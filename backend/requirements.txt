@@ -1,0 +1,32 @@
+# FastAPI provides the backend HTTP API framework.
+fastapi==0.140.2
+
+# Uvicorn runs the FastAPI application as an ASGI server.
+uvicorn==0.51.0
+
+# Pydantic validates API request and response schemas.
+pydantic==2.13.4
+
+# Pydantic Settings loads central configuration from environment variables.
+pydantic-settings==2.14.2
+
+# SQLAlchemy provides the asynchronous ORM and database abstraction layer.
+SQLAlchemy==2.0.51
+
+# aiosqlite is the asynchronous SQLite driver used by SQLAlchemy.
+aiosqlite==0.22.1
+
+# Alembic manages versioned database schema migrations.
+alembic==1.18.5
+
+# HTTPX communicates with the local Ollama HTTP runtime.
+httpx==0.28.1
+
+# LangChain Core provides shared message and model abstractions.
+langchain-core==1.5.1
+
+# LangChain Ollama connects IntraCore to locally installed Ollama models.
+langchain-ollama==1.1.0
+
+# LangGraph orchestrates the stateful chat workflow.
+langgraph==1.2.9

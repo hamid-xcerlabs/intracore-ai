@@ -1,0 +1,242 @@
+# =============================================================================
+# IntraCore AI — Root Git Ignore
+# =============================================================================
+# This repository contains:
+# - A Python/FastAPI backend
+# - A Next.js/TypeScript frontend
+# - Local SQLite and ChromaDB data
+# - Locally installed Ollama models managed outside this repository
+#
+# Generated files, machine-specific configuration, private user data,
+# dependencies, caches, and build output must never be committed.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Secrets and local environment configuration
+# -----------------------------------------------------------------------------
+# Real .env files may contain machine-specific configuration or future secrets.
+# Public configuration examples such as .env.example remain commit-safe.
+.env
+.env.*
+!.env.example
+
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+
+# -----------------------------------------------------------------------------
+# Python virtual environments
+# -----------------------------------------------------------------------------
+# Virtual environments contain machine-specific installed dependencies.
+# Contributors should recreate them from the project's dependency files.
+venv/
+.venv/
+env/
+ENV/
+
+backend/venv/
+backend/.venv/
+
+
+# -----------------------------------------------------------------------------
+# Python generated files and caches
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+*.egg-info/
+.eggs/
+dist/
+build/
+
+
+# -----------------------------------------------------------------------------
+# Backend local application data
+# -----------------------------------------------------------------------------
+# SQLite is the authoritative local runtime database.
+# It may contain private chats, messages, memories, settings, and metadata.
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+backend/data/*.sqlite
+backend/data/*.sqlite3
+
+# ChromaDB stores local semantic indexes for future RAG and memory retrieval.
+backend/data/chroma/
+backend/data/chromadb/
+
+# Uploaded documents may contain private user or company information.
+backend/data/uploads/
+
+# Runtime logs may contain local paths, diagnostics, or sensitive content.
+backend/data/logs/
+backend/logs/
+*.log
+
+# Temporary processing files.
+backend/data/temp/
+backend/data/tmp/
+
+
+# -----------------------------------------------------------------------------
+# Preserve empty local-data directories when placeholder files are added
+# -----------------------------------------------------------------------------
+# A future .gitkeep file can preserve required folder structure without
+# committing the private contents stored inside those folders.
+!backend/data/.gitkeep
+!backend/data/chroma/.gitkeep
+!backend/data/uploads/.gitkeep
+!backend/data/logs/.gitkeep
+
+
+# -----------------------------------------------------------------------------
+# Alembic and SQLAlchemy
+# -----------------------------------------------------------------------------
+# Alembic migration files are source code and MUST be committed.
+# Only Python cache files inside migration directories are ignored.
+backend/migrations/**/__pycache__/
+backend/migrations/**/*.pyc
+
+# Do not ignore:
+# backend/alembic.ini
+# backend/migrations/env.py
+# backend/migrations/versions/*.py
+
+
+# -----------------------------------------------------------------------------
+# Node.js dependencies
+# -----------------------------------------------------------------------------
+# Dependencies are reproducibly installed using package-lock.json.
+node_modules/
+frontend/node_modules/
+
+
+# -----------------------------------------------------------------------------
+# Next.js generated files
+# -----------------------------------------------------------------------------
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+frontend/next-env.d.ts.tmp
+
+.next/
+out/
+
+
+# -----------------------------------------------------------------------------
+# Frontend test and coverage output
+# -----------------------------------------------------------------------------
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+
+
+# -----------------------------------------------------------------------------
+# TypeScript generated information
+# -----------------------------------------------------------------------------
+*.tsbuildinfo
+
+
+# -----------------------------------------------------------------------------
+# Package-manager debug logs
+# -----------------------------------------------------------------------------
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# -----------------------------------------------------------------------------
+# Local Ollama model files
+# -----------------------------------------------------------------------------
+# Ollama manages downloaded models outside the repository.
+# IntraCore should store model names/configuration, never multi-GB model files.
+*.gguf
+*.ggml
+*.safetensors
+*.bin
+*.onnx
+
+
+# -----------------------------------------------------------------------------
+# Editors and IDEs
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.code-workspace
+
+# Keep a shared VS Code configuration later only if intentionally required.
+!.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+
+# -----------------------------------------------------------------------------
+# Operating-system generated files
+# -----------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+
+$RECYCLE.BIN/
+System Volume Information/
+
+
+# -----------------------------------------------------------------------------
+# Temporary and backup files
+# -----------------------------------------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+~$*
+
+
+# -----------------------------------------------------------------------------
+# Local exports and backups
+# -----------------------------------------------------------------------------
+# Future user exports and database backups must remain private by default.
+exports/
+backups/
+backend/data/exports/
+backend/data/backups/
+
+
+# -----------------------------------------------------------------------------
+# Security material
+# -----------------------------------------------------------------------------
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+secrets/
+credentials/
