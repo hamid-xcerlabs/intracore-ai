@@ -5,6 +5,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -16,6 +17,18 @@ type Chat = {
   title: string;
   created_at: string;
   updated_at: string;
+};
+
+
+// This type mirrors the backend durable MessageResponse schema.
+type Message = {
+  id: number;
+  chat_id: number;
+  role: "user" | "assistant" | "system" | "tool";
+  content: string;
+  sequence_number: number;
+  model_name: string | null;
+  created_at: string;
 };
 
 
@@ -42,9 +55,42 @@ export function ChatShell() {
   // Store a readable frontend error rather than failing silently.
   const [error, setError] = useState<string | null>(null);
 
+  // Store the selected conversation's durable ordered messages.
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  // Identify which chat owns the currently loaded message result.
+  const [messagesChatId, setMessagesChatId] = useState<number | null>(null);
+
+  // Track message-history loading independently from sidebar loading.
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // Associate message errors with a chat so stale errors are not displayed.
+  const [messageError, setMessageError] = useState<{
+    chatId: number;
+    message: string;
+  } | null>(null);
+
+  // Store the controlled composer text for the active conversation.
+  const [draftMessage, setDraftMessage] = useState("");
+
+  // Prevent duplicate submissions while one save request is running.
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  // Associate submission failures with the chat that produced them.
+  const [sendError, setSendError] = useState<{
+    chatId: number;
+    message: string;
+  } | null>(null);
+
+  // Keep slow send responses aware of the latest selected conversation.
+  const activeChatIdRef = useRef(activeChatId);
+
 
   // Load all persistent chats from the FastAPI backend.
   const loadChats = useCallback(async () => {
+    // Begin state updates after the effect's synchronous execution finishes.
+    await Promise.resolve();
+
     // Show loading state and clear stale failures before retrying.
     setIsLoadingChats(true);
     setError(null);
@@ -95,8 +141,188 @@ export function ChatShell() {
 
   // Load persistent conversations when the interface first opens.
   useEffect(() => {
-    void loadChats();
+    // Defer the async state transition until after the effect has subscribed.
+    const timeoutId = window.setTimeout(() => {
+      void loadChats();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadChats]);
+
+
+  // Keep asynchronous send completion aligned with the latest selection.
+  useEffect(() => {
+    activeChatIdRef.current = activeChatId;
+  }, [activeChatId]);
+
+
+  // Load durable history whenever the existing active-chat selection changes.
+  useEffect(() => {
+    // No message request is needed when no conversation is selected.
+    if (activeChatId === null) {
+      return;
+    }
+
+    // Cancel obsolete requests when users switch conversations quickly.
+    const controller = new AbortController();
+    const requestedChatId = activeChatId;
+
+    async function loadMessages() {
+      // Begin state updates after the effect's synchronous execution finishes.
+      await Promise.resolve();
+
+      // Stop before changing state if this selection is already obsolete.
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      // Invalidate the previous chat's stored result before fetching this one.
+      setMessages([]);
+      setMessagesChatId(null);
+      setMessageError(null);
+      setDraftMessage("");
+      setSendError(null);
+      setIsLoadingMessages(true);
+
+      try {
+        // Request the selected conversation's durable ordered history.
+        const response = await fetch(
+          `${API_BASE_URL}/chats/${requestedChatId}/messages`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
+
+        // Convert backend failures into a controlled message-area error.
+        if (!response.ok) {
+          throw new Error(
+            `Could not load messages (${response.status}).`,
+          );
+        }
+
+        // Parse the response using the durable frontend message contract.
+        const loadedMessages = (await response.json()) as Message[];
+
+        // Ignore a response if its request was cancelled during chat switching.
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setMessages(loadedMessages);
+        setMessagesChatId(requestedChatId);
+      } catch (requestError) {
+        // Aborted requests are expected when the selected chat changes.
+        if (
+          controller.signal.aborted ||
+          (
+            requestError instanceof DOMException &&
+            requestError.name === "AbortError"
+          )
+        ) {
+          return;
+        }
+
+        const message =
+          requestError instanceof Error
+            ? requestError.message
+            : "Could not load this conversation.";
+
+        setMessageError({
+          chatId: requestedChatId,
+          message,
+        });
+      } finally {
+        // An obsolete request must not change the current loading state.
+        if (!controller.signal.aborted) {
+          setIsLoadingMessages(false);
+        }
+      }
+    }
+
+    void loadMessages();
+
+    // Abort the current request before loading another selected chat.
+    return () => controller.abort();
+  }, [activeChatId]);
+
+
+  // Save one durable user message through POST /chats/{id}/messages.
+  async function sendMessage() {
+    // Submission requires a loaded active chat and no pending save.
+    if (
+      activeChatId === null ||
+      isMessageViewLoading ||
+      isSendingMessage
+    ) {
+      return;
+    }
+
+    const cleanContent = draftMessage.trim();
+    const targetChatId = activeChatId;
+
+    if (!cleanContent) {
+      setSendError({
+        chatId: targetChatId,
+        message: "Message cannot be empty.",
+      });
+      return;
+    }
+
+    setIsSendingMessage(true);
+    setSendError(null);
+
+    try {
+      // The backend controls role, sequence number, and model attribution.
+      const response = await fetch(
+        `${API_BASE_URL}/chats/${targetChatId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: cleanContent,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Could not save message (${response.status}).`,
+        );
+      }
+
+      // Append the authoritative durable response returned by FastAPI.
+      const savedMessage = (await response.json()) as Message;
+
+      // Ignore an old chat's response after the user changes selection.
+      if (activeChatIdRef.current !== targetChatId) {
+        return;
+      }
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        savedMessage,
+      ]);
+      setMessagesChatId(targetChatId);
+      setDraftMessage("");
+      setSendError(null);
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not save this message.";
+
+      setSendError({
+        chatId: targetChatId,
+        message,
+      });
+    } finally {
+      setIsSendingMessage(false);
+    }
+  }
 
 
   // Create one durable conversation through POST /chats.
@@ -195,6 +421,31 @@ export function ChatShell() {
   // Resolve the selected chat object for the workspace header.
   const activeChat =
     chats.find((chat) => chat.id === activeChatId) ?? null;
+
+  // Render messages only when they belong to the current active chat.
+  const activeMessages =
+    messagesChatId === activeChatId ? messages : [];
+
+  // Render errors only for the chat that produced them.
+  const activeMessageError =
+    messageError?.chatId === activeChatId
+      ? messageError.message
+      : null;
+
+  // Render submission failures only inside their originating conversation.
+  const activeSendError =
+    sendError?.chatId === activeChatId
+      ? sendError.message
+      : null;
+
+  // A changed chat remains loading until its own result has arrived.
+  const isMessageViewLoading =
+    activeChatId !== null &&
+    activeMessageError === null &&
+    (
+      isLoadingMessages ||
+      messagesChatId !== activeChatId
+    );
 
 
   return (
@@ -340,23 +591,90 @@ export function ChatShell() {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex flex-1 items-center justify-center overflow-y-auto px-6 py-12">
-            <div className="w-full max-w-2xl text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-xl font-semibold">
-                IC
-              </div>
+          <div className="flex-1 overflow-y-auto px-6 py-12">
+            <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center">
+              {!activeChat ? (
+                <div className="text-center">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-xl font-semibold">
+                    IC
+                  </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {activeChat
-                  ? activeChat.title
-                  : "What are you working on?"}
-              </h1>
+                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                    What are you working on?
+                  </h1>
 
-              <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/45 md:text-base">
-                {activeChat
-                  ? "This conversation is now stored locally in SQLite. Message persistence is the next milestone."
-                  : "Create a durable local conversation from the sidebar to begin."}
-              </p>
+                  <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/45 md:text-base">
+                    Create a durable local conversation from the sidebar to begin.
+                  </p>
+                </div>
+              ) : null}
+
+              {activeChat && isMessageViewLoading ? (
+                <p className="text-center text-sm text-white/40">
+                  Loading messages...
+                </p>
+              ) : null}
+
+              {activeChat && activeMessageError ? (
+                <div className="mx-auto w-full max-w-xl rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm leading-6 text-red-200">
+                  {activeMessageError}
+                </div>
+              ) : null}
+
+              {activeChat &&
+              !isMessageViewLoading &&
+              !activeMessageError &&
+              activeMessages.length === 0 ? (
+                <div className="text-center">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-xl font-semibold">
+                    IC
+                  </div>
+
+                  <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                    {activeChat.title}
+                  </h1>
+
+                  <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/45 md:text-base">
+                    This conversation has no messages yet.
+                  </p>
+                </div>
+              ) : null}
+
+              {activeChat &&
+              !isMessageViewLoading &&
+              !activeMessageError &&
+              activeMessages.length > 0 ? (
+                <div className="space-y-5">
+                  {activeMessages.map((message) => {
+                    const isUser = message.role === "user";
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${
+                          isUser ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                            isUser
+                              ? "bg-white text-black"
+                              : "border border-white/10 bg-white/[0.05] text-white/85"
+                          }`}
+                        >
+                          <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.14em] opacity-50">
+                            {message.role}
+                          </p>
+
+                          <p className="whitespace-pre-wrap break-words">
+                            {message.content}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -365,11 +683,25 @@ export function ChatShell() {
               <div className="rounded-2xl border border-white/10 bg-[#1c1c1c] p-3 shadow-2xl shadow-black/20">
                 <textarea
                   rows={2}
-                  disabled={!activeChat}
+                  value={draftMessage}
+                  onChange={(event) => {
+                    setDraftMessage(event.target.value);
+
+                    if (activeSendError) {
+                      setSendError(null);
+                    }
+                  }}
+                  disabled={
+                    !activeChat ||
+                    isMessageViewLoading ||
+                    isSendingMessage
+                  }
                   placeholder={
-                    activeChat
-                      ? "Message IntraCore AI"
-                      : "Create a chat first"
+                    !activeChat
+                      ? "Create a chat first"
+                      : isSendingMessage
+                        ? "Saving message..."
+                        : "Message IntraCore AI"
                   }
                   className="max-h-48 min-h-14 w-full resize-none bg-transparent px-2 py-2 text-sm leading-6 text-white outline-none placeholder:text-white/30 disabled:cursor-not-allowed"
                 />
@@ -385,13 +717,26 @@ export function ChatShell() {
 
                   <button
                     type="button"
-                    disabled
-                    className="flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-lg bg-white text-black opacity-40"
+                    onClick={() => void sendMessage()}
+                    disabled={
+                      !activeChat ||
+                      isMessageViewLoading ||
+                      isSendingMessage ||
+                      draftMessage.trim().length === 0
+                    }
+                    aria-label="Send message"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     ↑
                   </button>
                 </div>
               </div>
+
+              {activeSendError ? (
+                <p className="mt-3 text-center text-xs text-red-300">
+                  {activeSendError}
+                </p>
+              ) : null}
 
               <p className="mt-3 text-center text-[11px] text-white/30">
                 IntraCore can make mistakes. Verify important information.
