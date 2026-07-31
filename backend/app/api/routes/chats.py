@@ -15,9 +15,14 @@ from app.db.session import get_database_session
 
 # The repository owns reusable SQLAlchemy persistence operations.
 from app.repositories.chat_repository import chat_repository
+from app.repositories.message_repository import (
+    MessageSequenceConflictError,
+    message_repository,
+)
 
 # Pydantic schemas validate incoming and outgoing HTTP data.
 from app.schemas.chats import ChatCreate, ChatResponse, ChatUpdate
+from app.schemas.messages import MessageCreate, MessageResponse
 
 
 # Create one reusable typed alias for database-session dependency injection.
@@ -80,6 +85,89 @@ async def list_chats(
         ChatResponse.model_validate(chat)
         for chat in chats
     ]
+
+
+# GET /chats/{chat_id}/messages returns one conversation's durable history.
+@router.get(
+    "/{chat_id}/messages",
+    response_model=list[MessageResponse],
+)
+async def list_chat_messages(
+    chat_id: int,
+    session: DatabaseSession,
+) -> list[MessageResponse]:
+    # Verify that the parent conversation exists before loading its history.
+    chat = await chat_repository.get_by_id(
+        session=session,
+        chat_id=chat_id,
+    )
+
+    # Distinguish a missing chat from an existing chat with no messages.
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found.",
+        )
+
+    # Load durable messages in ascending sequence-number order.
+    messages = await message_repository.list_for_chat(
+        session=session,
+        chat_id=chat_id,
+    )
+
+    # Convert ORM objects into the stable public response contract.
+    return [
+        MessageResponse.model_validate(message)
+        for message in messages
+    ]
+
+
+# POST /chats/{chat_id}/messages saves one durable user message.
+@router.post(
+    "/{chat_id}/messages",
+    response_model=MessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_chat_message(
+    chat_id: int,
+    request: MessageCreate,
+    session: DatabaseSession,
+) -> MessageResponse:
+    # Verify the parent conversation before attempting a write.
+    chat = await chat_repository.get_by_id(
+        session=session,
+        chat_id=chat_id,
+    )
+
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found.",
+        )
+
+    # Normalise input and reject content containing only whitespace.
+    clean_content = request.content.strip()
+
+    if not clean_content:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Message content cannot be empty.",
+        )
+
+    try:
+        message = await message_repository.create_user_message(
+            session=session,
+            chat=chat,
+            content=clean_content,
+        )
+    except MessageSequenceConflictError as exc:
+        # The transaction has already been rolled back by the repository.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Message sequence conflict. Please retry.",
+        ) from exc
+
+    return MessageResponse.model_validate(message)
 
 
 # GET /chats/{chat_id} returns one persistent conversation.
