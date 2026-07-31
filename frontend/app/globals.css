@@ -2,11 +2,10 @@
 @import "tailwindcss";
 
 
-/* Define the application-level dark colour foundation.
-   Component-specific styling remains inside Tailwind class names. */
+/* Define the warm, light workspace foundation. */
 :root {
-  color-scheme: dark;
-  background: #101010;
+  color-scheme: light;
+  background: #f5f2ee;
 }
 
 
@@ -15,14 +14,21 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: #101010;
+  background:
+    radial-gradient(
+      circle at 82% 4%,
+      rgba(218, 205, 235, 0.32),
+      transparent 28rem
+    ),
+    #f5f2ee;
+  color: #2c2831;
 }
 
 
-/* Use a local system-font stack.
-   No external Google Font request is made, preserving offline behaviour. */
+/* Prefer the bundled Geist variable while retaining an offline-safe stack. */
 body {
   font-family:
+    var(--font-geist-sans),
     Inter,
     ui-sans-serif,
     system-ui,
@@ -48,10 +54,23 @@ select {
 }
 
 
-/* Apply a subtle local scrollbar suitable for the dark interface. */
+/* Keep selections and keyboard focus consistent with the lavender accent. */
+::selection {
+  background: #dfd3ee;
+  color: #302638;
+}
+
+
+:focus-visible {
+  outline: 2px solid #9a7fbc;
+  outline-offset: 2px;
+}
+
+
+/* Apply a subtle local scrollbar suitable for the light interface. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  scrollbar-color: rgba(100, 85, 111, 0.22) transparent;
 }
 
 
@@ -71,5 +90,64 @@ select {
 /* Use a low-contrast thumb that becomes visible only when needed. */
 *::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(100, 85, 111, 0.22);
+}
+
+
+/* Empty-state mark: an original CSS surface, not copied branding. */
+.intracore-orb {
+  border: 1px solid rgba(155, 128, 187, 0.28);
+  background:
+    radial-gradient(
+      circle at 32% 25%,
+      rgba(255, 255, 255, 0.98),
+      transparent 32%
+    ),
+    linear-gradient(145deg, #f7f2ff 8%, #d9c8ee 54%, #f0e8fa 100%);
+  box-shadow:
+    inset -8px -10px 24px rgba(116, 83, 153, 0.13),
+    0 16px 42px rgba(105, 78, 134, 0.16);
+}
+
+
+/* Compact assistant placeholder shown only in the conversation stream. */
+.intracore-thinking-dot {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: #9a7ebb;
+  animation: intracore-thinking 1.2s ease-in-out infinite;
+}
+
+
+.intracore-thinking-dot:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+
+.intracore-thinking-dot:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+
+@keyframes intracore-thinking {
+  0%,
+  70%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(-0.18rem);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .intracore-thinking-dot {
+    animation: none;
+    opacity: 0.7;
+  }
 }

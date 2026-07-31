@@ -93,5 +93,40 @@ class MessageRepository:
 
         return message
 
+    # Save one generated assistant message in a separate short transaction.
+    async def create_assistant_message(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+        content: str,
+        model_name: str,
+    ) -> Message:
+        sequence_number = await self._get_next_sequence_number(
+            session=session,
+            chat_id=chat_id,
+        )
+
+        message = Message(
+            chat_id=chat_id,
+            role="assistant",
+            content=content,
+            sequence_number=sequence_number,
+            model_name=model_name,
+        )
+
+        session.add(message)
+
+        try:
+            await session.commit()
+        except IntegrityError as exc:
+            # Preserve the committed user message and roll back this insert.
+            await session.rollback()
+            raise MessageSequenceConflictError from exc
+
+        await session.refresh(message)
+
+        return message
+
+
 # Export one stateless repository instance for route reuse.
 message_repository = MessageRepository()

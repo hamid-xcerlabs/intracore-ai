@@ -22,7 +22,17 @@ from app.repositories.message_repository import (
 
 # Pydantic schemas validate incoming and outgoing HTTP data.
 from app.schemas.chats import ChatCreate, ChatResponse, ChatUpdate
-from app.schemas.messages import MessageCreate, MessageResponse
+from app.schemas.messages import (
+    DurableGenerationResponse,
+    MessageCreate,
+    MessageResponse,
+)
+
+# ConversationService owns the complete durable AI generation workflow.
+from app.services.conversation_service import (
+    ConversationGenerationError,
+    conversation_service,
+)
 
 
 # Create one reusable typed alias for database-session dependency injection.
@@ -122,17 +132,17 @@ async def list_chat_messages(
     ]
 
 
-# POST /chats/{chat_id}/messages saves one durable user message.
+# POST /chats/{chat_id}/messages creates one complete durable AI turn.
 @router.post(
     "/{chat_id}/messages",
-    response_model=MessageResponse,
+    response_model=DurableGenerationResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_chat_message(
     chat_id: int,
     request: MessageCreate,
     session: DatabaseSession,
-) -> MessageResponse:
+) -> DurableGenerationResponse:
     # Verify the parent conversation before attempting a write.
     chat = await chat_repository.get_by_id(
         session=session,
@@ -155,19 +165,35 @@ async def create_chat_message(
         )
 
     try:
-        message = await message_repository.create_user_message(
-            session=session,
-            chat=chat,
-            content=clean_content,
+        user_message, assistant_message = (
+            await conversation_service.create_durable_turn(
+                session=session,
+                chat=chat,
+                content=clean_content,
+            )
         )
     except MessageSequenceConflictError as exc:
-        # The transaction has already been rolled back by the repository.
+        # The failing message transaction has been rolled back.
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Message sequence conflict. Please retry.",
         ) from exc
+    except ConversationGenerationError as exc:
+        # The service has retained the committed user message.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Assistant generation failed. "
+                "Your message was saved."
+            ),
+        ) from exc
 
-    return MessageResponse.model_validate(message)
+    return DurableGenerationResponse(
+        user_message=MessageResponse.model_validate(user_message),
+        assistant_message=MessageResponse.model_validate(
+            assistant_message
+        ),
+    )
 
 
 # GET /chats/{chat_id} returns one persistent conversation.
