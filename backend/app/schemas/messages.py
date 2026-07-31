@@ -46,3 +46,12 @@ class MessageResponse(BaseModel):
 
     # Database-generated creation timestamp.
     created_at: datetime
+
+
+# DurableGenerationResponse returns both records created by one complete turn.
+class DurableGenerationResponse(BaseModel):
+    # The user record is committed before model generation begins.
+    user_message: MessageResponse
+
+    # The assistant record exists only after successful generation.
+    assistant_message: MessageResponse
