@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 #Without configuration system model = "deepseek-r1:1.5b" then this name may in diff files needs to be update after changing the model
@@ -10,6 +11,13 @@ class Settings(BaseSettings): #BaseSettings .env ko read karke values Python obj
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_chat_model: str = "deepseek-r1:1.5b"
     ollama_embedding_model: str = "nomic-embed-text"
+    # "auto" preserves normal model behavior without forcing an unsupported
+    # reasoning flag. Enabled/disabled are explicit backend-controlled modes.
+    ollama_reasoning_mode: Literal[
+        "auto",
+        "enabled",
+        "disabled",
+    ] = "auto"
     # SQLAlchemy database connection URL.
     # The default points to a local SQLite file inside backend/data.
     database_url: str = "sqlite+aiosqlite:///./data/intracore.db"

@@ -1,11 +1,21 @@
 # Annotated lets FastAPI attach dependency metadata to typed parameters.
+import asyncio
+from collections.abc import AsyncIterator
 from typing import Annotated
 
 # APIRouter groups conversation endpoints.
 # Depends injects one request-scoped database session.
 # HTTPException returns controlled not-found responses.
 # Response provides an empty 204 response after deletion.
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
+from fastapi.responses import StreamingResponse
 
 # AsyncSession is the database session type injected into each endpoint.
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,14 +33,23 @@ from app.repositories.message_repository import (
 # Pydantic schemas validate incoming and outgoing HTTP data.
 from app.schemas.chats import ChatCreate, ChatResponse, ChatUpdate
 from app.schemas.messages import (
+    AssistantDeltaEvent,
+    AssistantMessageEvent,
+    ChatTitleUpdatedEvent,
     DurableGenerationResponse,
     MessageCreate,
     MessageResponse,
+    ResponseStartedEvent,
+    ResponseStoppedEvent,
+    StreamingErrorEvent,
+    UserMessageEvent,
 )
 
 # ConversationService owns the complete durable AI generation workflow.
 from app.services.conversation_service import (
     ConversationGenerationError,
+    ConversationStoppedError,
+    ConversationTitleUpdate,
     conversation_service,
 )
 
@@ -193,6 +212,113 @@ async def create_chat_message(
         assistant_message=MessageResponse.model_validate(
             assistant_message
         ),
+    )
+
+
+# POST /chats/{chat_id}/messages/stream emits one durable turn as NDJSON.
+@router.post("/{chat_id}/messages/stream")
+async def stream_chat_message(
+    chat_id: int,
+    payload: MessageCreate,
+    request: Request,
+    session: DatabaseSession,
+) -> StreamingResponse:
+    chat = await chat_repository.get_by_id(
+        session=session,
+        chat_id=chat_id,
+    )
+
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found.",
+        )
+
+    clean_content = payload.content.strip()
+
+    if not clean_content:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Message content cannot be empty.",
+        )
+
+    # Commit the user before response headers begin so validation and sequence
+    # conflicts can retain their normal HTTP status codes.
+    try:
+        prepared = await conversation_service.prepare_durable_turn(
+            session=session,
+            chat=chat,
+            content=clean_content,
+        )
+    except MessageSequenceConflictError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Message sequence conflict. Please retry.",
+        ) from exc
+
+    user_response = MessageResponse.model_validate(
+        prepared.user_message
+    )
+
+    async def event_stream() -> AsyncIterator[str]:
+        yield ResponseStartedEvent(
+            chat_id=chat_id
+        ).model_dump_json() + "\n"
+        yield UserMessageEvent(
+            message=user_response
+        ).model_dump_json() + "\n"
+
+        try:
+            async for item in (
+                conversation_service.stream_durable_assistant(
+                    session=session,
+                    chat_id=chat_id,
+                    graph_messages=prepared.graph_messages,
+                    title_source=prepared.title_source,
+                    should_generate_title=prepared.should_generate_title,
+                    should_stop=request.is_disconnected,
+                )
+            ):
+                if isinstance(item, str):
+                    yield AssistantDeltaEvent(
+                        delta=item
+                    ).model_dump_json() + "\n"
+                elif isinstance(item, ConversationTitleUpdate):
+                    yield ChatTitleUpdatedEvent(
+                        chat=ChatResponse.model_validate(item.chat)
+                    ).model_dump_json() + "\n"
+                else:
+                    yield AssistantMessageEvent(
+                        message=MessageResponse.model_validate(item)
+                    ).model_dump_json() + "\n"
+        except ConversationStoppedError:
+            # This event is best effort and may not reach a disconnected client.
+            if not await request.is_disconnected():
+                yield ResponseStoppedEvent().model_dump_json() + "\n"
+        except asyncio.CancelledError:
+            # Preserve cancellation semantics for ASGI cleanup.
+            raise
+        except MessageSequenceConflictError:
+            yield StreamingErrorEvent(
+                code="message_sequence_conflict",
+                message="Message sequence conflict. Please refresh.",
+            ).model_dump_json() + "\n"
+        except ConversationGenerationError:
+            yield StreamingErrorEvent(
+                code="generation_failed",
+                message=(
+                    "Assistant generation failed. "
+                    "Your message was saved."
+                ),
+            ).model_dump_json() + "\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 
