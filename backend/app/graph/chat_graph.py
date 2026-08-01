@@ -16,6 +16,9 @@ from langgraph.graph import END, START, StateGraph
 # instead of replacing the complete message history.
 from langgraph.graph.message import add_messages
 
+# Central settings control whether compatible models separate reasoning data.
+from app.core.config import get_settings
+
 # Import only the current minimal IntraCore system prompt.
 # CAPABILITY_REMINDER was removed and must no longer be imported.
 from app.prompts.system import INTRACORE_SYSTEM_PROMPT
@@ -23,6 +26,9 @@ from app.prompts.system import INTRACORE_SYSTEM_PROMPT
 # Import the shared Ollama provider.
 # This provider contains the configured ChatOllama model client.
 from app.providers.ollama_provider import ollama_provider
+
+
+settings = get_settings()
 
 
 # ChatState defines the exact data structure that moves
@@ -49,8 +55,19 @@ async def generate_response(
 
     # Send the prepared messages through LangChain ChatOllama.
     # Ollama runs the model configured in the backend .env file.
+    # Auto mode omits the provider-specific option so unsupported models keep
+    # their normal answer-streaming behavior. Explicit modes remain backend
+    # controlled and are useful for compatible reasoning models.
+    reasoning_options: dict[str, bool] = {}
+
+    if settings.ollama_reasoning_mode == "enabled":
+        reasoning_options["reasoning"] = True
+    elif settings.ollama_reasoning_mode == "disabled":
+        reasoning_options["reasoning"] = False
+
     response = await ollama_provider.chat_client.ainvoke(
-        model_messages
+        model_messages,
+        **reasoning_options,
     )
 
     # Return the generated AI message to LangGraph.
