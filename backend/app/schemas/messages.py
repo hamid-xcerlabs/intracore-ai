@@ -8,6 +8,8 @@ from typing import Literal
 # ConfigDict allows validation directly from SQLAlchemy model attributes.
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.chats import ChatResponse
+
 
 # MessageCreate accepts only user-authored message content from API clients.
 class MessageCreate(BaseModel):
@@ -55,3 +57,41 @@ class DurableGenerationResponse(BaseModel):
 
     # The assistant record exists only after successful generation.
     assistant_message: MessageResponse
+
+
+# Streaming response lifecycle events are newline-delimited JSON records.
+class ResponseStartedEvent(BaseModel):
+    type: Literal["response_started"] = "response_started"
+    chat_id: int
+
+
+class UserMessageEvent(BaseModel):
+    type: Literal["user_message"] = "user_message"
+    message: MessageResponse
+
+
+class AssistantDeltaEvent(BaseModel):
+    type: Literal["assistant_delta"] = "assistant_delta"
+    delta: str = Field(min_length=1)
+
+
+class AssistantMessageEvent(BaseModel):
+    type: Literal["assistant_message"] = "assistant_message"
+    message: MessageResponse
+
+
+class ChatTitleUpdatedEvent(BaseModel):
+    type: Literal["chat_title_updated"] = "chat_title_updated"
+    chat: ChatResponse
+
+
+class ResponseStoppedEvent(BaseModel):
+    type: Literal["response_stopped"] = "response_stopped"
+    message: str = "Generation stopped."
+
+
+class StreamingErrorEvent(BaseModel):
+    type: Literal["error"] = "error"
+    code: str
+    message: str
+    user_message_saved: bool = True

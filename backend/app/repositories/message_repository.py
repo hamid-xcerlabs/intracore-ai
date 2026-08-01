@@ -1,5 +1,5 @@
-# select creates SQLAlchemy ORM SELECT statements.
-from sqlalchemy import func, select
+# select and update create SQLAlchemy ORM statements.
+from sqlalchemy import func, select, update
 
 # IntegrityError identifies database constraint conflicts during commits.
 from sqlalchemy.exc import IntegrityError
@@ -114,6 +114,13 @@ class MessageRepository:
             model_name=model_name,
         )
 
+        # Assistant persistence is also conversation activity. Keep the
+        # message insert and parent timestamp update in one short transaction.
+        await session.execute(
+            update(Chat)
+            .where(Chat.id == chat_id)
+            .values(updated_at=func.now())
+        )
         session.add(message)
 
         try:
