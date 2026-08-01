@@ -4,6 +4,7 @@ from fastapi import FastAPI
 # Import the separate route modules that will be registered with the app.
 from app.api.routes.chat import router as chat_router
 from app.api.routes.health import router as health_router
+from app.api.routes.models import router as models_router
 
 #2nd update, Load application metadata from the central configuration layer.
 from app.core.config import get_settings
@@ -67,3 +68,6 @@ app.include_router(chat_router)
 
 # Register persistent chat-management endpoints.
 app.include_router(chats_router)
+
+# Register local Ollama model discovery for the frontend selector.
+app.include_router(models_router)
