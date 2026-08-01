@@ -82,13 +82,16 @@ class ChatTitleService:
         chat_id: int,
         source: str,
         should_generate: bool,
+        model_name: str,
     ) -> Chat | None:
         if not should_generate:
             return None
 
         try:
             response = await asyncio.wait_for(
-                ollama_provider.chat_client.ainvoke(
+                ollama_provider.create_chat_client(
+                    model_name
+                ).ainvoke(
                     [
                         SystemMessage(content=CHAT_TITLE_SYSTEM_PROMPT),
                         HumanMessage(content=source),

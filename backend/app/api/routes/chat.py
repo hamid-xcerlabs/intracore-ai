@@ -46,6 +46,7 @@ async def test_chat(
                 "messages": [
                     HumanMessage(content=request.message),
                 ],
+                "model_name": settings.ollama_chat_model,
             }
         )
 
