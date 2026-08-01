@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any #Any ka matlab value kisi bhi type ki ho sakti hai.
 
 import httpx           #httpx Python HTTP client hai.
@@ -8,6 +9,25 @@ from app.core.config import get_settings   #Central configuration system se sett
 
 
 settings = get_settings()
+
+
+# Product-approved local chat models remain backend-controlled. Locally
+# installed custom models are added only when Ollama reports completion
+# capability; embedding-only models never enter the chat selector.
+SUPPORTED_CHAT_MODEL_CATALOG = (
+    "qwen2.5:3b",
+    "qwen3:4b",
+    "llama3.2:3b",
+    "gemma3:4b",
+)
+
+
+class OllamaUnavailableError(Exception):
+    """Hide local runtime transport failures behind a stable boundary."""
+
+
+class OllamaModelUnavailableError(Exception):
+    """The requested model is missing or is not suitable for chat."""
 
 
 class OllamaProvider:                         #Yeh Ollama-related functionality ka blueprint hai.
@@ -25,23 +45,163 @@ class OllamaProvider:                         #Yeh Ollama-related functionality 
 # LangGraph
 # Structured output
 # Prompt templates
-        self.chat_client = ChatOllama( #Yeh reusable LangChain model client create karta hai.
-            model=self.chat_model, #Model .env configuration se aa raha hai.
-            base_url=self.base_url, #LangChain ko batata hai Ollama kis address par running hai: http://127.0.0.1:11434
-            temperature=0.7, #Temperature model response ki randomness control karti hai.
+        self.chat_client = self.create_chat_client(self.chat_model)
+
+    def create_chat_client(self, model_name: str) -> ChatOllama:
+        """Create an immutable request-specific client without global races."""
+
+        return ChatOllama(
+            model=model_name,
+            base_url=self.base_url,
+            temperature=0.7,
         )
 
-    async def get_installed_models(self) -> list[str]:    #Yeh asynchronous function installed models ki list return karega.
-        async with httpx.AsyncClient(timeout=10.0) as client: #Ek asynchronous HTTP client temporarily create hota hai.
-            response = await client.get(f"{self.base_url}/api/tags") #Ollama ka /api/tags endpoint installed models ki list deta hai. http://127.0.0.1:11434/api/tags
-            response.raise_for_status() # agr 200 return kre to contnue, Without this line, error response ko bhi normal successful JSON samjha ja sakta tha.
-
-        data: dict[str, Any] = response.json() #Ollama ka JSON response Python dictionary mein convert hota hai.
+    async def _get_installed_model_records(self) -> list[dict[str, Any]]:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(f"{self.base_url}/api/tags")
+                response.raise_for_status()
+            data: dict[str, Any] = response.json()
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
+            raise OllamaUnavailableError from exc
 
         return [
-            model["name"]
+            model
             for model in data.get("models", [])
-            if "name" in model
+            if isinstance(model, dict) and isinstance(model.get("name"), str)
+        ]
+
+    async def _get_model_capabilities(self, model_name: str) -> set[str]:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/show",
+                    json={"model": model_name},
+                )
+                response.raise_for_status()
+            data: dict[str, Any] = response.json()
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
+            return set()
+
+        capabilities = data.get("capabilities", [])
+        return {
+            capability
+            for capability in capabilities
+            if isinstance(capability, str)
+        }
+
+    @staticmethod
+    def _model_option(
+        name: str,
+        installed: bool,
+        selectable: bool,
+        record: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        details = record.get("details", {}) if record else {}
+        if not isinstance(details, dict):
+            details = {}
+
+        return {
+            "name": name,
+            "installed": installed,
+            "selectable": selectable,
+            "family": details.get("family"),
+            "parameter_size": details.get("parameter_size"),
+            "quantization_level": details.get("quantization_level"),
+        }
+
+    async def list_chat_models(self) -> list[dict[str, Any]]:
+        records = await self._get_installed_model_records()
+        installed_by_name = {
+            record["name"].casefold(): record
+            for record in records
+        }
+        supported_names = {
+            name.casefold() for name in SUPPORTED_CHAT_MODEL_CATALOG
+        }
+        options: list[dict[str, Any]] = []
+
+        # Preserve deliberate product ordering for the supported catalog.
+        for catalog_name in SUPPORTED_CHAT_MODEL_CATALOG:
+            record = installed_by_name.get(catalog_name.casefold())
+            actual_name = record["name"] if record else catalog_name
+            options.append(
+                self._model_option(
+                    name=actual_name,
+                    installed=record is not None,
+                    selectable=record is not None,
+                    record=record,
+                )
+            )
+
+        custom_records = [
+            record
+            for record in records
+            if record["name"].casefold() not in supported_names
+        ]
+        capability_results = await asyncio.gather(
+            *(
+                self._get_model_capabilities(record["name"])
+                for record in custom_records
+            )
+        )
+
+        for record, capabilities in sorted(
+            zip(custom_records, capability_results, strict=True),
+            key=lambda item: item[0]["name"].casefold(),
+        ):
+            if "completion" not in capabilities:
+                continue
+
+            options.append(
+                self._model_option(
+                    name=record["name"],
+                    installed=True,
+                    selectable=True,
+                    record=record,
+                )
+            )
+
+        return options
+
+    def default_chat_model(
+        self,
+        options: list[dict[str, Any]],
+    ) -> str | None:
+        selectable = {
+            option["name"].casefold(): option["name"]
+            for option in options
+            if option["selectable"]
+        }
+        return selectable.get(self.chat_model.casefold()) or next(
+            iter(selectable.values()),
+            None,
+        )
+
+    async def resolve_chat_model(self, requested: str | None) -> str:
+        options = await self.list_chat_models()
+        selectable = {
+            option["name"].casefold(): option["name"]
+            for option in options
+            if option["selectable"]
+        }
+
+        if requested is not None:
+            resolved = selectable.get(requested.strip().casefold())
+            if resolved is None:
+                raise OllamaModelUnavailableError
+            return resolved
+
+        default_model = self.default_chat_model(options)
+        if default_model is None:
+            raise OllamaModelUnavailableError
+
+        return default_model
+
+    async def get_installed_models(self) -> list[str]:    #Yeh asynchronous function installed models ki list return karega.
+        return [
+            model["name"]
+            for model in await self._get_installed_model_records()
         ]
 
     async def check_connection(self) -> dict[str, object]: #Yeh function complete diagnostic response banata hai.
@@ -60,24 +220,10 @@ class OllamaProvider:                         #Yeh Ollama-related functionality 
                 "installed_models": installed_models,
             }
 
-        except httpx.ConnectError:
+        except OllamaUnavailableError:
             return {
                 "connected": False,
                 "error": "Could not connect to Ollama.",
-                "ollama_url": self.base_url,
-            }
-
-        except httpx.HTTPStatusError as exc:  #Yeh tab chalega jab FastAPI Ollama server se connection hi establish na kar sake.
-            return {
-                "connected": False,
-                "error": f"Ollama returned HTTP {exc.response.status_code}.",
-                "ollama_url": self.base_url,
-            }
-##Error handling
-        except httpx.RequestError as exc:
-            return {
-                "connected": False,
-                "error": f"Ollama request failed: {str(exc)}",
                 "ollama_url": self.base_url,
             }
 

@@ -22,6 +22,14 @@ class MessageCreate(BaseModel):
         description="The user message to save in the selected conversation.",
     )
 
+    # Older clients may omit this and use the configured backend default.
+    model_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=200,
+        description="An installed backend-approved Ollama chat model.",
+    )
+
 
 # MessageResponse is the stable JSON representation of one durable message.
 class MessageResponse(BaseModel):

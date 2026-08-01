@@ -38,6 +38,10 @@ class ChatState(TypedDict):
     # add_messages controls how newly returned messages are merged.
     messages: Annotated[list[AnyMessage], add_messages]
 
+    # Each request carries its validated model; no shared provider state is
+    # mutated when different conversations choose different local models.
+    model_name: str
+
 
 # This node sends the current conversation to the local model
 # and returns the generated AI message.
@@ -65,7 +69,10 @@ async def generate_response(
     elif settings.ollama_reasoning_mode == "disabled":
         reasoning_options["reasoning"] = False
 
-    response = await ollama_provider.chat_client.ainvoke(
+    chat_client = ollama_provider.create_chat_client(
+        state["model_name"]
+    )
+    response = await chat_client.ainvoke(
         model_messages,
         **reasoning_options,
     )

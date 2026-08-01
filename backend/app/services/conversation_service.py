@@ -10,7 +10,6 @@ from langchain_core.messages import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.db.models.chat import Chat
 from app.db.models.message import Message
 from app.graph.chat_graph import chat_graph
@@ -204,12 +203,13 @@ class ConversationService:
         session: AsyncSession,
         chat_id: int,
         content: str,
+        model_name: str,
     ) -> Message:
         return await message_repository.create_assistant_message(
             session=session,
             chat_id=chat_id,
             content=content,
-            model_name=get_settings().ollama_chat_model,
+            model_name=model_name,
         )
 
     async def create_durable_turn(
@@ -217,6 +217,7 @@ class ConversationService:
         session: AsyncSession,
         chat: Chat,
         content: str,
+        model_name: str,
     ) -> tuple[Message, Message]:
         prepared = await self.prepare_durable_turn(
             session=session,
@@ -226,7 +227,10 @@ class ConversationService:
 
         try:
             result = await chat_graph.ainvoke(
-                {"messages": prepared.graph_messages}
+                {
+                    "messages": prepared.graph_messages,
+                    "model_name": model_name,
+                }
             )
             final_message = result["messages"][-1]
             answer_filter = AnswerTextFilter()
@@ -243,6 +247,7 @@ class ConversationService:
                 session=session,
                 chat_id=chat.id,
                 content=assistant_content,
+                model_name=model_name,
             )
 
             await chat_title_service.generate_for_first_turn(
@@ -250,6 +255,7 @@ class ConversationService:
                 chat_id=chat.id,
                 source=prepared.title_source,
                 should_generate=prepared.should_generate_title,
+                model_name=model_name,
             )
         except MessageSequenceConflictError:
             raise
@@ -269,12 +275,16 @@ class ConversationService:
         graph_messages: list[AnyMessage],
         title_source: str,
         should_generate_title: bool,
+        model_name: str,
         should_stop: Callable[[], Awaitable[bool]],
     ) -> AsyncIterator[str | Message | ConversationTitleUpdate]:
         answer_filter = AnswerTextFilter()
         answer_parts: list[str] = []
         graph_stream = chat_graph.astream(
-            {"messages": graph_messages},
+            {
+                "messages": graph_messages,
+                "model_name": model_name,
+            },
             stream_mode="messages",
         )
 
@@ -320,6 +330,7 @@ class ConversationService:
                 session=session,
                 chat_id=chat_id,
                 content=assistant_content,
+                model_name=model_name,
             )
             yield assistant_message
 
@@ -328,6 +339,7 @@ class ConversationService:
                 chat_id=chat_id,
                 source=title_source,
                 should_generate=should_generate_title,
+                model_name=model_name,
             )
 
             if updated_chat is not None:
