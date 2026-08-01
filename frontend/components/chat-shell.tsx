@@ -34,6 +34,20 @@ type Message = {
   created_at: string;
 };
 
+type ChatModelOption = {
+  name: string;
+  installed: boolean;
+  selectable: boolean;
+  family: string | null;
+  parameter_size: string | null;
+  quantization_level: string | null;
+};
+
+type ChatModelListResponse = {
+  default_model: string | null;
+  models: ChatModelOption[];
+};
+
 type StreamLifecycle =
   | "starting"
   | "thinking"
@@ -65,6 +79,7 @@ type StreamingEvent =
     };
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+const MODEL_PREFERENCE_KEY = "intracore.chatModel";
 
 const PRE_RESPONSE_STATUS_LABELS = [
   "Reading your request",
@@ -268,6 +283,34 @@ function MessageIcon() {
         d="M5.5 18.5 4 21l4-1.5c1.2.65 2.55 1 4 1 4.7 0 8.5-3.47 8.5-7.75S16.7 5 12 5s-8.5 3.47-8.5 7.75c0 2.25.77 4.25 2 5.75Z"
         stroke="currentColor"
         strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="m6.5 8 3.5 3.5L13.5 8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M10 3.5v8m0 0 3-3m-3 3-3-3M4.5 15.5h11"
+        stroke="currentColor"
+        strokeWidth="1.45"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>
@@ -561,6 +604,20 @@ export function ChatShell() {
   const [error, setError] =
     useState<string | null>(null);
 
+  const [modelOptions, setModelOptions] =
+    useState<ChatModelOption[]>([]);
+  const [selectedModelName, setSelectedModelName] =
+    useState<string | null>(null);
+  const [isLoadingModels, setIsLoadingModels] =
+    useState(true);
+  const [modelError, setModelError] =
+    useState<string | null>(null);
+  const [modelNotice, setModelNotice] =
+    useState<string | null>(null);
+  const [isModelMenuOpen, setIsModelMenuOpen] =
+    useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+
   const [messages, setMessages] =
     useState<Message[]>([]);
   const [messagesChatId, setMessagesChatId] =
@@ -600,6 +657,7 @@ export function ChatShell() {
   const conversationScrollRef =
     useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
+  const modelMenuRef = useRef<HTMLDivElement | null>(null);
 
   function clearDeltaFlushTimer() {
     if (deltaFlushTimerRef.current !== null) {
@@ -731,6 +789,65 @@ export function ChatShell() {
     }
   }, []);
 
+  const loadModels = useCallback(async () => {
+    setIsLoadingModels(true);
+    setModelError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/models`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          response.status === 503
+            ? "Ollama is unavailable."
+            : `Could not load models (${response.status}).`,
+        );
+      }
+
+      const result =
+        (await response.json()) as ChatModelListResponse;
+      const selectableNames = new Set(
+        result.models
+          .filter((model) => model.selectable)
+          .map((model) => model.name),
+      );
+      const storedModel = window.localStorage.getItem(
+        MODEL_PREFERENCE_KEY,
+      );
+      const selectedModel =
+        storedModel && selectableNames.has(storedModel)
+          ? storedModel
+          : result.default_model;
+
+      setModelOptions(result.models);
+      setSelectedModelName(selectedModel);
+
+      if (selectedModel) {
+        window.localStorage.setItem(
+          MODEL_PREFERENCE_KEY,
+          selectedModel,
+        );
+      } else {
+        window.localStorage.removeItem(
+          MODEL_PREFERENCE_KEY,
+        );
+      }
+    } catch (requestError) {
+      setModelOptions([]);
+      setSelectedModelName(null);
+      setModelError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not load local models.",
+      );
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }, []);
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadChats();
@@ -739,6 +856,43 @@ export function ChatShell() {
     return () =>
       window.clearTimeout(timeoutId);
   }, [loadChats]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadModels();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadModels]);
+
+  useEffect(() => {
+    if (!isModelMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        modelMenuRef.current &&
+        !modelMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsModelMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsModelMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isModelMenuOpen]);
 
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
@@ -892,11 +1046,20 @@ export function ChatShell() {
 
     const cleanContent = draftMessage.trim();
     const targetChatId = activeChatId;
+    const targetModelName = selectedModelName;
 
     if (!cleanContent) {
       setSendError({
         chatId: targetChatId,
         message: "Message cannot be empty.",
+      });
+      return;
+    }
+
+    if (!targetModelName) {
+      setSendError({
+        chatId: targetChatId,
+        message: "Select an installed chat model first.",
       });
       return;
     }
@@ -974,6 +1137,7 @@ export function ChatShell() {
           },
           body: JSON.stringify({
             content: cleanContent,
+            model_name: targetModelName,
           }),
           signal: abortController.signal,
         },
@@ -1448,6 +1612,13 @@ export function ChatShell() {
     activeMessages.length > 0 ||
     activeStreamingAssistant !== null;
 
+  const filteredModelOptions = modelOptions.filter(
+    (model) =>
+      model.name
+        .toLocaleLowerCase()
+        .includes(modelSearch.trim().toLocaleLowerCase()),
+  );
+
   return (
     <MotionConfig reducedMotion="user">
       <main className="ic-app">
@@ -1644,11 +1815,160 @@ export function ChatShell() {
 
               <div className="ic-header-actions">
                 <div
-                  className="ic-model-chip"
-                  aria-label="Active local model"
+                  className="ic-model-selector"
+                  ref={modelMenuRef}
                 >
-                  <span />
-                  <span>Qwen-4B</span>
+                  <button
+                    type="button"
+                    className="ic-model-chip"
+                    aria-label="Choose local model"
+                    aria-haspopup="listbox"
+                    aria-expanded={isModelMenuOpen}
+                    disabled={isSendingMessage}
+                    onClick={() => {
+                      setIsModelMenuOpen((current) => !current);
+                      setModelNotice(null);
+                    }}
+                  >
+                    <span
+                      className={`ic-model-live-dot ${
+                        selectedModelName ? "" : "is-unavailable"
+                      }`}
+                    />
+                    <span className="ic-model-chip-label">
+                      {isLoadingModels
+                        ? "Finding models…"
+                        : selectedModelName ?? "No model"}
+                    </span>
+                    <span
+                      className={`ic-model-chevron ${
+                        isModelMenuOpen ? "is-open" : ""
+                      }`}
+                    >
+                      <ChevronIcon />
+                    </span>
+                  </button>
+
+                  <AnimatePresence>
+                    {isModelMenuOpen ? (
+                      <motion.div
+                        className="ic-model-menu"
+                        initial={{ opacity: 0, y: -6, scale: 0.985 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                        transition={{ duration: 0.16 }}
+                      >
+                        <div className="ic-model-menu-search">
+                          <input
+                            value={modelSearch}
+                            onChange={(event) => {
+                              setModelSearch(event.target.value);
+                              setModelNotice(null);
+                            }}
+                            placeholder="Find model…"
+                            aria-label="Find model"
+                            autoFocus
+                          />
+                        </div>
+
+                        <div
+                          className="ic-model-options"
+                          role="listbox"
+                          aria-label="Available local models"
+                        >
+                          {filteredModelOptions.map((model) => {
+                            const isSelected =
+                              model.name === selectedModelName;
+
+                            return (
+                              <button
+                                type="button"
+                                key={model.name}
+                                role="option"
+                                aria-selected={isSelected}
+                                className={`ic-model-option ${
+                                  isSelected ? "is-selected" : ""
+                                } ${
+                                  model.installed
+                                    ? "is-installed"
+                                    : "is-missing"
+                                }`}
+                                title={
+                                  model.installed
+                                    ? `Use ${model.name}`
+                                    : "Model download support coming soon."
+                                }
+                                onClick={() => {
+                                  if (!model.selectable) {
+                                    setModelNotice(
+                                      "Model download support coming soon.",
+                                    );
+                                    return;
+                                  }
+
+                                  setSelectedModelName(model.name);
+                                  window.localStorage.setItem(
+                                    MODEL_PREFERENCE_KEY,
+                                    model.name,
+                                  );
+                                  setModelNotice(null);
+                                  setModelSearch("");
+                                  setIsModelMenuOpen(false);
+                                }}
+                              >
+                                <span className="ic-model-option-main">
+                                  <strong>{model.name}</strong>
+                                  {model.parameter_size ||
+                                  model.quantization_level ? (
+                                    <small>
+                                      {[
+                                        model.parameter_size,
+                                        model.quantization_level,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                    </small>
+                                  ) : null}
+                                </span>
+
+                                {model.installed ? (
+                                  <span
+                                    className="ic-model-installed-dot"
+                                    aria-label="Installed"
+                                  />
+                                ) : (
+                                  <span
+                                    className="ic-model-download-icon"
+                                    aria-label="Download support coming soon"
+                                  >
+                                    <DownloadIcon />
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+
+                          {!isLoadingModels &&
+                          filteredModelOptions.length === 0 ? (
+                            <p className="ic-model-empty">
+                              No matching models.
+                            </p>
+                          ) : null}
+                        </div>
+
+                        {modelNotice || modelError ? (
+                          <p
+                            className={`ic-model-menu-status ${
+                              modelError ? "is-error" : ""
+                            }`}
+                            role="status"
+                          >
+                            {modelNotice ?? modelError}
+                          </p>
+                        ) : null}
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
                 </div>
 
                 <button
@@ -1942,11 +2262,14 @@ export function ChatShell() {
                       disabled={
                         !activeChat ||
                         isMessageViewLoading ||
-                        isSendingMessage
+                        isSendingMessage ||
+                        !selectedModelName
                       }
                       placeholder={
                         !activeChat
                           ? "Create a conversation first"
+                          : !selectedModelName
+                            ? "Select an installed model first"
                           : "Message IntraCore AI..."
                       }
                     />
@@ -1974,6 +2297,7 @@ export function ChatShell() {
                           !isSendingMessage &&
                           (!activeChat ||
                             isMessageViewLoading ||
+                            !selectedModelName ||
                             draftMessage.trim()
                               .length === 0)
                         }

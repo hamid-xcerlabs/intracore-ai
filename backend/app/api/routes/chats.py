@@ -29,6 +29,11 @@ from app.repositories.message_repository import (
     MessageSequenceConflictError,
     message_repository,
 )
+from app.providers.ollama_provider import (
+    OllamaModelUnavailableError,
+    OllamaUnavailableError,
+    ollama_provider,
+)
 
 # Pydantic schemas validate incoming and outgoing HTTP data.
 from app.schemas.chats import ChatCreate, ChatResponse, ChatUpdate
@@ -66,6 +71,38 @@ router = APIRouter(
     prefix="/chats",
     tags=["Chats"],
 )
+
+
+async def resolve_message_model(payload: MessageCreate) -> str:
+    """Validate model selection before any durable user write occurs."""
+
+    requested_model = payload.model_name
+
+    if requested_model is not None:
+        requested_model = requested_model.strip()
+        if not requested_model:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Model name cannot be empty.",
+            )
+
+    try:
+        return await ollama_provider.resolve_chat_model(requested_model)
+    except OllamaUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not connect to the local Ollama runtime.",
+        ) from exc
+    except OllamaModelUnavailableError as exc:
+        detail = (
+            "Selected model is not installed or chat-capable."
+            if requested_model is not None
+            else "No installed chat-capable model is available."
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=detail,
+        ) from exc
 
 
 # POST /chats creates one durable conversation.
@@ -183,12 +220,15 @@ async def create_chat_message(
             detail="Message content cannot be empty.",
         )
 
+    model_name = await resolve_message_model(request)
+
     try:
         user_message, assistant_message = (
             await conversation_service.create_durable_turn(
                 session=session,
                 chat=chat,
                 content=clean_content,
+                model_name=model_name,
             )
         )
     except MessageSequenceConflictError as exc:
@@ -242,6 +282,8 @@ async def stream_chat_message(
             detail="Message content cannot be empty.",
         )
 
+    model_name = await resolve_message_model(payload)
+
     # Commit the user before response headers begin so validation and sequence
     # conflicts can retain their normal HTTP status codes.
     try:
@@ -276,6 +318,7 @@ async def stream_chat_message(
                     graph_messages=prepared.graph_messages,
                     title_source=prepared.title_source,
                     should_generate_title=prepared.should_generate_title,
+                    model_name=model_name,
                     should_stop=request.is_disconnected,
                 )
             ):
