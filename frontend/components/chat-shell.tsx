@@ -1,17 +1,22 @@
 "use client";
 
-
-// React hooks manage component state, lifecycle, and memoised actions.
+import Image from "next/image";
 import {
+  Children,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
+import {
+  AnimatePresence,
+  motion,
+  MotionConfig,
+} from "motion/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-
-// This type mirrors the backend ChatResponse Pydantic schema.
-// Keeping the contract explicit prevents the UI from guessing response fields.
 type Chat = {
   id: number;
   title: string;
@@ -19,8 +24,6 @@ type Chat = {
   updated_at: string;
 };
 
-
-// This type mirrors the backend durable MessageResponse schema.
 type Message = {
   id: number;
   chat_id: number;
@@ -31,106 +34,686 @@ type Message = {
   created_at: string;
 };
 
+type StreamLifecycle =
+  | "starting"
+  | "thinking"
+  | "streaming"
+  | "stopped"
+  | "interrupted";
 
-// This type mirrors the backend DurableGenerationResponse schema.
-type DurableGenerationResponse = {
-  user_message: Message;
-  assistant_message: Message;
+type StreamingAssistant = {
+  requestId: number;
+  chatId: number;
+  optimisticMessageId: number;
+  content: string;
+  status: StreamLifecycle;
+  startedAt: number;
 };
 
+type StreamingEvent =
+  | { type: "response_started"; chat_id: number }
+  | { type: "user_message"; message: Message }
+  | { type: "assistant_delta"; delta: string }
+  | { type: "assistant_message"; message: Message }
+  | { type: "chat_title_updated"; chat: Chat }
+  | { type: "response_stopped"; message: string }
+  | {
+      type: "error";
+      code: string;
+      message: string;
+      user_message_saved: boolean;
+    };
 
-// The browser-accessible FastAPI address.
-// This remains centralised instead of being repeated across requests.
-// It will later move into a frontend environment variable.
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+const PRE_RESPONSE_STATUS_LABELS = [
+  "Reading your request",
+  "Reviewing conversation",
+  "Working through context",
+  "Building a response",
+] as const;
 
-// ChatShell renders the interactive IntraCore workspace.
+const PRE_RESPONSE_STATUS_DURATION_MS = 10000;
+
+const ANIMATED_EMOJI_PATTERN =
+  /((?:\p{Regional_Indicator}{2})|(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?)*))/gu;
+
+const EMOJI_ONLY_PATTERN =
+  /^(?:\p{Regional_Indicator}{2})$|^(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\p{Emoji_Modifier})?)*)$/u;
+
+function animatedEmojiText(content: string) {
+  return content
+    .split(ANIMATED_EMOJI_PATTERN)
+    .filter(Boolean)
+    .map((part, index) =>
+      EMOJI_ONLY_PATTERN.test(part) ? (
+        <span
+          key={`emoji-${index}-${part}`}
+          className="ic-animated-emoji"
+          aria-label={part}
+          role="img"
+        >
+          {part}
+        </span>
+      ) : (
+        part
+      ),
+    );
+}
+
+function animatedEmojiChildren(children: ReactNode) {
+  return Children.map(children, (child) =>
+    typeof child === "string"
+      ? animatedEmojiText(child)
+      : child,
+  );
+}
+
+function AnimatedMarkdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        p: ({ children }) => (
+          <p>{animatedEmojiChildren(children)}</p>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+function markdownForStreaming(content: string): string {
+  const fenceCount = (content.match(/(^|\n)```/g) ?? []).length;
+
+  return fenceCount % 2 === 0
+    ? content
+    : `${content}\n\n\`\`\``;
+}
+
+function parseApiDate(value: string): Date {
+  const hasExplicitTimezone =
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+
+  // SQLite CURRENT_TIMESTAMP is UTC, but its serialized value can omit the
+  // timezone suffix. Mark such values as UTC before converting them locally.
+  return new Date(
+    hasExplicitTimezone ? value : `${value}Z`,
+  );
+}
+
+function formatMessageTime(value: string): string {
+  const date = parseApiDate(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
+function formatChatDate(value: string): string {
+  const date = parseApiDate(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const today = new Date();
+
+  if (date.toDateString() === today.toDateString()) {
+    return formatMessageTime(value);
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function updateChatActivity(
+  chats: Chat[],
+  chatId: number,
+  updatedAt: string,
+): Chat[] {
+  return chats
+    .map((chat) =>
+      chat.id === chatId
+        ? { ...chat, updated_at: updatedAt }
+        : chat,
+    )
+    .sort((first, second) => {
+      const timeDifference =
+        parseApiDate(second.updated_at).getTime() -
+        parseApiDate(first.updated_at).getTime();
+
+      return timeDifference || second.id - first.id;
+    });
+}
+
+function sortMessages(messages: Message[]): Message[] {
+  return [...messages].sort(
+    (first, second) =>
+      first.sequence_number - second.sequence_number,
+  );
+}
+
+function uniqueMessages(messages: Message[]): Message[] {
+  return sortMessages(
+    Array.from(
+      new Map(
+        messages.map((message) => [message.id, message]),
+      ).values(),
+    ),
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 19V5m0 0-5.25 5.25M12 5l5.25 5.25"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <span
+      className="ic-stop-square"
+      aria-hidden="true"
+    />
+  );
+}
+function DeleteIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M8.5 9.5v7m3.5-7v7m3.5-7v7M5.5 6.5h13m-8.5-3h4l1 3h-6l1-3Zm-3 3 .7 13h9.6l.7-13"
+        stroke="currentColor"
+        strokeWidth="1.45"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M5.5 18.5 4 21l4-1.5c1.2.65 2.55 1 4 1 4.7 0 8.5-3.47 8.5-7.75S16.7 5 12 5s-8.5 3.47-8.5 7.75c0 2.25.77 4.25 2 5.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StreamingAssistantView({
+  stream,
+}: {
+  stream: StreamingAssistant;
+}) {
+  const isActive =
+    stream.status === "starting" ||
+    stream.status === "thinking" ||
+    stream.status === "streaming";
+
+  const hasAnswer = stream.content.length > 0;
+
+  const [statusClock, setStatusClock] = useState(() =>
+    Date.now(),
+  );
+
+  useEffect(() => {
+    if (hasAnswer || !isActive) {
+      return;
+    }
+
+    const statusInterval = window.setInterval(() => {
+      setStatusClock(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(statusInterval);
+    };
+  }, [hasAnswer, isActive]);
+
+  const preResponseStatus =
+    PRE_RESPONSE_STATUS_LABELS[
+      Math.floor(
+        Math.max(0, statusClock - stream.startedAt) /
+          PRE_RESPONSE_STATUS_DURATION_MS,
+      ) % PRE_RESPONSE_STATUS_LABELS.length
+    ];
+
+  const statusLabel =
+    stream.status === "stopped"
+      ? "Stopped"
+      : stream.status === "interrupted"
+        ? "Response interrupted"
+        : hasAnswer
+          ? "Responding"
+          : "Thinking";
+
+  return (
+    <motion.article
+      layout
+      initial={{
+        opacity: 0,
+        y: 14,
+        scale: 0.992,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+      }}
+      exit={{
+        opacity: 0,
+        y: -5,
+        scale: 0.996,
+      }}
+      transition={{
+        duration: 0.34,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      className="ic-message ic-message-assistant ic-stream-message"
+    >
+      <div className="ic-assistant-avatar ic-avatar-live">
+        <Image
+          className="ic-assistant-logo"
+          src="/intracore-mark.png"
+          alt=""
+          width={32}
+          height={32}
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="ic-assistant-column">
+        <div className="ic-message-identity">
+          <span>IntraCore</span>
+          <span className="ic-message-time">
+            {stream.status === "stopped"
+              ? "Stopped"
+              : stream.status === "interrupted"
+                ? "Interrupted"
+                : hasAnswer
+                  ? "Streaming"
+                  : preResponseStatus}
+          </span>
+        </div>
+
+        <motion.section
+          layout
+          transition={{
+            layout: {
+              duration: 0.28,
+              ease: [0.22, 1, 0.36, 1],
+            },
+          }}
+          className={`ic-stream-card ${
+            hasAnswer ? "has-answer" : "is-thinking"
+          }`}
+        >
+          {isActive ? (
+            <div
+              className="ic-stream-light-beam"
+              aria-hidden="true"
+            />
+          ) : null}
+
+          <header
+            className={`ic-stream-header ${
+              hasAnswer ? "is-compact" : ""
+            }`}
+          >
+            <div className="ic-stream-title">
+              <AnimatePresence
+                mode="wait"
+                initial={false}
+              >
+                <motion.span
+                  key={statusLabel}
+                  initial={{
+                    opacity: 0,
+                    y: 4,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -4,
+                  }}
+                  transition={{
+                    duration: 0.18,
+                  }}
+                  className="ic-stream-status"
+                >
+                  {statusLabel}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            <div className="ic-stream-meta">
+              {isActive ? (
+                <span
+                  className="ic-activity-dots"
+                  aria-hidden="true"
+                >
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              ) : null}
+            </div>
+          </header>
+
+          <AnimatePresence
+            mode="wait"
+            initial={false}
+          >
+            {!hasAnswer && isActive ? (
+              <motion.div
+                key="thinking"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{
+                  opacity: 0,
+                  height: 0,
+                  filter: "blur(4px)",
+                }}
+                transition={{
+                  duration: 0.24,
+                }}
+                className="ic-thinking-stage"
+              >
+                Preparing a response
+              </motion.div>
+            ) : hasAnswer ? (
+              <motion.div
+                key="answer"
+                layout
+                initial={{
+                  opacity: 0,
+                  y: 7,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  duration: 0.28,
+                }}
+                className="ic-stream-answer"
+              >
+                <div className="assistant-markdown">
+                  <AnimatedMarkdown
+                    content={markdownForStreaming(
+                      stream.content,
+                    )}
+                  />
+                </div>
+
+                <AnimatePresence initial={false}>
+                  {stream.status === "streaming" ? (
+                    <motion.span
+                      key="caret"
+                      aria-hidden="true"
+                      className="ic-stream-caret"
+                      initial={{
+                        opacity: 0,
+                      }}
+                      animate={{
+                        opacity: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                        scaleY: 0.55,
+                      }}
+                    />
+                  ) : null}
+                </AnimatePresence>
+
+                {stream.status === "stopped" ? (
+                  <p className="ic-stream-note ic-stream-note-stopped">
+                    Stopped — this partial response is
+                    not saved.
+                  </p>
+                ) : null}
+
+                {stream.status === "interrupted" ? (
+                  <p className="ic-stream-note ic-stream-note-error">
+                    Response interrupted — this partial
+                    response is not saved.
+                  </p>
+                ) : null}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="empty-status"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="ic-stream-empty-status"
+              >
+                {stream.status === "stopped"
+                  ? "Generation stopped before a visible response arrived."
+                  : "The response was interrupted before text arrived."}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.section>
+
+        <span
+          className="ic-sr-only"
+          aria-live="polite"
+        >
+          {stream.status === "starting" ||
+          stream.status === "thinking"
+            ? "Thinking"
+            : stream.status === "streaming"
+              ? "Response streaming"
+              : stream.status === "stopped"
+                ? "Stopped"
+                : "Response interrupted"}
+        </span>
+      </div>
+    </motion.article>
+  );
+}
+
 export function ChatShell() {
-  // Store durable chats returned by GET /chats.
   const [chats, setChats] = useState<Chat[]>([]);
+  const [activeChatId, setActiveChatId] =
+    useState<number | null>(null);
+  const [isLoadingChats, setIsLoadingChats] =
+    useState(true);
+  const [isCreatingChat, setIsCreatingChat] =
+    useState(false);
+  const [error, setError] =
+    useState<string | null>(null);
 
-  // Track the conversation currently selected in the sidebar.
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
-
-  // Track initial sidebar loading state.
-  const [isLoadingChats, setIsLoadingChats] = useState(true);
-
-  // Prevent duplicate chat creation while POST /chats is running.
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-
-  // Store a readable frontend error rather than failing silently.
-  const [error, setError] = useState<string | null>(null);
-
-  // Store the selected conversation's durable ordered messages.
-  const [messages, setMessages] = useState<Message[]>([]);
-
-  // Identify which chat owns the currently loaded message result.
-  const [messagesChatId, setMessagesChatId] = useState<number | null>(null);
-
-  // Track message-history loading independently from sidebar loading.
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-
-  // Associate message errors with a chat so stale errors are not displayed.
+  const [messages, setMessages] =
+    useState<Message[]>([]);
+  const [messagesChatId, setMessagesChatId] =
+    useState<number | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] =
+    useState(false);
   const [messageError, setMessageError] = useState<{
     chatId: number;
     message: string;
   } | null>(null);
 
-  // Store the controlled composer text for the active conversation.
-  const [draftMessage, setDraftMessage] = useState("");
-
-  // Prevent duplicate submissions while one save request is running.
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-
-  // Identify which conversation owns the pending generation placeholder.
-  const [sendingChatId, setSendingChatId] = useState<number | null>(null);
-
-  // Associate submission failures with the chat that produced them.
+  const [draftMessage, setDraftMessage] =
+    useState("");
+  const [isSendingMessage, setIsSendingMessage] =
+    useState(false);
+  const [
+    streamingAssistant,
+    setStreamingAssistant,
+  ] = useState<StreamingAssistant | null>(null);
+  const [showJumpToLatest, setShowJumpToLatest] =
+    useState(false);
   const [sendError, setSendError] = useState<{
     chatId: number;
     message: string;
   } | null>(null);
 
-  // Keep slow send responses aware of the latest selected conversation.
   const activeChatIdRef = useRef(activeChatId);
-
-  // Generate local negative IDs that cannot collide with SQLite message IDs.
   const nextOptimisticMessageIdRef = useRef(-1);
+  const nextStreamRequestIdRef = useRef(1);
+  const activeStreamRequestIdRef =
+    useRef<number | null>(null);
+  const streamAbortControllerRef =
+    useRef<AbortController | null>(null);
+  const pendingAssistantDeltaRef = useRef("");
+  const deltaFlushTimerRef =
+    useRef<number | null>(null);
+  const conversationScrollRef =
+    useRef<HTMLDivElement | null>(null);
+  const isNearBottomRef = useRef(true);
 
+  function clearDeltaFlushTimer() {
+    if (deltaFlushTimerRef.current !== null) {
+      window.clearTimeout(
+        deltaFlushTimerRef.current,
+      );
+      deltaFlushTimerRef.current = null;
+    }
+  }
 
-  // Load all persistent chats from the FastAPI backend.
+  function flushAssistantDeltas(
+    requestId: number,
+  ) {
+    clearDeltaFlushTimer();
+
+    const pendingDelta =
+      pendingAssistantDeltaRef.current;
+
+    pendingAssistantDeltaRef.current = "";
+
+    if (!pendingDelta) {
+      return;
+    }
+
+    setStreamingAssistant((current) => {
+      if (current?.requestId !== requestId) {
+        return current;
+      }
+
+      return {
+        ...current,
+        content: current.content + pendingDelta,
+        status: "streaming",
+      };
+    });
+  }
+
+  function scheduleAssistantDeltaFlush(
+    requestId: number,
+  ) {
+    if (deltaFlushTimerRef.current !== null) {
+      return;
+    }
+
+    deltaFlushTimerRef.current =
+      window.setTimeout(() => {
+        flushAssistantDeltas(requestId);
+      }, 40);
+  }
+
+  async function reloadDurableHistory(
+    chatId: number,
+  ) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/chats/${chatId}/messages`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        return;
+      }
+
+      const durableMessages =
+        (await response.json()) as Message[];
+
+      if (
+        activeChatIdRef.current === chatId
+      ) {
+        setMessages(
+          sortMessages(durableMessages),
+        );
+        setMessagesChatId(chatId);
+      }
+    } catch {
+      // Keep the controlled stream state.
+    }
+  }
+
   const loadChats = useCallback(async () => {
-    // Begin state updates after the effect's synchronous execution finishes.
     await Promise.resolve();
 
-    // Show loading state and clear stale failures before retrying.
     setIsLoadingChats(true);
     setError(null);
 
     try {
-      // Request the durable conversation list.
-      const response = await fetch(`${API_BASE_URL}/chats`, {
-        method: "GET",
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/chats`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
 
-      // Convert non-success HTTP responses into controlled frontend errors.
       if (!response.ok) {
-        throw new Error(`Could not load chats (${response.status}).`);
+        throw new Error(
+          `Could not load chats (${response.status}).`,
+        );
       }
 
-      // Parse the JSON response using the local Chat contract.
-      const loadedChats = (await response.json()) as Chat[];
+      const loadedChats =
+        (await response.json()) as Chat[];
 
-      // Replace temporary UI data with authoritative backend data.
       setChats(loadedChats);
 
-      // Select the newest available chat when nothing is selected.
       setActiveChatId((currentId) => {
         if (
           currentId !== null &&
-          loadedChats.some((chat) => chat.id === currentId)
+          loadedChats.some(
+            (chat) => chat.id === currentId,
+          )
         ) {
           return currentId;
         }
@@ -138,58 +721,68 @@ export function ChatShell() {
         return loadedChats[0]?.id ?? null;
       });
     } catch (requestError) {
-      // Convert unknown JavaScript exceptions into readable UI text.
-      const message =
+      setError(
         requestError instanceof Error
           ? requestError.message
-          : "Could not connect to the IntraCore backend.";
-
-      setError(message);
+          : "Could not connect to the IntraCore backend.",
+      );
     } finally {
-      // End loading regardless of success or failure.
       setIsLoadingChats(false);
     }
   }, []);
 
-
-  // Load persistent conversations when the interface first opens.
   useEffect(() => {
-    // Defer the async state transition until after the effect has subscribed.
     const timeoutId = window.setTimeout(() => {
       void loadChats();
     }, 0);
 
-    return () => window.clearTimeout(timeoutId);
+    return () =>
+      window.clearTimeout(timeoutId);
   }, [loadChats]);
 
-
-  // Keep asynchronous send completion aligned with the latest selection.
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
+    isNearBottomRef.current = true;
+
+    const timeoutId = window.setTimeout(() => {
+      setShowJumpToLatest(false);
+    }, 0);
+
+    return () =>
+      window.clearTimeout(timeoutId);
   }, [activeChatId]);
 
-
-  // Load durable history whenever the existing active-chat selection changes.
   useEffect(() => {
-    // No message request is needed when no conversation is selected.
+    return () => {
+      streamAbortControllerRef.current?.abort();
+
+      if (
+        deltaFlushTimerRef.current !== null
+      ) {
+        window.clearTimeout(
+          deltaFlushTimerRef.current,
+        );
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeChatId === null) {
+      setMessages([]);
+      setMessagesChatId(null);
       return;
     }
 
-    // Cancel obsolete requests when users switch conversations quickly.
     const controller = new AbortController();
     const requestedChatId = activeChatId;
 
     async function loadMessages() {
-      // Begin state updates after the effect's synchronous execution finishes.
       await Promise.resolve();
 
-      // Stop before changing state if this selection is already obsolete.
       if (controller.signal.aborted) {
         return;
       }
 
-      // Invalidate the previous chat's stored result before fetching this one.
       setMessages([]);
       setMessagesChatId(null);
       setMessageError(null);
@@ -198,7 +791,6 @@ export function ChatShell() {
       setIsLoadingMessages(true);
 
       try {
-        // Request the selected conversation's durable ordered history.
         const response = await fetch(
           `${API_BASE_URL}/chats/${requestedChatId}/messages`,
           {
@@ -208,46 +800,40 @@ export function ChatShell() {
           },
         );
 
-        // Convert backend failures into a controlled message-area error.
         if (!response.ok) {
           throw new Error(
             `Could not load messages (${response.status}).`,
           );
         }
 
-        // Parse the response using the durable frontend message contract.
-        const loadedMessages = (await response.json()) as Message[];
+        const loadedMessages =
+          (await response.json()) as Message[];
 
-        // Ignore a response if its request was cancelled during chat switching.
         if (controller.signal.aborted) {
           return;
         }
 
-        setMessages(loadedMessages);
+        setMessages(
+          sortMessages(loadedMessages),
+        );
         setMessagesChatId(requestedChatId);
       } catch (requestError) {
-        // Aborted requests are expected when the selected chat changes.
         if (
           controller.signal.aborted ||
-          (
-            requestError instanceof DOMException &&
-            requestError.name === "AbortError"
-          )
+          (requestError instanceof DOMException &&
+            requestError.name === "AbortError")
         ) {
           return;
         }
 
-        const message =
-          requestError instanceof Error
-            ? requestError.message
-            : "Could not load this conversation.";
-
         setMessageError({
           chatId: requestedChatId,
-          message,
+          message:
+            requestError instanceof Error
+              ? requestError.message
+              : "Could not load this conversation.",
         });
       } finally {
-        // An obsolete request must not change the current loading state.
         if (!controller.signal.aborted) {
           setIsLoadingMessages(false);
         }
@@ -256,14 +842,46 @@ export function ChatShell() {
 
     void loadMessages();
 
-    // Abort the current request before loading another selected chat.
     return () => controller.abort();
   }, [activeChatId]);
 
+  useEffect(() => {
+    const container =
+      conversationScrollRef.current;
 
-  // Save one durable user/assistant turn through POST /chats/{id}/messages.
+    if (!container) {
+      return;
+    }
+
+    if (!isNearBottomRef.current) {
+      const frameId =
+        window.requestAnimationFrame(() => {
+          setShowJumpToLatest(true);
+        });
+
+      return () =>
+        window.cancelAnimationFrame(frameId);
+    }
+
+    const frameId =
+      window.requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "auto",
+        });
+
+        setShowJumpToLatest(false);
+      });
+
+    return () =>
+      window.cancelAnimationFrame(frameId);
+  }, [
+    activeChatId,
+    messages,
+    streamingAssistant,
+  ]);
+
   async function sendMessage() {
-    // Submission requires a loaded active chat and no pending save.
     if (
       activeChatId === null ||
       isMessageViewLoading ||
@@ -283,14 +901,18 @@ export function ChatShell() {
       return;
     }
 
-    // Build a temporary user message for immediate optimistic rendering.
-    const optimisticMessageId = nextOptimisticMessageIdRef.current;
+    const optimisticMessageId =
+      nextOptimisticMessageIdRef.current;
+
     nextOptimisticMessageIdRef.current -= 1;
 
     const optimisticSequenceNumber =
       messages.reduce(
-        (highestSequence, message) =>
-          Math.max(highestSequence, message.sequence_number),
+        (highest, message) =>
+          Math.max(
+            highest,
+            message.sequence_number,
+          ),
         0,
       ) + 1;
 
@@ -299,34 +921,52 @@ export function ChatShell() {
       chat_id: targetChatId,
       role: "user",
       content: cleanContent,
-      sequence_number: optimisticSequenceNumber,
+      sequence_number:
+        optimisticSequenceNumber,
       model_name: null,
       created_at: new Date().toISOString(),
     };
 
     setIsSendingMessage(true);
-    setSendingChatId(targetChatId);
     setSendError(null);
-    setMessages((currentMessages) =>
-      [
-        ...currentMessages,
+    setMessages((current) =>
+      sortMessages([
+        ...current,
         optimisticMessage,
-      ].sort(
-        (firstMessage, secondMessage) =>
-          firstMessage.sequence_number -
-          secondMessage.sequence_number,
-      ),
+      ]),
     );
     setMessagesChatId(targetChatId);
     setDraftMessage("");
 
-    // Retain the HTTP status so 503 can trigger authoritative history reload.
-    let responseStatus: number | null = null;
+    const requestId =
+      nextStreamRequestIdRef.current;
+
+    nextStreamRequestIdRef.current += 1;
+    activeStreamRequestIdRef.current =
+      requestId;
+    pendingAssistantDeltaRef.current = "";
+    clearDeltaFlushTimer();
+
+    const abortController =
+      new AbortController();
+
+    streamAbortControllerRef.current =
+      abortController;
+
+    setStreamingAssistant({
+      requestId,
+      chatId: targetChatId,
+      optimisticMessageId,
+      content: "",
+      status: "starting",
+      startedAt: Date.now(),
+    });
+
+    let receivedTerminalEvent = false;
 
     try {
-      // The backend controls role, sequence number, and model attribution.
       const response = await fetch(
-        `${API_BASE_URL}/chats/${targetChatId}/messages`,
+        `${API_BASE_URL}/chats/${targetChatId}/messages/stream`,
         {
           method: "POST",
           headers: {
@@ -335,125 +975,350 @@ export function ChatShell() {
           body: JSON.stringify({
             content: cleanContent,
           }),
+          signal: abortController.signal,
         },
       );
 
       if (!response.ok) {
-        responseStatus = response.status;
-
-        // Prefer the backend's controlled public error detail when available.
-        let errorMessage = `Could not generate response (${response.status}).`;
+        let errorMessage =
+          `Could not generate response (${response.status}).`;
 
         try {
-          const errorBody = (await response.json()) as {
-            detail?: unknown;
-          };
+          const body =
+            (await response.json()) as {
+              detail?: unknown;
+            };
 
-          if (typeof errorBody.detail === "string") {
-            errorMessage = errorBody.detail;
+          if (
+            typeof body.detail === "string"
+          ) {
+            errorMessage = body.detail;
           }
         } catch {
-          // Keep the status-based fallback for non-JSON failures.
+          // Keep status-based fallback.
         }
 
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
         throw new Error(
-          errorMessage,
+          "Streaming response body was unavailable.",
         );
       }
 
-      // Parse both authoritative durable records returned by FastAPI.
-      const generatedTurn =
-        (await response.json()) as DurableGenerationResponse;
+      const reader =
+        response.body.getReader();
+      const decoder = new TextDecoder();
+      let eventBuffer = "";
 
-      // Ignore an old chat's response after the user changes selection.
-      if (activeChatIdRef.current !== targetChatId) {
+      async function handleEvent(
+        event: StreamingEvent,
+      ) {
+        if (
+          activeStreamRequestIdRef.current !==
+          requestId
+        ) {
+          return;
+        }
+
+        if (
+          event.type === "response_started"
+        ) {
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId
+              ? {
+                  ...current,
+                  status: "thinking",
+                }
+              : current,
+          );
+
+          return;
+        }
+
+        if (
+          event.type === "user_message"
+        ) {
+          setChats((current) =>
+            updateChatActivity(
+              current,
+              targetChatId,
+              event.message.created_at,
+            ),
+          );
+
+          if (
+            activeChatIdRef.current ===
+            targetChatId
+          ) {
+            setMessages((current) =>
+              uniqueMessages([
+                ...current.filter(
+                  (message) =>
+                    message.id !==
+                    optimisticMessageId,
+                ),
+                event.message,
+              ]),
+            );
+
+            setMessagesChatId(targetChatId);
+          }
+
+          return;
+        }
+
+        if (
+          event.type === "assistant_delta"
+        ) {
+          pendingAssistantDeltaRef.current +=
+            event.delta;
+
+          scheduleAssistantDeltaFlush(
+            requestId,
+          );
+
+          return;
+        }
+
+        if (
+          event.type === "assistant_message"
+        ) {
+          receivedTerminalEvent = true;
+          pendingAssistantDeltaRef.current = "";
+          clearDeltaFlushTimer();
+
+          setChats((current) =>
+            updateChatActivity(
+              current,
+              targetChatId,
+              event.message.created_at,
+            ),
+          );
+
+          if (
+            activeChatIdRef.current ===
+            targetChatId
+          ) {
+            setMessages((current) =>
+              uniqueMessages([
+                ...current.filter(
+                  (message) =>
+                    message.id !==
+                    optimisticMessageId,
+                ),
+                event.message,
+              ]),
+            );
+
+            setMessagesChatId(targetChatId);
+          }
+
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId
+              ? null
+              : current,
+          );
+
+          setSendError(null);
+          return;
+        }
+
+        if (event.type === "chat_title_updated") {
+          setChats((current) => [
+            event.chat,
+            ...current.filter(
+              (chat) => chat.id !== event.chat.id,
+            ),
+          ]);
+
+          return;
+        }
+
+        if (
+          event.type === "response_stopped"
+        ) {
+          receivedTerminalEvent = true;
+          flushAssistantDeltas(requestId);
+
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId
+              ? {
+                  ...current,
+                  status: "stopped",
+                }
+              : current,
+          );
+
+          await reloadDurableHistory(
+            targetChatId,
+          );
+
+          return;
+        }
+
+        receivedTerminalEvent = true;
+        flushAssistantDeltas(requestId);
+
+        setStreamingAssistant((current) =>
+          current?.requestId === requestId
+            ? {
+                ...current,
+                status: "interrupted",
+              }
+            : current,
+        );
+
+        setSendError({
+          chatId: targetChatId,
+          message: event.message,
+        });
+
+        await reloadDurableHistory(
+          targetChatId,
+        );
+      }
+
+      async function consumeLine(
+        line: string,
+      ) {
+        const cleanLine = line.trim();
+
+        if (!cleanLine) {
+          return;
+        }
+
+        const event =
+          JSON.parse(
+            cleanLine,
+          ) as StreamingEvent;
+
+        await handleEvent(event);
+      }
+
+      while (true) {
+        const { done, value } =
+          await reader.read();
+
+        if (done) {
+          eventBuffer += decoder.decode();
+          break;
+        }
+
+        eventBuffer += decoder.decode(value, {
+          stream: true,
+        });
+
+        let newlineIndex =
+          eventBuffer.indexOf("\n");
+
+        while (newlineIndex >= 0) {
+          const line = eventBuffer.slice(
+            0,
+            newlineIndex,
+          );
+
+          eventBuffer = eventBuffer.slice(
+            newlineIndex + 1,
+          );
+
+          await consumeLine(line);
+
+          newlineIndex =
+            eventBuffer.indexOf("\n");
+        }
+      }
+
+      await consumeLine(eventBuffer);
+
+      if (!receivedTerminalEvent) {
+        throw new Error(
+          "Response stream ended before completion.",
+        );
+      }
+    } catch (requestError) {
+      if (
+        activeStreamRequestIdRef.current !==
+        requestId
+      ) {
         return;
       }
 
-      // Replace the optimistic record and deduplicate authoritative messages.
-      setMessages((currentMessages) => {
-        const authoritativeMessages = [
-          ...currentMessages.filter(
-            (message) => message.id !== optimisticMessageId,
-          ),
-          generatedTurn.user_message,
-          generatedTurn.assistant_message,
-        ];
+      const wasStopped =
+        requestError instanceof DOMException &&
+        requestError.name === "AbortError";
 
-        return Array.from(
-          new Map(
-            authoritativeMessages.map((message) => [
-              message.id,
-              message,
-            ]),
-          ).values(),
-        ).sort(
-          (firstMessage, secondMessage) =>
-            firstMessage.sequence_number -
-            secondMessage.sequence_number,
-        );
-      });
-      setMessagesChatId(targetChatId);
-      setSendError(null);
-    } catch (requestError) {
-      // Never retain a failed request's temporary local message.
-      setMessages((currentMessages) =>
-        currentMessages.filter(
-          (message) => message.id !== optimisticMessageId,
+      flushAssistantDeltas(requestId);
+
+      setMessages((current) =>
+        current.filter(
+          (message) =>
+            message.id !==
+            optimisticMessageId,
         ),
       );
 
-      const message =
-        requestError instanceof Error
-          ? requestError.message
-          : "Could not save this message.";
-
-      setSendError({
-        chatId: targetChatId,
-        message,
-      });
-
-      // A 503 may still have a committed durable user message.
-      if (responseStatus === 503) {
-        try {
-          const historyResponse = await fetch(
-            `${API_BASE_URL}/chats/${targetChatId}/messages`,
-            {
-              method: "GET",
-              cache: "no-store",
-            },
-          );
-
-          if (historyResponse.ok) {
-            const durableMessages =
-              (await historyResponse.json()) as Message[];
-
-            // Do not replace another chat's visible message history.
-            if (activeChatIdRef.current === targetChatId) {
-              setMessages(
-                [...durableMessages].sort(
-                  (firstMessage, secondMessage) =>
-                    firstMessage.sequence_number -
-                    secondMessage.sequence_number,
-                ),
-              );
-              setMessagesChatId(targetChatId);
+      setStreamingAssistant((current) =>
+        current?.requestId === requestId
+          ? {
+              ...current,
+              status: wasStopped
+                ? "stopped"
+                : "interrupted",
             }
-          }
-        } catch {
-          // Preserve the controlled generation error if history reload fails.
-        }
+          : current,
+      );
+
+      if (!wasStopped) {
+        setSendError({
+          chatId: targetChatId,
+          message:
+            requestError instanceof Error
+              ? requestError.message
+              : "Response interrupted.",
+        });
       }
+
+      await reloadDurableHistory(
+        targetChatId,
+      );
     } finally {
-      setIsSendingMessage(false);
-      setSendingChatId(null);
+      if (
+        activeStreamRequestIdRef.current ===
+        requestId
+      ) {
+        activeStreamRequestIdRef.current =
+          null;
+        streamAbortControllerRef.current =
+          null;
+        setIsSendingMessage(false);
+      }
     }
   }
 
+  function stopGenerating() {
+    streamAbortControllerRef.current?.abort();
+  }
 
-  // Create one durable conversation through POST /chats.
+  function jumpToLatest() {
+    const container =
+      conversationScrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    isNearBottomRef.current = true;
+    setShowJumpToLatest(false);
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
+  }
+
   async function createChat() {
-    // Prevent repeated clicks from creating duplicate conversations.
     if (isCreatingChat) {
       return;
     }
@@ -462,52 +1327,52 @@ export function ChatShell() {
     setError(null);
 
     try {
-      // Send a validated chat-creation request to FastAPI.
-      const response = await fetch(`${API_BASE_URL}/chats`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${API_BASE_URL}/chats`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: "New chat",
+          }),
         },
-        body: JSON.stringify({
-          title: "New chat",
-        }),
-      });
+      );
 
-      // Surface backend validation or availability failures.
       if (!response.ok) {
-        throw new Error(`Could not create chat (${response.status}).`);
+        throw new Error(
+          `Could not create chat (${response.status}).`,
+        );
       }
 
-      // Parse the newly persisted chat returned by the backend.
-      const createdChat = (await response.json()) as Chat;
+      const createdChat =
+        (await response.json()) as Chat;
 
-      // Put the newest conversation at the top of the sidebar immediately.
-      setChats((currentChats) => [
+      setChats((current) => [
         createdChat,
-        ...currentChats,
+        ...current,
       ]);
 
-      // Open the newly created conversation.
+      activeChatIdRef.current =
+        createdChat.id;
+
       setActiveChatId(createdChat.id);
     } catch (requestError) {
-      const message =
+      setError(
         requestError instanceof Error
           ? requestError.message
-          : "Could not create a new chat.";
-
-      setError(message);
+          : "Could not create a new chat.",
+      );
     } finally {
       setIsCreatingChat(false);
     }
   }
 
-
-  // Delete one durable conversation through DELETE /chats/{id}.
   async function deleteChat(chatId: number) {
     setError(null);
 
     try {
-      // Request permanent deletion from SQLite through FastAPI.
       const response = await fetch(
         `${API_BASE_URL}/chats/${chatId}`,
         {
@@ -515,408 +1380,652 @@ export function ChatShell() {
         },
       );
 
-      // A successful deletion returns HTTP 204.
       if (!response.ok) {
-        throw new Error(`Could not delete chat (${response.status}).`);
+        throw new Error(
+          `Could not delete chat (${response.status}).`,
+        );
       }
 
-      // Remove the deleted record from frontend state.
-      setChats((currentChats) => {
-        const remainingChats = currentChats.filter(
+      setChats((current) => {
+        const remaining = current.filter(
           (chat) => chat.id !== chatId,
         );
 
-        // Select the next available chat when the active chat was deleted.
         if (activeChatId === chatId) {
-          setActiveChatId(remainingChats[0]?.id ?? null);
+          const nextChatId =
+            remaining[0]?.id ?? null;
+
+          activeChatIdRef.current =
+            nextChatId;
+
+          setActiveChatId(nextChatId);
         }
 
-        return remainingChats;
+        return remaining;
       });
     } catch (requestError) {
-      const message =
+      setError(
         requestError instanceof Error
           ? requestError.message
-          : "Could not delete the chat.";
-
-      setError(message);
+          : "Could not delete the chat.",
+      );
     }
   }
 
-
-  // Resolve the selected chat object for the workspace header.
   const activeChat =
-    chats.find((chat) => chat.id === activeChatId) ?? null;
+    chats.find(
+      (chat) => chat.id === activeChatId,
+    ) ?? null;
 
-  // Render messages only when they belong to the current active chat.
   const activeMessages =
-    messagesChatId === activeChatId ? messages : [];
+    messagesChatId === activeChatId
+      ? messages
+      : [];
 
-  // Render errors only for the chat that produced them.
   const activeMessageError =
     messageError?.chatId === activeChatId
       ? messageError.message
       : null;
 
-  // Render submission failures only inside their originating conversation.
   const activeSendError =
     sendError?.chatId === activeChatId
       ? sendError.message
       : null;
 
-  // A changed chat remains loading until its own result has arrived.
   const isMessageViewLoading =
     activeChatId !== null &&
     activeMessageError === null &&
-    (
-      isLoadingMessages ||
-      messagesChatId !== activeChatId
-    );
+    (isLoadingMessages ||
+      messagesChatId !== activeChatId);
 
-  // Show generation feedback only in the conversation that owns the request.
-  const isActiveChatGenerating =
-    isSendingMessage &&
-    sendingChatId === activeChatId;
+  const activeStreamingAssistant =
+    streamingAssistant?.chatId ===
+    activeChatId
+      ? streamingAssistant
+      : null;
 
+  const hasConversationContent =
+    activeMessages.length > 0 ||
+    activeStreamingAssistant !== null;
 
   return (
-    <main className="flex h-dvh overflow-hidden bg-[#f5f2ee] text-[#2c2831]">
-      {/* Sidebar now renders real SQLite-backed conversations. */}
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-[#e6e0e8] bg-[#f8f6f3] md:flex">
-        <div className="border-b border-[#e8e3e9] p-4">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#dcd2e8] bg-gradient-to-br from-[#f6f1ff] to-[#e7dcf8] text-sm font-bold text-[#6e5597] shadow-sm shadow-[#8e72b8]/10">
-              IC
-            </div>
+    <MotionConfig reducedMotion="user">
+      <main className="ic-app">
+        <div
+          className="ic-app-aurora ic-app-aurora-one"
+          aria-hidden="true"
+        />
+        <div
+          className="ic-app-aurora ic-app-aurora-two"
+          aria-hidden="true"
+        />
 
-            <div>
-              <p className="text-sm font-semibold tracking-[-0.01em]">
-                IntraCore AI
-              </p>
-              <p className="text-xs text-[#807886]">
-                Local workspace
-              </p>
-            </div>
-          </div>
-
-          {/* This button now creates a durable SQLite chat. */}
-          <button
-            type="button"
-            onClick={() => void createChat()}
-            disabled={isCreatingChat}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d8cce7] bg-[#eee7f8] px-4 py-2.5 text-sm font-medium text-[#5d477d] shadow-sm shadow-[#8f76ad]/10 transition hover:border-[#cdbce1] hover:bg-[#e8def5] disabled:cursor-wait disabled:opacity-60"
-          >
-            <span className="text-lg leading-none">+</span>
-            {isCreatingChat ? "Creating..." : "New chat"}
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3">
-          <p className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9a919e]">
-            Recent
-          </p>
-
-          {/* Display backend connectivity errors inside the relevant area. */}
-          {error ? (
-            <div className="mx-2 mb-3 rounded-xl border border-[#edc9c9] bg-[#fff4f3] p-3 text-xs leading-5 text-[#9f4545]">
-              {error}
-            </div>
-          ) : null}
-
-          {/* Initial API loading state. */}
-          {isLoadingChats ? (
-            <p className="px-2 py-3 text-sm text-[#918994]">
-              Loading chats...
-            </p>
-          ) : null}
-
-          {/* Empty state appears before the first persistent chat is created. */}
-          {!isLoadingChats && chats.length === 0 ? (
-            <p className="px-2 py-3 text-sm leading-6 text-[#918994]">
-              No conversations yet. Create your first local chat.
-            </p>
-          ) : null}
-
-          {/* Render one durable conversation row. */}
-          <div className="space-y-1">
-            {chats.map((chat) => {
-              const isActive = chat.id === activeChatId;
-
-              return (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center rounded-xl border transition ${
-                    isActive
-                      ? "border-[#ded2ea] bg-[#eee8f6] shadow-sm shadow-[#8f76ad]/5"
-                      : "border-transparent hover:border-[#e9e3e9] hover:bg-white/70"
-                  }`}
-                >
-                  {/* Selecting a row updates the active local conversation. */}
-                  <button
-                    type="button"
-                    onClick={() => setActiveChatId(chat.id)}
-                    className={`min-w-0 flex-1 px-3 py-2.5 text-left text-sm ${
-                      isActive
-                        ? "font-medium text-[#5e497b]"
-                        : "text-[#6f6873] group-hover:text-[#343039]"
-                    }`}
-                  >
-                    <span className="block truncate">
-                      {chat.title}
-                    </span>
-                  </button>
-
-                  {/* Temporary visible delete control.
-                      A polished menu can replace this later. */}
-                  <button
-                    type="button"
-                    onClick={() => void deleteChat(chat.id)}
-                    aria-label={`Delete ${chat.title}`}
-                    className="mr-2 flex h-7 w-7 items-center justify-center rounded-lg text-sm text-[#aaa1ad] opacity-0 transition hover:bg-[#e4d9ee] hover:text-[#684f86] group-hover:opacity-100 focus:opacity-100"
-                  >
-                    &times;
-                  </button>
+        <div className="ic-workspace">
+          <aside className="ic-sidebar">
+            <div className="ic-sidebar-top">
+              <div className="ic-brand">
+                <div className="ic-brand-mark">
+                  <Image
+                    className="ic-brand-logo"
+                    src="/intracore-mark.png"
+                    alt="IntraCore AI"
+                    width={40}
+                    height={40}
+                    priority
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        <div className="border-t border-[#e8e3e9] p-4">
-          <div className="rounded-2xl border border-[#e6e0e7] bg-white/70 p-3 shadow-sm shadow-[#75627f]/5">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-xs font-medium text-[#4e4852]">
-                Local mode
-              </span>
-            </div>
-
-            <p className="text-xs leading-5 text-[#867e89]">
-              Your current runtime is configured to stay on this device.
-            </p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main workspace renders the active durable conversation. */}
-      <section className="flex min-w-0 flex-1 flex-col bg-[#fcfbf9]">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#ebe6eb] bg-white/70 px-4 backdrop-blur md:px-7">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold tracking-[-0.01em] text-[#332e38]">
-              {activeChat?.title ?? "New chat"}
-            </p>
-
-            <p className="truncate text-xs text-[#918895]">
-              {activeChat
-                ? `Persistent local conversation #${activeChat.id}`
-                : "Create a conversation to begin"}
-            </p>
-          </div>
-
-          <div
-            aria-label="Active local model"
-            className="ml-4 flex shrink-0 items-center gap-2 rounded-xl border border-[#e2dce4] bg-white px-3 py-2 text-xs text-[#655e69] shadow-sm shadow-[#75627f]/5"
-          >
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>deepseek-r1:1.5b</span>
-          </div>
-        </header>
-
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 md:py-12">
-            <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center">
-              {!activeChat ? (
-                <div className="text-center">
-                  <div className="intracore-orb mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-full text-base font-semibold text-[#6b528e]">
-                    IC
-                  </div>
-
-                  <p className="mb-2 text-sm font-medium text-[#8d73b2]">
-                    Private by design
-                  </p>
-
-                  <h1 className="text-3xl font-semibold tracking-[-0.035em] text-[#29252e] md:text-4xl">
-                    What are you working on?
-                  </h1>
-
-                  <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[#7e7681] md:text-base">
-                    Create a durable local conversation from the sidebar to begin.
-                  </p>
-                </div>
-              ) : null}
-
-              {activeChat && isMessageViewLoading ? (
-                <div className="flex items-center justify-center gap-2 text-sm text-[#827987]">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#ad93cf]" />
-                  Loading messages...
-                </div>
-              ) : null}
-
-              {activeChat && activeMessageError ? (
-                <div className="mx-auto w-full max-w-xl rounded-2xl border border-[#edc9c9] bg-[#fff4f3] p-4 text-sm leading-6 text-[#9f4545] shadow-sm">
-                  {activeMessageError}
-                </div>
-              ) : null}
-
-              {activeChat &&
-              !isMessageViewLoading &&
-              !activeMessageError &&
-              !isActiveChatGenerating &&
-              activeMessages.length === 0 ? (
-                <div className="text-center">
-                  <div className="intracore-orb mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-full text-base font-semibold text-[#6b528e]">
-                    IC
-                  </div>
-
-                  <p className="mb-2 text-sm font-medium text-[#8d73b2]">
-                    A fresh local conversation
-                  </p>
-
-                  <h1 className="text-3xl font-semibold tracking-[-0.035em] text-[#29252e] md:text-4xl">
-                    {activeChat.title}
-                  </h1>
-
-                  <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[#7e7681] md:text-base">
-                    This conversation has no messages yet.
-                  </p>
-                </div>
-              ) : null}
-
-              {activeChat &&
-              !isMessageViewLoading &&
-              !activeMessageError &&
-              (activeMessages.length > 0 || isActiveChatGenerating) ? (
-                <div className="space-y-7 py-2">
-                  {activeMessages.map((message) => {
-                    const isUser = message.role === "user";
-
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex items-start gap-3 ${
-                          isUser ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {!isUser ? (
-                          <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#ded4e8] bg-[#f1ebf8] text-[10px] font-bold text-[#725793]">
-                            IC
-                          </div>
-                        ) : null}
-
-                        <div
-                          className={`text-sm leading-7 ${
-                            isUser
-                              ? "max-w-[85%] rounded-2xl rounded-br-md border border-[#ddd1e8] bg-[#eee8f7] px-4 py-3 text-[#3e3449] shadow-sm shadow-[#80649e]/10 sm:max-w-[75%]"
-                              : "min-w-0 max-w-[calc(100%_-_2.75rem)] flex-1 py-1 text-[#403a44]"
-                          }`}
-                        >
-                          {!isUser ? (
-                            <p className="mb-1 text-xs font-semibold text-[#6c567f]">
-                              IntraCore
-                            </p>
-                          ) : null}
-
-                          <p className="whitespace-pre-wrap break-words">
-                            {message.content}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {isActiveChatGenerating ? (
-                    <div className="flex items-start gap-3" aria-live="polite">
-                      <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#ded4e8] bg-[#f1ebf8] text-[10px] font-bold text-[#725793]">
-                        IC
-                      </div>
-
-                      <div className="min-w-0 flex-1 py-1">
-                        <p className="mb-2 text-xs font-semibold text-[#6c567f]">
-                          IntraCore
-                        </p>
-
-                        <div
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[#e2d9ea] bg-white px-3.5 py-2.5 shadow-sm shadow-[#80649e]/5"
-                          aria-label="Generating response"
-                        >
-                          <span className="intracore-thinking-dot" />
-                          <span className="intracore-thinking-dot" />
-                          <span className="intracore-thinking-dot" />
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="shrink-0 bg-gradient-to-t from-[#fcfbf9] via-[#fcfbf9] to-transparent px-4 pb-5 pt-3 md:px-6">
-            <div className="mx-auto max-w-3xl">
-              <div
-                className={`rounded-[1.4rem] border bg-white/95 p-3 shadow-[0_18px_50px_-26px_rgba(74,58,90,0.38)] transition ${
-                  isSendingMessage
-                    ? "border-[#ded5e7] opacity-90"
-                    : "border-[#ddd7df] focus-within:border-[#bca9d3] focus-within:shadow-[0_20px_55px_-26px_rgba(105,77,139,0.45)]"
-                }`}
-              >
-                <textarea
-                  rows={2}
-                  value={draftMessage}
-                  onChange={(event) => {
-                    setDraftMessage(event.target.value);
-
-                    if (activeSendError) {
-                      setSendError(null);
-                    }
-                  }}
-                  disabled={
-                    !activeChat ||
-                    isMessageViewLoading ||
-                    isSendingMessage
-                  }
-                  placeholder={
-                    !activeChat
-                      ? "Create a chat first"
-                      : "Message IntraCore AI"
-                  }
-                  className="max-h-48 min-h-14 w-full resize-none bg-transparent px-2 py-2 text-sm leading-6 text-[#332e38] outline-none placeholder:text-[#a39ba6] disabled:cursor-not-allowed disabled:text-[#8e8791]"
-                />
-
-                <div className="flex items-center justify-end pt-2">
-                  <button
-                    type="button"
-                    onClick={() => void sendMessage()}
-                    disabled={
-                      !activeChat ||
-                      isMessageViewLoading ||
-                      isSendingMessage ||
-                      draftMessage.trim().length === 0
-                    }
-                    aria-label="Send message"
-                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#79609a] text-white shadow-sm shadow-[#72558f]/25 transition hover:bg-[#6f558f] disabled:cursor-not-allowed disabled:bg-[#ded8e2] disabled:text-[#9d95a1] disabled:shadow-none"
-                  >
-                    &uarr;
-                  </button>
+                <div className="ic-brand-copy">
+                  <strong>IntraCore AI</strong>
+                  <span>Local intelligence</span>
                 </div>
               </div>
 
-              {!isSendingMessage && activeSendError ? (
-                <p
-                  className="mt-3 text-center text-xs text-[#a34848]"
-                  role="alert"
-                >
-                  {activeSendError}
-                </p>
+              <button
+                type="button"
+                onClick={() =>
+                  void createChat()
+                }
+                disabled={isCreatingChat}
+                className="ic-new-chat"
+              >
+                <span className="ic-plus">
+                  +
+                </span>
+
+                <span>
+                  {isCreatingChat
+                    ? "Creating..."
+                    : "New conversation"}
+                </span>
+              </button>
+            </div>
+
+            <div className="ic-sidebar-content">
+              <div className="ic-section-heading">
+                <span>Conversations</span>
+                <span>{chats.length}</span>
+              </div>
+
+              {error ? (
+                <div className="ic-sidebar-error">
+                  {error}
+                </div>
               ) : null}
 
-              <p className="mt-3 text-center text-[11px] text-[#9a929d]">
-                IntraCore can make mistakes. Verify important information.
-              </p>
+              {isLoadingChats ? (
+                <div className="ic-sidebar-loading">
+                  <span />
+                  Loading conversations
+                </div>
+              ) : null}
+
+              {!isLoadingChats &&
+              chats.length === 0 ? (
+                <div className="ic-sidebar-empty">
+                  <MessageIcon />
+                  <p>No conversations yet.</p>
+                  <span>
+                    Start a private local chat.
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="ic-chat-list">
+                {chats.map((chat) => {
+                  const isActive =
+                    chat.id === activeChatId;
+
+                  return (
+                    <motion.div
+                      layout
+                      key={chat.id}
+                      className={`ic-chat-row ${
+                        isActive
+                          ? "is-active"
+                          : ""
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          activeChatIdRef.current =
+                            chat.id;
+
+                          setActiveChatId(
+                            chat.id,
+                          );
+                        }}
+                        className="ic-chat-select"
+                      >
+                        <span className="ic-chat-icon">
+                          <MessageIcon />
+                        </span>
+
+                        <span className="ic-chat-copy">
+                          <strong>
+                            {chat.title}
+                          </strong>
+
+                          <small>
+                            {formatChatDate(
+                              chat.updated_at,
+                            )}
+                          </small>
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void deleteChat(chat.id)
+                        }
+                        aria-label={`Delete ${chat.title}`}
+                        className="ic-delete-chat"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+
+            <div className="ic-sidebar-footer">
+              <div className="ic-local-card">
+                <span className="ic-local-status">
+                  <span />
+                </span>
+
+                <div>
+                  <strong>Local mode</strong>
+                  <p>
+                    Conversations stay on this
+                    device.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <section className="ic-main">
+            <header className="ic-header">
+              <div className="ic-header-title">
+                <div
+                  className="ic-header-mark"
+                  aria-hidden="true"
+                >
+                  <Image
+                    src="/intracore-mark.png"
+                    alt=""
+                    width={38}
+                    height={38}
+                  />
+                </div>
+
+                <div className="ic-header-copy">
+                  <span className="ic-header-eyebrow">
+                    Workspace
+                    <span aria-hidden="true" />
+                  </span>
+
+                  <h1>
+                    {activeChat?.title ??
+                      "IntraCore AI"}
+                  </h1>
+
+                  <p>
+                    {activeChat
+                      ? `Local conversation · Updated ${formatChatDate(activeChat.updated_at)}`
+                      : "Private local AI workspace"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="ic-header-actions">
+                <div
+                  className="ic-model-chip"
+                  aria-label="Active local model"
+                >
+                  <span />
+                  <span>Qwen-4B</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    void createChat()
+                  }
+                  disabled={isCreatingChat}
+                  className="ic-mobile-new-chat"
+                  aria-label="Create new chat"
+                >
+                  +
+                </button>
+              </div>
+            </header>
+
+            <div className="ic-conversation">
+              <div
+                ref={conversationScrollRef}
+                onScroll={(event) => {
+                  const container =
+                    event.currentTarget;
+
+                  const distanceFromBottom =
+                    container.scrollHeight -
+                    container.scrollTop -
+                    container.clientHeight;
+
+                  const isNearBottom =
+                    distanceFromBottom <= 120;
+
+                  isNearBottomRef.current =
+                    isNearBottom;
+
+                  if (isNearBottom) {
+                    setShowJumpToLatest(
+                      false,
+                    );
+                  }
+                }}
+                className="ic-thread"
+              >
+                <div
+                  className={`ic-thread-inner ${
+                    !hasConversationContent
+                      ? "is-empty"
+                      : ""
+                  }`}
+                >
+                  {!activeChat ? (
+                    <div className="ic-empty-state">
+                      <div className="ic-empty-orb">
+                        <span className="ic-orb-light" />
+                        <Image
+                          className="ic-empty-orb-logo"
+                          src="/intracore-mark.png"
+                          alt=""
+                          width={72}
+                          height={72}
+                          aria-hidden="true"
+                        />
+                      </div>
+
+                      <span className="ic-empty-kicker">
+                        Private local intelligence
+                      </span>
+
+                      <h2>
+                        What would you like to
+                        explore?
+                      </h2>
+
+                      <p>
+                        Create a durable conversation
+                        to start working with your
+                        local assistant.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {activeChat &&
+                  isMessageViewLoading ? (
+                    <div className="ic-page-loading">
+                      <span />
+                      <p>Loading conversation</p>
+                    </div>
+                  ) : null}
+
+                  {activeChat &&
+                  activeMessageError ? (
+                    <div className="ic-page-error">
+                      {activeMessageError}
+                    </div>
+                  ) : null}
+
+                  {activeChat &&
+                  !isMessageViewLoading &&
+                  !activeMessageError &&
+                  !hasConversationContent ? (
+                    <div className="ic-empty-state">
+                      <div className="ic-empty-orb">
+                        <span className="ic-orb-light" />
+                        <Image
+                          className="ic-empty-orb-logo"
+                          src="/intracore-mark.png"
+                          alt=""
+                          width={72}
+                          height={72}
+                          aria-hidden="true"
+                        />
+                      </div>
+
+                      <span className="ic-empty-kicker">
+                        New local conversation
+                      </span>
+
+                      <h2>
+                        How can I assist you today?
+                      </h2>
+
+                      <p>
+                        Ask a question, develop an
+                        idea, or work through a
+                        problem privately.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {activeChat &&
+                  !isMessageViewLoading &&
+                  !activeMessageError &&
+                  hasConversationContent ? (
+                    <div className="ic-message-list">
+                      <AnimatePresence
+                        initial={false}
+                        mode="popLayout"
+                      >
+                        {activeMessages.map(
+                          (message) => {
+                            const isUser =
+                              message.role ===
+                              "user";
+
+                            return (
+                              <motion.article
+                                layout
+                                key={`message-${message.chat_id}-${message.sequence_number}-${message.role}`}
+                                initial={{
+                                  opacity: 0,
+                                  y: 8,
+                                }}
+                                animate={{
+                                  opacity: 1,
+                                  y: 0,
+                                }}
+                                exit={{
+                                  opacity: 0,
+                                  y: -4,
+                                }}
+                                transition={{
+                                  duration: 0.2,
+                                }}
+                                className={`ic-message ${
+                                  isUser
+                                    ? "ic-message-user"
+                                    : "ic-message-assistant"
+                                }`}
+                              >
+                                {!isUser ? (
+                                  <div className="ic-assistant-avatar">
+                                    <Image
+                                      className="ic-assistant-logo"
+                                      src="/intracore-mark.png"
+                                      alt=""
+                                      width={32}
+                                      height={32}
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+                                ) : null}
+
+                                <div
+                                  className={
+                                    isUser
+                                      ? "ic-saved-user-message"
+                                      : "ic-assistant-column"
+                                  }
+                                >
+                                  {!isUser ? (
+                                    <div className="ic-message-identity">
+                                      <span>
+                                        IntraCore
+                                      </span>
+                                      <span className="ic-message-time">
+                                        {formatMessageTime(
+                                          message.created_at,
+                                        )}
+                                      </span>
+                                    </div>
+                                  ) : null}
+
+{isUser ? (
+  <>
+    <div className="ic-saved-user-bubble">
+      <p>{animatedEmojiText(message.content)}</p>
+    </div>
+
+    <time
+      className="ic-saved-user-time"
+      dateTime={message.created_at}
+    >
+      {formatMessageTime(message.created_at)}
+    </time>
+  </>
+                                  ) : (
+                                    <div className="ic-assistant-content assistant-markdown">
+                                      <AnimatedMarkdown
+                                        content={
+                                          message.content
+                                        }
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.article>
+                            );
+                          },
+                        )}
+
+                        {activeStreamingAssistant ? (
+                          <StreamingAssistantView
+                            key={`stream-${activeStreamingAssistant.requestId}`}
+                            stream={
+                              activeStreamingAssistant
+                            }
+                          />
+                        ) : null}
+                      </AnimatePresence>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {showJumpToLatest &&
+                activeChat ? (
+                  <motion.button
+                    type="button"
+                    onClick={jumpToLatest}
+                    initial={{
+                      opacity: 0,
+                      y: 8,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 5,
+                    }}
+                    className="ic-jump-button"
+                  >
+                    <SendIcon />
+                    Jump to latest
+                  </motion.button>
+                ) : null}
+              </AnimatePresence>
+
+              <div className="ic-composer-zone">
+                <div className="ic-composer-wrap">
+                  <div
+                    className={`ic-composer ${
+                      isSendingMessage
+                        ? "is-generating"
+                        : ""
+                    }`}
+                  >
+                    <textarea
+                      rows={2}
+                      value={draftMessage}
+                      onChange={(event) => {
+                        setDraftMessage(
+                          event.target.value,
+                        );
+
+                        if (activeSendError) {
+                          setSendError(null);
+                        }
+                      }}
+                      disabled={
+                        !activeChat ||
+                        isMessageViewLoading ||
+                        isSendingMessage
+                      }
+                      placeholder={
+                        !activeChat
+                          ? "Create a conversation first"
+                          : "Message IntraCore AI..."
+                      }
+                    />
+
+                    <div className="ic-composer-footer">
+                      <div className="ic-composer-context">
+                        <span className="ic-private-dot" />
+                        <span>
+                          Local and durable
+                        </span>
+                      </div>
+
+                      <motion.button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            isSendingMessage
+                          ) {
+                            stopGenerating();
+                          } else {
+                            void sendMessage();
+                          }
+                        }}
+                        disabled={
+                          !isSendingMessage &&
+                          (!activeChat ||
+                            isMessageViewLoading ||
+                            draftMessage.trim()
+                              .length === 0)
+                        }
+                        aria-label={
+                          isSendingMessage
+                            ? "Stop generating"
+                            : "Send message"
+                        }
+                        whileHover={{
+                          scale: 1.04,
+                        }}
+                        whileTap={{
+                          scale: 0.94,
+                        }}
+                        className={`ic-primary-action ${
+                          isSendingMessage
+                            ? "is-stop"
+                            : "is-send"
+                        }`}
+                      >
+                        {isSendingMessage ? (
+                          <>
+                            <StopIcon />
+                            <span>Stop</span>
+                          </>
+                        ) : (
+                          <SendIcon />
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {!isSendingMessage &&
+                  activeSendError ? (
+                    <p
+                      className="ic-send-error"
+                      role="alert"
+                    >
+                      {activeSendError}
+                    </p>
+                  ) : null}
+
+                  <p className="ic-disclaimer">
+                    IntraCore may make mistakes.
+                    Verify important information.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
-    </main>
+      </main>
+    </MotionConfig>
   );
 }
