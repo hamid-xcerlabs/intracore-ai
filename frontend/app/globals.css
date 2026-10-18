@@ -3728,3 +3728,171 @@ textarea:focus-visible {
     display: none;
   }
 }
+
+/* ── Inline rename input (commit 2) ────────────────────────────────────────── */
+
+.ic-rename-wrap {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+}
+
+.ic-rename-input {
+  width: 100%;
+  background: rgba(255 255 255 / 0.07);
+  border: 1px solid rgba(255 255 255 / 0.2);
+  border-radius: 6px;
+  color: var(--ic-text-primary);
+  font-size: 0.82rem;
+  padding: 4px 8px;
+  outline: none;
+  font-family: inherit;
+}
+
+.ic-rename-input:focus {
+  border-color: rgba(255 255 255 / 0.45);
+  background: rgba(255 255 255 / 0.1);
+}
+
+/* ── Rename trigger button (commit 2) ──────────────────────────────────────── */
+
+.ic-rename-chat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255 255 255 / 0.45);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.ic-rename-chat:hover {
+  color: rgba(255 255 255 / 0.9);
+  background: rgba(255 255 255 / 0.08);
+}
+
+.ic-rename-chat svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ic-chat-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ic-chat-row:hover .ic-chat-actions,
+.ic-chat-row.is-active .ic-chat-actions {
+  display: flex;
+}
+
+/* ── Model name badge on assistant messages (commit 3) ─────────────────────── */
+
+.ic-model-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(255 255 255 / 0.45);
+  background: rgba(255 255 255 / 0.06);
+  border: 1px solid rgba(255 255 255 / 0.1);
+  user-select: none;
+}
+
+/* ── Copy button on assistant messages (commit 6) ──────────────────────────── */
+
+.ic-message-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.ic-message-assistant:hover .ic-message-actions {
+  opacity: 1;
+}
+
+.ic-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255 255 255 / 0.1);
+  background: rgba(255 255 255 / 0.05);
+  color: rgba(255 255 255 / 0.5);
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.ic-copy-btn:hover {
+  color: rgba(255 255 255 / 0.85);
+  background: rgba(255 255 255 / 0.1);
+  border-color: rgba(255 255 255 / 0.2);
+}
+
+.ic-copy-btn.is-copied {
+  color: #4ade80;
+  border-color: rgba(74 222 128 / 0.3);
+  background: rgba(74 222 128 / 0.07);
+}
+
+.ic-copy-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* ── Starter prompt chips on new-chat empty state (commit 4) ───────────────── */
+
+.ic-starter-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+  max-width: 520px;
+}
+
+.ic-starter-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255 255 255 / 0.14);
+  background: rgba(255 255 255 / 0.05);
+  color: rgba(255 255 255 / 0.7);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.ic-starter-chip:hover {
+  color: rgba(255 255 255 / 0.95);
+  background: rgba(255 255 255 / 0.1);
+  border-color: rgba(255 255 255 / 0.28);
+  transform: translateY(-1px);
+}
+
+/* ── Memory count "X active · Y total" (commit 9) ──────────────────────────── */
+
+.ic-memory-count {
+  font-size: 0.75rem;
+  color: rgba(255 255 255 / 0.45);
+  margin: 2px 0 0;
+  font-weight: 400;
+}

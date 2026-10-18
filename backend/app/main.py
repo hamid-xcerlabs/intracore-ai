@@ -64,8 +64,9 @@ app.add_middleware(
 # Register health and diagnostic endpoints with the main application.
 app.include_router(health_router)
 
-# Register chat endpoints with the main application.
-app.include_router(chat_router)
+# Register development-only test endpoint only when debug_mode is enabled.
+if settings.debug_mode:
+    app.include_router(chat_router)
 
 # Register persistent chat-management endpoints.
 app.include_router(chats_router)
