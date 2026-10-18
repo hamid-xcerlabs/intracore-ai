@@ -564,6 +564,8 @@ export function ChatShell() {
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<{ id: number; message: string }[]>([]);
+  const toastIdRef = useRef(1);
 
   // Inline rename state
   const [renamingChatId, setRenamingChatId] = useState<number | null>(null);
@@ -1357,6 +1359,15 @@ export function ChatShell() {
     }
   }
 
+  function showToast(message: string) {
+    const id = toastIdRef.current;
+    toastIdRef.current += 1;
+    setToasts((current) => [...current, { id, message }]);
+    window.setTimeout(() => {
+      setToasts((current) => current.filter((t) => t.id !== id));
+    }, 4000);
+  }
+
   function stopGenerating() {
     streamAbortControllerRef.current?.abort();
   }
@@ -1523,13 +1534,14 @@ export function ChatShell() {
     try {
       await navigator.clipboard.writeText(message.content);
       setCopiedMessageId(message.id);
+      showToast("Copied to clipboard");
       window.setTimeout(() => {
         setCopiedMessageId((current) =>
           current === message.id ? null : current,
         );
       }, 2000);
     } catch {
-      // Clipboard unavailable — silently ignore.
+      showToast("Could not access clipboard.");
     }
   }
 
@@ -2525,6 +2537,23 @@ export function ChatShell() {
             </>
           ) : null}
         </AnimatePresence>
+        {/* ── Toast notifications ── */}
+        <div className="ic-toast-container" aria-live="polite">
+          <AnimatePresence>
+            {toasts.map((toast) => (
+              <motion.div
+                key={toast.id}
+                className="ic-toast"
+                initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.2 }}
+              >
+                {toast.message}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </main>
     </MotionConfig>
   );
