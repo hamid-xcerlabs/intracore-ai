@@ -2165,6 +2165,16 @@ export function ChatShell() {
                             ? "Select an installed model first"
                             : "Message IntraCore AI..."
                       }
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" &&
+                          (event.ctrlKey || event.metaKey) &&
+                          !isSendingMessage
+                        ) {
+                          event.preventDefault();
+                          void sendMessage();
+                        }
+                      }}
                     />
 
                     <div className="ic-composer-footer">
