@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 #Without configuration system model = "deepseek-r1:1.5b" then this name may in diff files needs to be update after changing the model
 
@@ -18,6 +19,12 @@ class Settings(BaseSettings): #BaseSettings .env ko read karke values Python obj
         "enabled",
         "disabled",
     ] = "auto"
+    # This is a per-request prompt budget, not a storage or user usage quota.
+    memory_context_max_chars: int = Field(
+        default=6000,
+        ge=512,
+        le=100_000,
+    )
     # SQLAlchemy database connection URL.
     # The default points to a local SQLite file inside backend/data.
     database_url: str = "sqlite+aiosqlite:///./data/intracore.db"

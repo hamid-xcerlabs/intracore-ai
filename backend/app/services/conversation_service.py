@@ -18,6 +18,7 @@ from app.repositories.message_repository import (
     message_repository,
 )
 from app.services.chat_title_service import chat_title_service
+from app.services.memory_service import memory_service
 
 
 class ConversationGenerationError(Exception):
@@ -34,6 +35,7 @@ class PreparedConversationTurn:
 
     user_message: Message
     graph_messages: list[AnyMessage]
+    memory_context: str
     should_generate_title: bool
     title_source: str
 
@@ -179,6 +181,10 @@ class ConversationService:
             chat_id=chat.id,
         )
 
+        # Global memory is loaded independently; no messages from any other
+        # chat are queried or merged into the selected chat's durable history.
+        memory_context = await memory_service.build_context(session)
+
         first_user_message = next(
             (
                 message
@@ -194,6 +200,7 @@ class ConversationService:
         return PreparedConversationTurn(
             user_message=user_message,
             graph_messages=self._to_graph_messages(durable_history),
+            memory_context=memory_context,
             should_generate_title=(chat.title == "New chat"),
             title_source=first_user_message.content,
         )
@@ -229,6 +236,7 @@ class ConversationService:
             result = await chat_graph.ainvoke(
                 {
                     "messages": prepared.graph_messages,
+                    "memory_context": prepared.memory_context,
                     "model_name": model_name,
                 }
             )
@@ -273,6 +281,7 @@ class ConversationService:
         session: AsyncSession,
         chat_id: int,
         graph_messages: list[AnyMessage],
+        memory_context: str,
         title_source: str,
         should_generate_title: bool,
         model_name: str,
@@ -283,6 +292,7 @@ class ConversationService:
         graph_stream = chat_graph.astream(
             {
                 "messages": graph_messages,
+                "memory_context": memory_context,
                 "model_name": model_name,
             },
             stream_mode="messages",

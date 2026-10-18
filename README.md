@@ -58,10 +58,17 @@ The working foundation currently includes:
 - LangChain and LangGraph orchestration
 - SQLite, SQLAlchemy, and Alembic persistence
 - chat and message data models
+- manual cross-conversation memories stored in local SQLite
+- user-controlled memory create, edit, enable/disable, and hard delete
 - an initial local AI interface
 - modular backend boundaries for future providers, memory, RAG, tools, and integrations
 
 The foundation works.
+
+Memory is currently explicit and user-controlled: IntraCore does not
+automatically extract or save memories from conversations. Enabled global
+memories are bounded before they are supplied to the local model, while chat
+messages remain isolated to their own conversation.
 
 The larger product is still being shaped.
 
