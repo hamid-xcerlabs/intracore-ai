@@ -562,6 +562,7 @@ export function ChatShell() {
   const [activeChatId, setActiveChatId] = useState<number | null>(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [chatSearch, setChatSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Inline rename state
@@ -1524,6 +1525,12 @@ export function ChatShell() {
   const enabledMemoryCount = memories.filter((memory) => memory.is_enabled).length;
   const totalMemoryCount = memories.length;
 
+  const filteredChats = chatSearch.trim()
+    ? chats.filter((chat) =>
+        chat.title.toLocaleLowerCase().includes(chatSearch.trim().toLocaleLowerCase()),
+      )
+    : chats;
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -1571,6 +1578,19 @@ export function ChatShell() {
                 <span>{chats.length}</span>
               </div>
 
+              {chats.length > 0 ? (
+                <div className="ic-chat-search-wrap">
+                  <input
+                    className="ic-chat-search"
+                    type="search"
+                    placeholder="Search conversations…"
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    aria-label="Search conversations"
+                  />
+                </div>
+              ) : null}
+
               {error ? (
                 <div className="ic-sidebar-error">{error}</div>
               ) : null}
@@ -1590,8 +1610,12 @@ export function ChatShell() {
                 </div>
               ) : null}
 
+              {!isLoadingChats && chats.length > 0 && filteredChats.length === 0 ? (
+                <p className="ic-chat-search-empty">No matches for "{chatSearch}"</p>
+              ) : null}
+
               <div className="ic-chat-list">
-                {chats.map((chat) => {
+                {filteredChats.map((chat) => {
                   const isActive = chat.id === activeChatId;
                   const isRenaming = renamingChatId === chat.id;
 
