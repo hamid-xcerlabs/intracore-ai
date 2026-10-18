@@ -19,6 +19,15 @@ class MessageSequenceConflictError(Exception):
 
 # MessageRepository contains reusable read operations for durable messages.
 class MessageRepository:
+    async def get_by_id(
+        self,
+        session: AsyncSession,
+        message_id: int,
+    ) -> Message | None:
+        """Load one message when another durable record references its source."""
+
+        return await session.get(Message, message_id)
+
     # Return one chat's messages in stable conversation order.
     async def list_for_chat(
         self,
