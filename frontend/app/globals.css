@@ -3730,6 +3730,46 @@ textarea:focus-visible {
   }
 }
 
+/* ── Code block styling ─────────────────────────────────────────────────────── */
+
+.assistant-markdown pre {
+  background: #1a1a2e;
+  border: 1px solid rgba(255 255 255 / 0.08);
+  border-radius: 10px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 12px 0;
+  position: relative;
+}
+
+.assistant-markdown pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  color: #e2e8f0;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.assistant-markdown code {
+  background: rgba(255 255 255 / 0.08);
+  border: 1px solid rgba(255 255 255 / 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.82em;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  color: #c4b5fd;
+}
+
+.assistant-markdown pre code {
+  color: #e2e8f0;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
 /* ── Regenerate button ──────────────────────────────────────────────────────── */
 
 .ic-regen-btn {
