@@ -618,6 +618,7 @@ export function ChatShell() {
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
   const modelMenuRef = useRef<HTMLDivElement | null>(null);
+  const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   function clearDeltaFlushTimer() {
     if (deltaFlushTimerRef.current !== null) {
@@ -1061,6 +1062,13 @@ export function ChatShell() {
 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
+  function resizeComposer() {
+    const el = composerTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }
+
   async function sendMessage() {
     if (activeChatId === null || isMessageViewLoading || isSendingMessage) {
       return;
@@ -1107,6 +1115,9 @@ export function ChatShell() {
     setMessages((current) => sortMessages([...current, optimisticMessage]));
     setMessagesChatId(targetChatId);
     setDraftMessage("");
+    if (composerTextareaRef.current) {
+      composerTextareaRef.current.style.height = "auto";
+    }
 
     const requestId = nextStreamRequestIdRef.current;
     nextStreamRequestIdRef.current += 1;
@@ -2131,10 +2142,11 @@ export function ChatShell() {
                     }`}
                   >
                     <textarea
-                      rows={2}
+                      ref={composerTextareaRef}
                       value={draftMessage}
                       onChange={(event) => {
                         setDraftMessage(event.target.value);
+                        resizeComposer();
 
                         if (activeSendError) {
                           setSendError(null);

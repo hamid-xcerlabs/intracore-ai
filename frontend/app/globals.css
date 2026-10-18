@@ -2087,6 +2087,7 @@ textarea:focus-visible {
   min-height: 58px;
   max-height: 180px;
   resize: none;
+  overflow-y: auto;
   border: 0;
   background: transparent;
   padding: 7px 8px;
