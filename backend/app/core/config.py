@@ -31,6 +31,10 @@ class Settings(BaseSettings): #BaseSettings .env ko read karke values Python obj
     
     # Browser origin allowed to call the local FastAPI backend during development.
     frontend_origin: str = "http://localhost:3000"
+
+    # Enable development-only endpoints (e.g. POST /chat/test).
+    # Keep false in production.
+    debug_mode: bool = False
     
     model_config = SettingsConfigDict( #env_file=".env" Pydantic ko batata hai:Configuration backend folder ki .env file se read karo.
         env_file=".env", #File kis text encoding mein read hogi.
