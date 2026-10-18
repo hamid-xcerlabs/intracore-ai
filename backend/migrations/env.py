@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # Base contains the combined metadata Alembic compares against SQLite.
 from app.db.base import Base
 
-# Importing the models registers chats and messages in Base.metadata.
-from app.db.models import Chat, Message
+# Importing all durable models registers their tables in Base.metadata.
+from app.db.models import Chat, Memory, Message
 
 # Central settings provide the same DATABASE_URL used by the application.
 from app.core.config import get_settings

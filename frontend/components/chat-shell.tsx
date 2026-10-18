@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   Children,
+  type FormEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -46,6 +47,19 @@ type ChatModelOption = {
 type ChatModelListResponse = {
   default_model: string | null;
   models: ChatModelOption[];
+};
+
+type MemoryKind = "fact" | "preference" | "instruction";
+
+type MemoryRecord = {
+  id: number;
+  content: string;
+  kind: MemoryKind;
+  is_enabled: boolean;
+  source_chat_id: number | null;
+  source_message_id: number | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type StreamLifecycle =
@@ -211,6 +225,18 @@ function updateChatActivity(
     });
 }
 
+async function readApiError(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    return typeof body.detail === "string" ? body.detail : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function sortMessages(messages: Message[]): Message[] {
   return [...messages].sort(
     (first, second) =>
@@ -312,6 +338,24 @@ function DownloadIcon() {
         strokeWidth="1.45"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function MemoryIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M6.5 4.25h7A2.25 2.25 0 0 1 15.75 6.5v7a2.25 2.25 0 0 1-2.25 2.25h-7a2.25 2.25 0 0 1-2.25-2.25v-7A2.25 2.25 0 0 1 6.5 4.25Z"
+        stroke="currentColor"
+        strokeWidth="1.35"
+      />
+      <path
+        d="M7.25 8h5.5M7.25 11h5.5"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -618,6 +662,24 @@ export function ChatShell() {
     useState(false);
   const [modelSearch, setModelSearch] = useState("");
 
+  // Memory state is fetched from SQLite-backed APIs only; none of this
+  // authoritative cross-chat context is mirrored into browser storage.
+  const [isMemoryPanelOpen, setIsMemoryPanelOpen] =
+    useState(false);
+  const [memories, setMemories] = useState<MemoryRecord[]>([]);
+  const [isLoadingMemories, setIsLoadingMemories] =
+    useState(false);
+  const [memoryError, setMemoryError] =
+    useState<string | null>(null);
+  const [memoryContent, setMemoryContent] = useState("");
+  const [memoryKind, setMemoryKind] =
+    useState<MemoryKind>("fact");
+  const [editingMemoryId, setEditingMemoryId] =
+    useState<number | null>(null);
+  const [isSavingMemory, setIsSavingMemory] = useState(false);
+  const [busyMemoryId, setBusyMemoryId] =
+    useState<number | null>(null);
+
   const [messages, setMessages] =
     useState<Message[]>([]);
   const [messagesChatId, setMessagesChatId] =
@@ -848,6 +910,174 @@ export function ChatShell() {
     }
   }, []);
 
+  // Refresh the drawer from the backend so another request or future client
+  // cannot leave the visible enabled state stale.
+  const loadMemories = useCallback(async () => {
+    setIsLoadingMemories(true);
+    setMemoryError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/memories`, {
+        method: "GET",
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, "Could not load memories."),
+        );
+      }
+      setMemories((await response.json()) as MemoryRecord[]);
+    } catch (requestError) {
+      setMemoryError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not load memories.",
+      );
+    } finally {
+      setIsLoadingMemories(false);
+    }
+  }, []);
+
+  function resetMemoryForm() {
+    setMemoryContent("");
+    setMemoryKind("fact");
+    setEditingMemoryId(null);
+  }
+
+  // One form owns both create and in-place edit while the backend remains the
+  // source of truth for normalized content and timestamps.
+  async function saveMemory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const content = memoryContent.trim();
+    if (!content || isSavingMemory) {
+      if (!content) {
+        setMemoryError("Memory content cannot be empty.");
+      }
+      return;
+    }
+
+    setIsSavingMemory(true);
+    setMemoryError(null);
+    const isEditing = editingMemoryId !== null;
+    const endpoint = isEditing
+      ? `${API_BASE_URL}/memories/${editingMemoryId}`
+      : `${API_BASE_URL}/memories`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: isEditing ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          kind: memoryKind,
+          ...(isEditing ? {} : { is_enabled: true }),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, "Could not save memory."),
+        );
+      }
+
+      const savedMemory = (await response.json()) as MemoryRecord;
+      setMemories((current) =>
+        isEditing
+          ? current.map((memory) =>
+              memory.id === savedMemory.id ? savedMemory : memory,
+            )
+          : [...current, savedMemory],
+      );
+      resetMemoryForm();
+    } catch (requestError) {
+      setMemoryError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not save memory.",
+      );
+    } finally {
+      setIsSavingMemory(false);
+    }
+  }
+
+  // Enable/disable changes the model-injection set without deleting the
+  // durable memory or pretending the change succeeded optimistically.
+  async function toggleMemory(memory: MemoryRecord) {
+    if (busyMemoryId !== null) {
+      return;
+    }
+    setBusyMemoryId(memory.id);
+    setMemoryError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/memories/${memory.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_enabled: !memory.is_enabled }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, "Could not update memory."),
+        );
+      }
+      const updatedMemory = (await response.json()) as MemoryRecord;
+      setMemories((current) =>
+        current.map((item) =>
+          item.id === updatedMemory.id ? updatedMemory : item,
+        ),
+      );
+    } catch (requestError) {
+      setMemoryError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not update memory.",
+      );
+    } finally {
+      setBusyMemoryId(null);
+    }
+  }
+
+  // Hard deletion requires explicit confirmation because v1 intentionally
+  // has no soft-delete or recovery layer.
+  async function deleteMemory(memory: MemoryRecord) {
+    if (
+      busyMemoryId !== null ||
+      !window.confirm("Permanently delete this memory?")
+    ) {
+      return;
+    }
+    setBusyMemoryId(memory.id);
+    setMemoryError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/memories/${memory.id}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        throw new Error(
+          await readApiError(response, "Could not delete memory."),
+        );
+      }
+      setMemories((current) =>
+        current.filter((item) => item.id !== memory.id),
+      );
+      if (editingMemoryId === memory.id) {
+        resetMemoryForm();
+      }
+    } catch (requestError) {
+      setMemoryError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not delete memory.",
+      );
+    } finally {
+      setBusyMemoryId(null);
+    }
+  }
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadChats();
@@ -895,6 +1125,21 @@ export function ChatShell() {
   }, [isModelMenuOpen]);
 
   useEffect(() => {
+    if (!isMemoryPanelOpen) {
+      return;
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMemoryPanelOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [isMemoryPanelOpen]);
+
+  useEffect(() => {
     activeChatIdRef.current = activeChatId;
     isNearBottomRef.current = true;
 
@@ -922,9 +1167,13 @@ export function ChatShell() {
 
   useEffect(() => {
     if (activeChatId === null) {
-      setMessages([]);
-      setMessagesChatId(null);
-      return;
+      // Defer the local reset to the next task so this synchronization effect
+      // does not cause a cascading render while React is committing effects.
+      const timeoutId = window.setTimeout(() => {
+        setMessages([]);
+        setMessagesChatId(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
 
     const controller = new AbortController();
@@ -1618,6 +1867,9 @@ export function ChatShell() {
         .toLocaleLowerCase()
         .includes(modelSearch.trim().toLocaleLowerCase()),
   );
+  const enabledMemoryCount = memories.filter(
+    (memory) => memory.is_enabled,
+  ).length;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -1814,6 +2066,23 @@ export function ChatShell() {
               </div>
 
               <div className="ic-header-actions">
+                <button
+                  type="button"
+                  className="ic-memory-trigger"
+                  aria-label="Manage global memories"
+                  onClick={() => {
+                    setIsModelMenuOpen(false);
+                    setIsMemoryPanelOpen(true);
+                    void loadMemories();
+                  }}
+                >
+                  <MemoryIcon />
+                  <span>Memories</span>
+                  {enabledMemoryCount > 0 ? (
+                    <small>{enabledMemoryCount}</small>
+                  ) : null}
+                </button>
+
                 <div
                   className="ic-model-selector"
                   ref={modelMenuRef}
@@ -2349,6 +2618,189 @@ export function ChatShell() {
             </div>
           </section>
         </div>
+
+        <AnimatePresence>
+          {isMemoryPanelOpen ? (
+            <>
+              <motion.button
+                type="button"
+                className="ic-memory-backdrop"
+                aria-label="Close memories"
+                onClick={() => setIsMemoryPanelOpen(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              />
+
+              <motion.aside
+                className="ic-memory-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="memory-panel-title"
+                initial={{ opacity: 0, x: 28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 24 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <header className="ic-memory-panel-header">
+                  <div>
+                    <span>Global context</span>
+                    <h2 id="memory-panel-title">Memories</h2>
+                    <p>Explicit details IntraCore may use in every chat.</p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Close memories"
+                    onClick={() => setIsMemoryPanelOpen(false)}
+                  >
+                    ×
+                  </button>
+                </header>
+
+                <form className="ic-memory-form" onSubmit={saveMemory}>
+                  <label htmlFor="memory-content">
+                    {editingMemoryId === null ? "New memory" : "Edit memory"}
+                  </label>
+                  <textarea
+                    id="memory-content"
+                    rows={4}
+                    value={memoryContent}
+                    onChange={(event) => {
+                      setMemoryContent(event.target.value);
+                      setMemoryError(null);
+                    }}
+                    placeholder="Add a fact, preference, or instruction…"
+                    disabled={isSavingMemory}
+                  />
+
+                  <div className="ic-memory-form-footer">
+                    <select
+                      value={memoryKind}
+                      onChange={(event) =>
+                        setMemoryKind(event.target.value as MemoryKind)
+                      }
+                      disabled={isSavingMemory}
+                      aria-label="Memory kind"
+                    >
+                      <option value="fact">Fact</option>
+                      <option value="preference">Preference</option>
+                      <option value="instruction">Instruction</option>
+                    </select>
+
+                    <div>
+                      {editingMemoryId !== null ? (
+                        <button
+                          type="button"
+                          className="ic-memory-secondary"
+                          onClick={resetMemoryForm}
+                          disabled={isSavingMemory}
+                        >
+                          Cancel
+                        </button>
+                      ) : null}
+                      <button
+                        type="submit"
+                        className="ic-memory-save"
+                        disabled={isSavingMemory || !memoryContent.trim()}
+                      >
+                        {isSavingMemory
+                          ? "Saving…"
+                          : editingMemoryId === null
+                            ? "Add memory"
+                            : "Save changes"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                {memoryError ? (
+                  <p className="ic-memory-error" role="alert">
+                    {memoryError}
+                  </p>
+                ) : null}
+
+                <div className="ic-memory-list" aria-live="polite">
+                  {isLoadingMemories ? (
+                    <p className="ic-memory-list-state">Loading memories…</p>
+                  ) : null}
+
+                  {!isLoadingMemories && memories.length === 0 ? (
+                    <div className="ic-memory-empty">
+                      <MemoryIcon />
+                      <strong>No memories yet</strong>
+                      <p>Only details you add manually will be remembered.</p>
+                    </div>
+                  ) : null}
+
+                  {!isLoadingMemories
+                    ? memories.map((memory) => (
+                        <article
+                          key={memory.id}
+                          className={`ic-memory-card ${
+                            memory.is_enabled ? "" : "is-disabled"
+                          }`}
+                        >
+                          <div className="ic-memory-card-top">
+                            <span>{memory.kind}</span>
+                            <button
+                              type="button"
+                              className="ic-memory-toggle"
+                              role="switch"
+                              aria-checked={memory.is_enabled}
+                              aria-label={`${
+                                memory.is_enabled ? "Disable" : "Enable"
+                              } memory`}
+                              disabled={busyMemoryId !== null}
+                              onClick={() => void toggleMemory(memory)}
+                            >
+                              <span />
+                            </button>
+                          </div>
+
+                          <p>{memory.content}</p>
+
+                          {memory.source_chat_id || memory.source_message_id ? (
+                            <small>
+                              Source
+                              {memory.source_chat_id
+                                ? ` chat ${memory.source_chat_id}`
+                                : ""}
+                              {memory.source_message_id
+                                ? ` · message ${memory.source_message_id}`
+                                : ""}
+                            </small>
+                          ) : null}
+
+                          <div className="ic-memory-card-actions">
+                            <button
+                              type="button"
+                              disabled={busyMemoryId !== null}
+                              onClick={() => {
+                                setEditingMemoryId(memory.id);
+                                setMemoryContent(memory.content);
+                                setMemoryKind(memory.kind);
+                                setMemoryError(null);
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="is-danger"
+                              disabled={busyMemoryId !== null}
+                              onClick={() => void deleteMemory(memory)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </article>
+                      ))
+                    : null}
+                </div>
+              </motion.aside>
+            </>
+          ) : null}
+        </AnimatePresence>
       </main>
     </MotionConfig>
   );

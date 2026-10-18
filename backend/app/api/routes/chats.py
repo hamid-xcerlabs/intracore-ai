@@ -316,6 +316,7 @@ async def stream_chat_message(
                     session=session,
                     chat_id=chat_id,
                     graph_messages=prepared.graph_messages,
+                    memory_context=prepared.memory_context,
                     title_source=prepared.title_source,
                     should_generate_title=prepared.should_generate_title,
                     model_name=model_name,
