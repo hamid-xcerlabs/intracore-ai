@@ -11,6 +11,7 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
     Request,
     Response,
     status,
@@ -173,6 +174,8 @@ async def list_chats(
 async def list_chat_messages(
     chat_id: int,
     session: DatabaseSession,
+    limit: int | None = Query(default=None, ge=1, le=500, description="Maximum messages to return."),
+    offset: int = Query(default=0, ge=0, description="Number of messages to skip from the start."),
 ) -> list[MessageResponse]:
     # Verify that the parent conversation exists before loading its history.
     chat = await chat_repository.get_by_id(
@@ -193,10 +196,13 @@ async def list_chat_messages(
         chat_id=chat_id,
     )
 
+    # Apply offset and optional limit in Python — list is already ordered.
+    paginated = messages[offset:] if limit is None else messages[offset: offset + limit]
+
     # Convert ORM objects into the stable public response contract.
     return [
         MessageResponse.model_validate(message)
-        for message in messages
+        for message in paginated
     ]
 
 
