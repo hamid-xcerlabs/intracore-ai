@@ -478,3 +478,50 @@ async def delete_chat(
 
     # A successful DELETE with status 204 has no JSON response body.
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# GET /chats/{chat_id}/export returns the conversation as a Markdown document.
+@router.get(
+    "/{chat_id}/export",
+    response_class=Response,
+    responses={200: {"content": {"text/markdown": {}}}},
+)
+async def export_chat(
+    chat_id: int,
+    session: DatabaseSession,
+) -> Response:
+    chat = await chat_repository.get_by_id(session=session, chat_id=chat_id)
+
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found.",
+        )
+
+    messages = await message_repository.list_for_chat(
+        session=session,
+        chat_id=chat_id,
+    )
+
+    lines: list[str] = [
+        f"# {chat.title}",
+        "",
+        f"*Exported from IntraCore AI — {chat.updated_at.strftime('%Y-%m-%d %H:%M')} UTC*",
+        "",
+    ]
+
+    for message in sorted(messages, key=lambda m: m.sequence_number):
+        if message.role == "user":
+            lines += ["## You", "", message.content, ""]
+        elif message.role == "assistant":
+            badge = f" *({message.model_name})*" if message.model_name else ""
+            lines += [f"## IntraCore{badge}", "", message.content, ""]
+
+    filename = chat.title.lower().replace(" ", "-")
+    return Response(
+        content="\n".join(lines),
+        media_type="text/markdown",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}.md"',
+        },
+    )
