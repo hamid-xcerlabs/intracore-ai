@@ -3730,6 +3730,29 @@ textarea:focus-visible {
   }
 }
 
+/* ── Regenerate button ──────────────────────────────────────────────────────── */
+
+.ic-regen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255 255 255 / 0.1);
+  background: rgba(255 255 255 / 0.05);
+  color: rgba(255 255 255 / 0.5);
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.ic-regen-btn:hover {
+  color: rgba(255 255 255 / 0.85);
+  background: rgba(255 255 255 / 0.1);
+  border-color: rgba(255 255 255 / 0.2);
+}
+
 /* ── Export button ──────────────────────────────────────────────────────────── */
 
 .ic-export-btn {

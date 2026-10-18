@@ -1070,12 +1070,12 @@ export function ChatShell() {
     el.style.height = `${el.scrollHeight}px`;
   }
 
-  async function sendMessage() {
+  async function sendMessage(overrideContent?: string) {
     if (activeChatId === null || isMessageViewLoading || isSendingMessage) {
       return;
     }
 
-    const cleanContent = draftMessage.trim();
+    const cleanContent = (overrideContent ?? draftMessage).trim();
     const targetChatId = activeChatId;
     const targetModelName = selectedModelName;
 
@@ -1115,9 +1115,11 @@ export function ChatShell() {
     setSendError(null);
     setMessages((current) => sortMessages([...current, optimisticMessage]));
     setMessagesChatId(targetChatId);
-    setDraftMessage("");
-    if (composerTextareaRef.current) {
-      composerTextareaRef.current.style.height = "auto";
+    if (!overrideContent) {
+      setDraftMessage("");
+      if (composerTextareaRef.current) {
+        composerTextareaRef.current.style.height = "auto";
+      }
     }
 
     const requestId = nextStreamRequestIdRef.current;
@@ -1505,6 +1507,18 @@ export function ChatShell() {
   }
 
   // Commit 6: copy message content to clipboard
+  async function regenerateLastResponse() {
+    if (isSendingMessage || !activeChat || !selectedModelName) return;
+
+    const lastUserMessage = [...activeMessages]
+      .reverse()
+      .find((m) => m.role === "user");
+
+    if (!lastUserMessage) return;
+
+    void sendMessage(lastUserMessage.content);
+  }
+
   async function copyMessage(message: Message) {
     try {
       await navigator.clipboard.writeText(message.content);
@@ -2065,6 +2079,12 @@ export function ChatShell() {
                         {activeMessages.map((message) => {
                           const isUser = message.role === "user";
                           const isCopied = copiedMessageId === message.id;
+                          const isLastAssistant =
+                            !isUser &&
+                            message.id ===
+                              [...activeMessages]
+                                .reverse()
+                                .find((m) => m.role === "assistant")?.id;
 
                           return (
                             <motion.article
@@ -2162,6 +2182,17 @@ export function ChatShell() {
                                           {isCopied ? "Copied" : "Copy"}
                                         </span>
                                       </button>
+
+                                      {isLastAssistant && !isSendingMessage ? (
+                                        <button
+                                          type="button"
+                                          className="ic-regen-btn"
+                                          aria-label="Regenerate response"
+                                          onClick={() => void regenerateLastResponse()}
+                                        >
+                                          ↺ Regenerate
+                                        </button>
+                                      ) : null}
                                     </div>
                                   </>
                                 )}
