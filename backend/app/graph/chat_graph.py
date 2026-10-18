@@ -38,6 +38,10 @@ class ChatState(TypedDict):
     # add_messages controls how newly returned messages are merged.
     messages: Annotated[list[AnyMessage], add_messages]
 
+    # ConversationService supplies a bounded block of explicit global
+    # memories. The graph remains database-agnostic.
+    memory_context: str
+
     # Each request carries its validated model; no shared provider state is
     # mutated when different conversations choose different local models.
     model_name: str
@@ -49,13 +53,19 @@ async def generate_response(
     state: ChatState,
 ) -> dict[str, list[AnyMessage]]:
     # Build the ordered message list sent to the model.
-    model_messages = [
+    model_messages: list[AnyMessage] = [
         # Add the short application-level system prompt first.
         SystemMessage(content=INTRACORE_SYSTEM_PROMPT),
-
-        # Add all current user and assistant conversation messages.
-        *state["messages"],
     ]
+
+    # Memory follows the core prompt so it cannot outrank application rules,
+    # and precedes only the selected chat's current durable history.
+    if state["memory_context"]:
+        model_messages.append(
+            SystemMessage(content=state["memory_context"])
+        )
+
+    model_messages.extend(state["messages"])
 
     # Send the prepared messages through LangChain ChatOllama.
     # Ollama runs the model configured in the backend .env file.
