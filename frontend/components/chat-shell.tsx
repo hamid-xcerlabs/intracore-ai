@@ -1359,6 +1359,34 @@ export function ChatShell() {
     streamAbortControllerRef.current?.abort();
   }
 
+  function exportChatAsMarkdown() {
+    if (!activeChat || activeMessages.length === 0) return;
+
+    const lines: string[] = [
+      `# ${activeChat.title}`,
+      ``,
+      `*Exported from IntraCore AI — ${new Date().toLocaleString()}*`,
+      ``,
+    ];
+
+    for (const message of activeMessages) {
+      if (message.role === "user") {
+        lines.push(`## You`, ``, message.content, ``);
+      } else if (message.role === "assistant") {
+        const badge = message.model_name ? ` *(${message.model_name})*` : "";
+        lines.push(`## IntraCore${badge}`, ``, message.content, ``);
+      }
+    }
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${activeChat.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   function jumpToLatest() {
     const container = conversationScrollRef.current;
 
@@ -1732,6 +1760,18 @@ export function ChatShell() {
               </div>
 
               <div className="ic-header-actions">
+                {activeChat && activeMessages.length > 0 ? (
+                  <button
+                    type="button"
+                    className="ic-export-btn"
+                    aria-label="Export conversation as Markdown"
+                    onClick={exportChatAsMarkdown}
+                  >
+                    <DownloadIcon />
+                    <span>Export</span>
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   className="ic-memory-trigger"

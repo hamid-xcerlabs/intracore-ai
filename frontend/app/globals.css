@@ -3730,6 +3730,41 @@ textarea:focus-visible {
   }
 }
 
+/* ── Export button ──────────────────────────────────────────────────────────── */
+
+.ic-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255 255 255 / 0.12);
+  background: rgba(255 255 255 / 0.05);
+  color: rgba(255 255 255 / 0.6);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.ic-export-btn:hover {
+  color: rgba(255 255 255 / 0.9);
+  background: rgba(255 255 255 / 0.1);
+  border-color: rgba(255 255 255 / 0.25);
+}
+
+.ic-export-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .ic-export-btn span { display: none; }
+  .ic-export-btn { padding: 6px 8px; }
+}
+
 /* ── Sidebar conversation search ───────────────────────────────────────────── */
 
 .ic-chat-search-wrap {
