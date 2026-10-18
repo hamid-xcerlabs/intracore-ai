@@ -1708,7 +1708,12 @@ export function ChatShell() {
 
                           <span className="ic-chat-copy">
                             <strong>{chat.title}</strong>
-                            <small>{formatChatDate(chat.updated_at)}</small>
+                            <small>
+                              {formatChatDate(chat.updated_at)}
+                              {chat.message_count > 0
+                                ? ` · ${chat.message_count} msg`
+                                : ""}
+                            </small>
                           </span>
                         </button>
                       )}

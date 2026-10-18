@@ -42,3 +42,6 @@ class ChatResponse(BaseModel):
 
     # Last-update timestamp supplied by the database.
     updated_at: datetime
+
+    # Total number of messages in this conversation (user + assistant).
+    message_count: int = 0

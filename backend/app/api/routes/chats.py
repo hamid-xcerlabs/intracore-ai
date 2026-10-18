@@ -16,6 +16,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import StreamingResponse
+from sqlalchemy import func, select as sa_select
 
 # AsyncSession is the database session type injected into each endpoint.
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +25,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_database_session
 
 # The repository owns reusable SQLAlchemy persistence operations.
+from app.db.models.chat import Chat
+from app.db.models.message import Message as MessageModel
 from app.repositories.chat_repository import chat_repository
 from app.repositories.message_repository import (
     MessageSequenceConflictError,
@@ -143,13 +146,22 @@ async def create_chat(
 async def list_chats(
     session: DatabaseSession,
 ) -> list[ChatResponse]:
-    # Load chats through the repository rather than querying in the route.
-    chats = await chat_repository.list_all(session)
+    # Count messages per chat in one query using a correlated subquery.
+    count_subq = (
+        sa_select(func.count())
+        .where(MessageModel.chat_id == Chat.id)
+        .correlate(Chat)
+        .scalar_subquery()
+    )
+    statement = (
+        sa_select(Chat, count_subq.label("message_count"))
+        .order_by(Chat.updated_at.desc(), Chat.id.desc())
+    )
+    rows = (await session.execute(statement)).all()
 
-    # Convert each ORM object into a validated API response.
     return [
-        ChatResponse.model_validate(chat)
-        for chat in chats
+        ChatResponse.model_validate(chat, update={"message_count": count})
+        for chat, count in rows
     ]
 
 
