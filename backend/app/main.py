@@ -37,12 +37,11 @@ app = FastAPI(
     description="Local-first backend API for IntraCore AI.",
     
 )
-# Allow only the configured local frontend origin.
-# A wildcard is intentionally avoided so random websites cannot call the
-# local IntraCore API through the user's browser.
+# Allow any localhost port so the frontend works regardless of which port
+# Next.js binds to (3000, 3001, etc.).  External origins are still blocked.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

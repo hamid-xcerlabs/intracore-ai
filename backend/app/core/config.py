@@ -30,7 +30,7 @@ class Settings(BaseSettings): #BaseSettings .env ko read karke values Python obj
     database_url: str = "sqlite+aiosqlite:///./data/intracore.db"
     
     # Browser origin allowed to call the local FastAPI backend during development.
-    frontend_origin: str = "http://localhost:3000"
+    frontend_origin: str = "http://localhost:3001"
 
     # Enable development-only endpoints (e.g. POST /chat/test).
     # Keep false in production.

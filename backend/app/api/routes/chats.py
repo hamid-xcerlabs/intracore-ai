@@ -160,10 +160,12 @@ async def list_chats(
     )
     rows = (await session.execute(statement)).all()
 
-    return [
-        ChatResponse.model_validate(chat, update={"message_count": count})
-        for chat, count in rows
-    ]
+    result = []
+    for chat, count in rows:
+        data = chat.__dict__.copy()
+        data["message_count"] = count
+        result.append(ChatResponse.model_validate(data))
+    return result
 
 
 # GET /chats/{chat_id}/messages returns one conversation's durable history.
