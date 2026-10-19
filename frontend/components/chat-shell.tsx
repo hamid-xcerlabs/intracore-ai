@@ -1733,6 +1733,7 @@ export function ChatShell() {
                             <div
                               className="ic-chat-menu-dropdown"
                               style={menuPos ? { position: "fixed", left: menuPos.x, top: menuPos.y } : undefined}
+                              onPointerDown={(e) => e.nativeEvent.stopImmediatePropagation()}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button
