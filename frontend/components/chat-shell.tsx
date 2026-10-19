@@ -563,6 +563,9 @@ export function ChatShell() {
   const [menuOpenChatId, setMenuOpenChatId] = useState<number | null>(null);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
+  // Mobile sidebar drawer
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [modelOptions, setModelOptions] = useState<ChatModelOption[]>([]);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
@@ -1593,8 +1596,17 @@ export function ChatShell() {
         <div className="ic-app-aurora ic-app-aurora-two" aria-hidden="true" />
 
         <div className="ic-workspace">
+          {/* ── Mobile sidebar backdrop ── */}
+          {isSidebarOpen ? (
+            <div
+              className="ic-sidebar-backdrop"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-hidden="true"
+            />
+          ) : null}
+
           {/* ── Sidebar ── */}
-          <aside className="ic-sidebar">
+          <aside className={`ic-sidebar${isSidebarOpen ? " is-open" : ""}`}>
             <div className="ic-sidebar-top">
               <div className="ic-brand">
                 <div className="ic-brand-mark">
@@ -1698,6 +1710,7 @@ export function ChatShell() {
                           onClick={() => {
                             activeChatIdRef.current = chat.id;
                             setActiveChatId(chat.id);
+                            setIsSidebarOpen(false);
                           }}
                           className="ic-chat-select"
                         >
@@ -1782,6 +1795,17 @@ export function ChatShell() {
           {/* ── Main panel ── */}
           <section className="ic-main">
             <header className="ic-header">
+              <button
+                type="button"
+                className="ic-hamburger"
+                aria-label="Open conversations"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+              </button>
+
               <div className="ic-header-title">
                 <div className="ic-header-mark" aria-hidden="true">
                   <Image
