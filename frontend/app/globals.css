@@ -3384,17 +3384,17 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #a1a1aa;
+  color: #71717a;
   font-size: 0;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.12s, background 0.12s;
 }
 
 .ic-regen-btn:hover {
@@ -3403,8 +3403,8 @@ textarea:focus-visible {
 }
 
 .ic-regen-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
@@ -3559,8 +3559,8 @@ textarea:focus-visible {
 .ic-message-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-top: 6px;
+  gap: 0px;
+  margin-top: 4px;
   opacity: 0;
   transition: opacity 0.18s;
 }
@@ -3573,17 +3573,17 @@ textarea:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #a1a1aa;
+  color: #71717a;
   font-size: 0;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.12s, background 0.12s;
 }
 
 .ic-copy-btn:hover {
@@ -3596,8 +3596,8 @@ textarea:focus-visible {
 }
 
 .ic-copy-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 

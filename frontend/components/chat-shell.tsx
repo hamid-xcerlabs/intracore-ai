@@ -319,22 +319,9 @@ function MemoryIcon() {
 
 function CopyIcon() {
   return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect
-        x="7"
-        y="7"
-        width="9"
-        height="9"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.35"
-      />
-      <path
-        d="M13 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"
-        stroke="currentColor"
-        strokeWidth="1.35"
-        strokeLinecap="round"
-      />
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M15 9V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
     </svg>
   );
 }
@@ -2204,9 +2191,9 @@ export function ChatShell() {
                                           aria-label="Regenerate response"
                                           onClick={() => void regenerateLastResponse()}
                                         >
-                                          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2" />
-                                            <polyline points="11 2 13.5 4.7 11 7.5" />
+                                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                            <path d="M3 3v5h5" />
                                           </svg>
                                         </button>
                                       ) : null}
