@@ -559,6 +559,10 @@ export function ChatShell() {
   const [renameDraft, setRenameDraft] = useState("");
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
+  // 3-dot context menu state
+  const [menuOpenChatId, setMenuOpenChatId] = useState<number | null>(null);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+
   const [modelOptions, setModelOptions] = useState<ChatModelOption[]>([]);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
@@ -883,6 +887,14 @@ export function ChatShell() {
 
     return () => window.clearTimeout(timeoutId);
   }, [loadModels]);
+
+  // Close 3-dot dropdown when clicking outside
+  useEffect(() => {
+    if (menuOpenChatId === null) return;
+    function handleClick() { setMenuOpenChatId(null); }
+    document.addEventListener("pointerdown", handleClick);
+    return () => document.removeEventListener("pointerdown", handleClick);
+  }, [menuOpenChatId]);
 
   useEffect(() => {
     if (!isModelMenuOpen) {
@@ -1689,43 +1701,61 @@ export function ChatShell() {
                           }}
                           className="ic-chat-select"
                         >
-                          <span className="ic-chat-icon">
-                            <MessageIcon />
-                          </span>
-
                           <span className="ic-chat-copy">
                             <strong>{chat.title}</strong>
-                            <small>
-                              {formatChatDate(chat.updated_at)}
-                              {chat.message_count > 0
-                                ? ` · ${chat.message_count} msg`
-                                : ""}
-                            </small>
                           </span>
                         </button>
                       )}
 
                       {!isRenaming ? (
                         <div className="ic-chat-actions">
-                          {/* Commit 2: pencil rename trigger */}
                           <button
                             type="button"
-                            onClick={() => startRenaming(chat)}
-                            aria-label={`Rename ${chat.title}`}
-                            className="ic-rename-chat"
+                            className="ic-chat-menu-btn"
+                            aria-label="Chat options"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              setMenuPos({ x: rect.right - 130, y: rect.bottom + 4 });
+                              setMenuOpenChatId(
+                                menuOpenChatId === chat.id ? null : chat.id,
+                              );
+                            }}
                           >
-                            <PencilIcon />
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <circle cx="5" cy="12" r="1.5" />
+                              <circle cx="12" cy="12" r="1.5" />
+                              <circle cx="19" cy="12" r="1.5" />
+                            </svg>
                           </button>
 
-                          {/* Commit 1: delete with confirmation */}
-                          <button
-                            type="button"
-                            onClick={() => void deleteChat(chat.id)}
-                            aria-label={`Delete ${chat.title}`}
-                            className="ic-delete-chat"
-                          >
-                            <DeleteIcon />
-                          </button>
+                          {menuOpenChatId === chat.id ? (
+                            <div
+                              className="ic-chat-menu-dropdown"
+                              style={menuPos ? { position: "fixed", left: menuPos.x, top: menuPos.y } : undefined}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuOpenChatId(null);
+                                  startRenaming(chat);
+                                }}
+                              >
+                                Rename
+                              </button>
+                              <button
+                                type="button"
+                                className="is-danger"
+                                onClick={() => {
+                                  setMenuOpenChatId(null);
+                                  void deleteChat(chat.id);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                     </motion.div>
