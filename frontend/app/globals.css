@@ -1125,28 +1125,25 @@ textarea:focus-visible {
 .ic-user-bubble {
   width: fit-content;
   max-width: min(76%, 620px);
-  border-radius: 20px 20px 7px 20px;
-  background:
-    linear-gradient(145deg, #26232d, #16151c);
-  padding: 12px 15px 9px;
-  color: #fff;
-  box-shadow:
-    0 18px 38px -24px rgba(22, 18, 28, 0.75);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #18181b;
 }
 
 .ic-user-bubble p {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.62;
 }
 
 .ic-user-bubble time {
   display: block;
-  margin-top: 5px;
-  color: rgba(255, 255, 255, 0.48);
-  font-size: 8px;
+  margin-top: 4px;
+  color: #a1a1aa;
+  font-size: 10px;
   text-align: right;
 }
 
@@ -1611,23 +1608,20 @@ textarea:focus-visible {
 
 .ic-user-bubble {
   max-width: min(68%, 560px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px 18px 6px 18px;
-  background: linear-gradient(145deg, #252330, #17161d);
-  padding: 10px 14px 8px;
-  box-shadow:
-    0 12px 26px -18px rgba(20, 17, 27, 0.78),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .ic-user-bubble p {
-  font-size: 12.5px;
+  font-size: 13.5px;
   line-height: 1.55;
 }
 
 .ic-user-bubble time {
   margin-top: 4px;
-  color: rgba(255, 255, 255, 0.46);
+  color: #a1a1aa;
 }
 
 .ic-assistant-content {
@@ -2523,10 +2517,10 @@ textarea:focus-visible {
   position: relative;
   width: fit-content;
   max-width: 100%;
-  border-radius: 16px 16px 4px 16px;
-  background: #18181b;
-  padding: 10px 14px;
-  color: #ffffff;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #18181b;
 }
 
 .ic-saved-user-bubble::after {
