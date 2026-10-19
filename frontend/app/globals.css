@@ -3383,22 +3383,29 @@ textarea:focus-visible {
 .ic-regen-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 6px;
-  border: 1px solid #e4e4e7;
-  background: #f4f4f5;
-  color: #71717a;
-  font-size: 0.72rem;
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  font-size: 0;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .ic-regen-btn:hover {
   color: #18181b;
-  background: #e4e4e7;
-  border-color: #a1a1aa;
+  background: #f4f4f5;
+}
+
+.ic-regen-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* ── Export button ──────────────────────────────────────────────────────────── */
@@ -3540,15 +3547,10 @@ textarea:focus-visible {
 
 .ic-model-badge {
   display: inline-block;
-  margin-top: 6px;
-  padding: 2px 7px;
-  border-radius: 20px;
+  margin-top: 4px;
   font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-weight: 400;
   color: #a1a1aa;
-  background: #f4f4f5;
-  border: 1px solid #e4e4e7;
   user-select: none;
 }
 
@@ -3557,8 +3559,8 @@ textarea:focus-visible {
 .ic-message-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 2px;
+  margin-top: 6px;
   opacity: 0;
   transition: opacity 0.18s;
 }
@@ -3570,33 +3572,32 @@ textarea:focus-visible {
 .ic-copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 7px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 6px;
-  border: 1px solid #e4e4e7;
-  background: #f4f4f5;
-  color: #71717a;
-  font-size: 0.72rem;
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  font-size: 0;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .ic-copy-btn:hover {
   color: #18181b;
-  background: #e4e4e7;
-  border-color: #a1a1aa;
+  background: #f4f4f5;
 }
 
 .ic-copy-btn.is-copied {
   color: #16a34a;
-  border-color: rgba(22, 163, 74, 0.3);
-  background: rgba(22, 163, 74, 0.06);
 }
 
 .ic-copy-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
