@@ -2195,9 +2195,6 @@ export function ChatShell() {
                                         ) : (
                                           <CopyIcon />
                                         )}
-                                        <span>
-                                          {isCopied ? "Copied" : "Copy"}
-                                        </span>
                                       </button>
 
                                       {isLastAssistant && !isSendingMessage ? (
@@ -2207,7 +2204,10 @@ export function ChatShell() {
                                           aria-label="Regenerate response"
                                           onClick={() => void regenerateLastResponse()}
                                         >
-                                          ↺ Regenerate
+                                          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c1.8 0 3.4.87 4.4 2.2" />
+                                            <polyline points="11 2 13.5 4.7 11 7.5" />
+                                          </svg>
                                         </button>
                                       ) : null}
                                     </div>
