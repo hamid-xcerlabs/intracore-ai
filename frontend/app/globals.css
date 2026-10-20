@@ -124,15 +124,15 @@ textarea:focus-visible {
 /* ── Sidebar top / brand ── */
 
 .ic-sidebar-top {
-  padding: 10px 10px 4px;
+  padding: 12px 12px 5px;
 }
 
 .ic-sidebar-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
-  padding: 0 4px;
+  height: 40px;
+  padding: 0 2px;
 }
 
 .ic-brand-inline {
@@ -164,19 +164,26 @@ textarea:focus-visible {
 
 .ic-brand-name {
   overflow: hidden;
-  color: #111118;
-  font-size: 14px;
+  color: #0d0d0d;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.015em;
+  line-height: 20px;
+  letter-spacing: -0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ic-brand-chevron {
+  flex: 0 0 auto;
+  margin-left: -4px;
+  color: #8a8a8a;
 }
 
 /* Action icon buttons in sidebar header */
 .ic-sidebar-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .ic-sidebar-action-btn {
@@ -188,7 +195,7 @@ textarea:focus-visible {
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #71717a;
+  color: #5f6368;
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease;
 }
@@ -214,15 +221,16 @@ textarea:focus-visible {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 6px 12px;
-  margin-top: 2px;
+  min-height: 36px;
+  padding: 7px 6px;
+  margin-top: 11px;
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #18181b;
+  color: #0d0d0d;
   cursor: pointer;
-  font-size: 13.5px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
   font-family: inherit;
   text-align: left;
   transition: background 120ms ease;
@@ -239,7 +247,9 @@ textarea:focus-visible {
 
 .ic-new-chat-row svg {
   flex-shrink: 0;
-  color: #52525b;
+  width: 18px;
+  height: 18px;
+  color: #4f5358;
 }
 
 /* Desktop sidebar collapsed state */

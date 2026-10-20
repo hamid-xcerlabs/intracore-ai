@@ -1625,6 +1625,22 @@ export function ChatShell() {
                     />
                   </div>
                   <strong className="ic-brand-name">IntraCore AI</strong>
+                  <svg
+                    className="ic-brand-chevron"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                  >
+                    <path
+                      d="m5 6.5 3 3 3-3"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
 
                 <div className="ic-sidebar-actions">
