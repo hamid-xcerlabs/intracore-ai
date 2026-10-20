@@ -706,31 +706,12 @@ textarea:focus-visible {
   backdrop-filter: blur(24px);
 }
 
-.ic-model-menu-search {
-  padding: 10px;
-  border-bottom: 1px solid rgba(76, 63, 87, 0.07);
-}
-
-.ic-model-menu-search input {
-  width: 100%;
-  border: 1px solid rgba(85, 72, 96, 0.1);
-  border-radius: 11px;
-  padding: 9px 10px;
-  background: rgba(248, 247, 249, 0.9);
-  color: #29262e;
-  font: inherit;
-  font-size: 12px;
-  outline: none;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
-}
-
-.ic-model-menu-search input:focus {
-  border-color: rgba(143, 100, 181, 0.22);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(177, 137, 212, 0.08);
+.ic-model-menu-header {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #a1a1aa;
+  letter-spacing: 0.01em;
 }
 
 .ic-model-options {
@@ -790,24 +771,11 @@ textarea:focus-visible {
   font-size: 9px;
 }
 
-.ic-model-installed-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-radius: 50%;
-  background: #39d38c;
-  box-shadow:
-    0 0 0 4px rgba(57, 211, 140, 0.09),
-    0 0 9px rgba(57, 211, 140, 0.34);
-}
-
-.ic-model-download-icon {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  place-items: center;
-  color: #8d8790;
+.ic-model-check {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: #18181b;
+  font-weight: 500;
 }
 
 .ic-model-empty,

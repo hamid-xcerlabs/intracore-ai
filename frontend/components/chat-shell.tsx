@@ -2440,25 +2440,14 @@ export function ChatShell() {
                                 exit={{ opacity: 0, y: 4, scale: 0.99 }}
                                 transition={{ duration: 0.16 }}
                               >
-                                <div className="ic-model-menu-search">
-                                  <input
-                                    value={modelSearch}
-                                    onChange={(event) => {
-                                      setModelSearch(event.target.value);
-                                      setModelNotice(null);
-                                    }}
-                                    placeholder="Find model…"
-                                    aria-label="Find model"
-                                    autoFocus
-                                  />
-                                </div>
+                                <div className="ic-model-menu-header">Select model</div>
 
                                 <div
                                   className="ic-model-options"
                                   role="listbox"
                                   aria-label="Available local models"
                                 >
-                                  {filteredModelOptions.map((model) => {
+                                  {modelOptions.map((model) => {
                                     const isSelected = model.name === selectedModelName;
                                     return (
                                       <button
@@ -2476,7 +2465,6 @@ export function ChatShell() {
                                           setSelectedModelName(model.name);
                                           window.localStorage.setItem(MODEL_PREFERENCE_KEY, model.name);
                                           setModelNotice(null);
-                                          setModelSearch("");
                                           setIsModelMenuOpen(false);
                                         }}
                                       >
@@ -2486,18 +2474,14 @@ export function ChatShell() {
                                             <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" · ")}</small>
                                           ) : null}
                                         </span>
-                                        {model.installed ? (
-                                          <span className="ic-model-installed-dot" aria-label="Installed" />
-                                        ) : (
-                                          <span className="ic-model-download-icon" aria-label="Download support coming soon">
-                                            <DownloadIcon />
-                                          </span>
-                                        )}
+                                        {isSelected ? (
+                                          <span className="ic-model-check" aria-label="Selected">✓</span>
+                                        ) : null}
                                       </button>
                                     );
                                   })}
-                                  {!isLoadingModels && filteredModelOptions.length === 0 ? (
-                                    <p className="ic-model-empty">No matching models.</p>
+                                  {!isLoadingModels && modelOptions.length === 0 ? (
+                                    <p className="ic-model-empty">No models found.</p>
                                   ) : null}
                                 </div>
 
