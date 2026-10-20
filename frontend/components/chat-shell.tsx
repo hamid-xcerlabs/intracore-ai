@@ -108,6 +108,45 @@ function animatedEmojiChildren(children: ReactNode) {
   );
 }
 
+function CodeBlock({ children }: { children?: ReactNode }) {
+  const [copied, setCopied] = useState(false);
+
+  let lang = "";
+  let codeText = "";
+  Children.forEach(children, (child) => {
+    if (child && typeof child === "object" && "props" in child) {
+      const props = (child as { props: Record<string, unknown> }).props;
+      const className = typeof props.className === "string" ? props.className : "";
+      lang = className.replace("language-", "");
+      codeText = typeof props.children === "string" ? props.children.replace(/\n$/, "") : "";
+    }
+  });
+
+  const handleCopy = () => {
+    void navigator.clipboard.writeText(codeText).then(() => {
+      setCopied(true);
+      setTimeout(() => { setCopied(false); }, 2000);
+    });
+  };
+
+  return (
+    <div className="ic-code-block">
+      <div className="ic-code-header">
+        <span className="ic-code-lang">{lang || "code"}</span>
+        <button
+          type="button"
+          className={`ic-code-copy-btn${copied ? " is-copied" : ""}`}
+          onClick={handleCopy}
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
+          <span>{copied ? "Copied" : "Copy code"}</span>
+        </button>
+      </div>
+      <pre>{children}</pre>
+    </div>
+  );
+}
+
 function AnimatedMarkdown({ content }: { content: string }) {
   return (
     <ReactMarkdown
@@ -116,6 +155,7 @@ function AnimatedMarkdown({ content }: { content: string }) {
         p: ({ children }) => (
           <p>{animatedEmojiChildren(children)}</p>
         ),
+        pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
       }}
     >
       {content}
@@ -412,10 +452,10 @@ function StreamingAssistantView({
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 14, scale: 0.992 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -5, scale: 0.996 }}
-      transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.22 }}
       className="ic-message ic-message-assistant ic-stream-message"
     >
       <div className="ic-assistant-avatar ic-avatar-live">
@@ -432,132 +472,64 @@ function StreamingAssistantView({
       <div className="ic-assistant-column">
         <div className="ic-message-identity">
           <span>IntraCore</span>
-          <span className="ic-message-time">
-            {stream.status === "stopped"
-              ? "Stopped"
-              : stream.status === "interrupted"
-                ? "Interrupted"
-                : hasAnswer
-                  ? "Streaming"
-                  : preResponseStatus}
-          </span>
+          {!hasAnswer && isActive ? null : (
+            <span className="ic-message-time">
+              {stream.status === "stopped"
+                ? "Stopped"
+                : stream.status === "interrupted"
+                  ? "Interrupted"
+                  : null}
+            </span>
+          )}
         </div>
 
-        <motion.section
-          layout
-          transition={{
-            layout: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-          }}
-          className={`ic-stream-card ${
-            hasAnswer ? "has-answer" : "is-thinking"
-          }`}
-        >
-          {isActive ? (
-            <div className="ic-stream-light-beam" aria-hidden="true" />
-          ) : null}
-
-          <header className={`ic-stream-header ${hasAnswer ? "is-compact" : ""}`}>
-            <div className="ic-stream-title">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.span
-                  key={statusLabel}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.18 }}
-                  className="ic-stream-status"
-                >
-                  {statusLabel}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-
-            <div className="ic-stream-meta">
-              {isActive ? (
-                <span className="ic-activity-dots" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </span>
+        <AnimatePresence mode="wait" initial={false}>
+          {!hasAnswer && isActive ? (
+            <motion.div
+              key="thinking"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="ic-thinking-dots"
+              aria-label="Thinking"
+            >
+              <span /><span /><span />
+            </motion.div>
+          ) : hasAnswer ? (
+            <motion.div
+              key="answer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.18 }}
+              className="ic-assistant-content assistant-markdown"
+            >
+              <AnimatedMarkdown content={markdownForStreaming(stream.content)} />
+              {stream.status === "streaming" ? (
+                <span aria-hidden="true" className="ic-stream-caret" />
               ) : null}
-            </div>
-          </header>
-
-          <AnimatePresence mode="wait" initial={false}>
-            {!hasAnswer && isActive ? (
-              <motion.div
-                key="thinking"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, height: 0, filter: "blur(4px)" }}
-                transition={{ duration: 0.24 }}
-                className="ic-thinking-stage"
-              >
-                Preparing a response
-              </motion.div>
-            ) : hasAnswer ? (
-              <motion.div
-                key="answer"
-                layout
-                initial={{ opacity: 0, y: 7 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28 }}
-                className="ic-stream-answer"
-              >
-                <div className="assistant-markdown">
-                  <AnimatedMarkdown
-                    content={markdownForStreaming(stream.content)}
-                  />
-                </div>
-
-                <AnimatePresence initial={false}>
-                  {stream.status === "streaming" ? (
-                    <motion.span
-                      key="caret"
-                      aria-hidden="true"
-                      className="ic-stream-caret"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, scaleY: 0.55 }}
-                    />
-                  ) : null}
-                </AnimatePresence>
-
-                {stream.status === "stopped" ? (
-                  <p className="ic-stream-note ic-stream-note-stopped">
-                    Stopped — this partial response is not saved.
-                  </p>
-                ) : null}
-
-                {stream.status === "interrupted" ? (
-                  <p className="ic-stream-note ic-stream-note-error">
-                    Response interrupted — this partial response is not saved.
-                  </p>
-                ) : null}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="empty-status"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="ic-stream-empty-status"
-              >
-                {stream.status === "stopped"
-                  ? "Generation stopped before a visible response arrived."
-                  : "The response was interrupted before text arrived."}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.section>
+              {stream.status === "stopped" || stream.status === "interrupted" ? (
+                <p className="ic-stream-note">
+                  {stream.status === "stopped"
+                    ? "Stopped — this partial response is not saved."
+                    : "Response interrupted — this partial response is not saved."}
+                </p>
+              ) : null}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="ic-thinking-dots"
+            >
+              <span /><span /><span />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <span className="ic-sr-only" aria-live="polite">
-          {stream.status === "starting" || stream.status === "thinking"
-            ? "Thinking"
-            : stream.status === "streaming"
-              ? "Response streaming"
-              : stream.status === "stopped"
-                ? "Stopped"
-                : "Response interrupted"}
+          {!hasAnswer ? "Thinking" : stream.status === "streaming" ? "Responding" : "Done"}
         </span>
       </div>
     </motion.article>
