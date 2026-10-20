@@ -340,6 +340,28 @@ function CheckIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M10 4v12M4 10h12"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MicrophoneIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="7" y="3" width="6" height="9" rx="3" stroke="currentColor" strokeWidth="1.35" />
+      <path d="M4.75 9.5a5.25 5.25 0 0 0 10.5 0M10 14.75V17M7.5 17h5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ─── Streaming assistant view ─────────────────────────────────────────────────
 
 function StreamingAssistantView({
@@ -564,6 +586,7 @@ export function ChatShell() {
   // 3-dot context menu state
   const [menuOpenChatId, setMenuOpenChatId] = useState<number | null>(null);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
+  const [isChatOptionsOpen, setIsChatOptionsOpen] = useState(false);
 
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -618,6 +641,7 @@ export function ChatShell() {
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
   const modelMenuRef = useRef<HTMLDivElement | null>(null);
+  const chatOptionsRef = useRef<HTMLDivElement | null>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   function clearDeltaFlushTimer() {
@@ -930,6 +954,34 @@ export function ChatShell() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isModelMenuOpen]);
+
+  useEffect(() => {
+    if (!isChatOptionsOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        chatOptionsRef.current &&
+        !chatOptionsRef.current.contains(event.target as Node)
+      ) {
+        setIsChatOptionsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsChatOptionsOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isChatOptionsOpen]);
 
   useEffect(() => {
     if (!isMemoryPanelOpen) {
@@ -1598,6 +1650,89 @@ export function ChatShell() {
         <div className="ic-app-aurora ic-app-aurora-one" aria-hidden="true" />
         <div className="ic-app-aurora ic-app-aurora-two" aria-hidden="true" />
 
+        {isSearchOpen ? (
+          <div
+            className="ic-search-overlay"
+            role="presentation"
+            onMouseDown={() => {
+              setIsSearchOpen(false);
+              setChatSearch("");
+            }}
+          >
+            <section
+              className="ic-search-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search conversations"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <header className="ic-search-dialog-header">
+                <input
+                  ref={searchInputRef}
+                  className="ic-search-dialog-input"
+                  type="search"
+                  placeholder="Search..."
+                  value={chatSearch}
+                  onChange={(event) => setChatSearch(event.target.value)}
+                  aria-label="Search conversations"
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setIsSearchOpen(false);
+                      setChatSearch("");
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="ic-search-dialog-close"
+                  aria-label="Close search"
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setChatSearch("");
+                  }}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </header>
+
+              <div className="ic-search-dialog-section-title">Recent chats</div>
+
+              <div className="ic-search-dialog-results">
+                {filteredChats.length > 0 ? (
+                  filteredChats.map((chat) => (
+                    <button
+                      type="button"
+                      className="ic-search-result"
+                      key={chat.id}
+                      onClick={() => {
+                        activeChatIdRef.current = chat.id;
+                        setActiveChatId(chat.id);
+                        setIsSidebarOpen(false);
+                        setIsSearchOpen(false);
+                        setChatSearch("");
+                      }}
+                    >
+                      <span className="ic-search-result-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M20.5 11.5a7.5 7.5 0 0 1-7.5 7.5 7.6 7.6 0 0 1-3.3-.75L5 20l1.75-3.65A7.5 7.5 0 1 1 20.5 11.5Z" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className="ic-search-result-copy">
+                        <strong>{chat.title}</strong>
+                        <small>Updated {formatChatDate(chat.updated_at)}</small>
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="ic-search-dialog-empty">
+                    No conversations found{chatSearch.trim() ? ` matching ${chatSearch.trim()}` : ""}.
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+        ) : null}
+
         <div className={`ic-workspace${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
           {/* ── Mobile sidebar backdrop ── */}
           {isSidebarOpen ? (
@@ -1614,17 +1749,7 @@ export function ChatShell() {
               {/* Row 1: brand + action icons */}
               <div className="ic-sidebar-header-row">
                 <div className="ic-brand-inline">
-                  <div className="ic-brand-mark">
-                    <Image
-                      className="ic-brand-logo"
-                      src="/intracore-mark.png"
-                      alt="IntraCore AI"
-                      width={40}
-                      height={40}
-                      priority
-                    />
-                  </div>
-                  <strong className="ic-brand-name">IntraCore AI</strong>
+                  <strong className="ic-brand-name">IntraCore</strong>
                   <svg
                     className="ic-brand-chevron"
                     viewBox="0 0 16 16"
@@ -1686,9 +1811,9 @@ export function ChatShell() {
                 disabled={isCreatingChat}
                 onClick={() => void createChat()}
               >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="16" height="16">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                  <path d="M13.5 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.7 3.8a2.12 2.12 0 0 1 3 3L11 15.5l-3.5.9.9-3.5 8.3-9.1Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 <span>{isCreatingChat ? "Creating…" : "New chat"}</span>
               </button>
@@ -1699,26 +1824,6 @@ export function ChatShell() {
                 <span>Conversations</span>
                 <span>{chats.length}</span>
               </div>
-
-              {isSearchOpen ? (
-                <div className="ic-chat-search-wrap">
-                  <input
-                    ref={searchInputRef}
-                    className="ic-chat-search"
-                    type="search"
-                    placeholder="Search conversations…"
-                    value={chatSearch}
-                    onChange={(e) => setChatSearch(e.target.value)}
-                    aria-label="Search conversations"
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setIsSearchOpen(false);
-                        setChatSearch("");
-                      }
-                    }}
-                  />
-                </div>
-              ) : null}
 
               {error ? (
                 <div className="ic-sidebar-error">{error}</div>
@@ -1737,10 +1842,6 @@ export function ChatShell() {
                   <p>No conversations yet.</p>
                   <span>Start a private local chat.</span>
                 </div>
-              ) : null}
-
-              {!isLoadingChats && chats.length > 0 && filteredChats.length === 0 ? (
-                <p className="ic-chat-search-empty">No matches for "{chatSearch}"</p>
               ) : null}
 
               <div className="ic-chat-list">
@@ -1901,6 +2002,52 @@ export function ChatShell() {
               </div>
 
               <div className="ic-header-actions">
+                <div className="ic-chat-options" ref={chatOptionsRef}>
+                  <button
+                    type="button"
+                    className="ic-chat-options-trigger"
+                    aria-label="Chat options"
+                    aria-expanded={isChatOptionsOpen}
+                    onClick={() => setIsChatOptionsOpen((current) => !current)}
+                  >
+                    <span aria-hidden="true">•••</span>
+                  </button>
+
+                  {isChatOptionsOpen ? (
+                    <div className="ic-chat-options-menu" role="menu">
+                      {activeChat && activeMessages.length > 0 ? (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setIsChatOptionsOpen(false);
+                            exportChatAsMarkdown();
+                          }}
+                        >
+                          <DownloadIcon />
+                          Export conversation
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsChatOptionsOpen(false);
+                          setIsModelMenuOpen(false);
+                          setIsMemoryPanelOpen(true);
+                          void loadMemories();
+                        }}
+                      >
+                        <MemoryIcon />
+                        Memories
+                        {enabledMemoryCount > 0 ? (
+                          <small>{enabledMemoryCount}</small>
+                        ) : null}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
                 {activeChat && activeMessages.length > 0 ? (
                   <button
                     type="button"
@@ -1930,153 +2077,6 @@ export function ChatShell() {
                   ) : null}
                 </button>
 
-                <div className="ic-model-selector" ref={modelMenuRef}>
-                  <button
-                    type="button"
-                    className="ic-model-chip"
-                    aria-label="Choose local model"
-                    aria-haspopup="listbox"
-                    aria-expanded={isModelMenuOpen}
-                    disabled={isSendingMessage}
-                    onClick={() => {
-                      setIsModelMenuOpen((current) => !current);
-                      setModelNotice(null);
-                    }}
-                  >
-                    <span
-                      className={`ic-model-live-dot ${
-                        selectedModelName ? "" : "is-unavailable"
-                      }`}
-                    />
-                    <span className="ic-model-chip-label">
-                      {isLoadingModels
-                        ? "Finding models…"
-                        : selectedModelName ?? "No model"}
-                    </span>
-                    <span
-                      className={`ic-model-chevron ${
-                        isModelMenuOpen ? "is-open" : ""
-                      }`}
-                    >
-                      <ChevronIcon />
-                    </span>
-                  </button>
-
-                  <AnimatePresence>
-                    {isModelMenuOpen ? (
-                      <motion.div
-                        className="ic-model-menu"
-                        initial={{ opacity: 0, y: -6, scale: 0.985 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -4, scale: 0.99 }}
-                        transition={{ duration: 0.16 }}
-                      >
-                        <div className="ic-model-menu-search">
-                          <input
-                            value={modelSearch}
-                            onChange={(event) => {
-                              setModelSearch(event.target.value);
-                              setModelNotice(null);
-                            }}
-                            placeholder="Find model…"
-                            aria-label="Find model"
-                            autoFocus
-                          />
-                        </div>
-
-                        <div
-                          className="ic-model-options"
-                          role="listbox"
-                          aria-label="Available local models"
-                        >
-                          {filteredModelOptions.map((model) => {
-                            const isSelected = model.name === selectedModelName;
-
-                            return (
-                              <button
-                                type="button"
-                                key={model.name}
-                                role="option"
-                                aria-selected={isSelected}
-                                className={`ic-model-option ${
-                                  isSelected ? "is-selected" : ""
-                                } ${
-                                  model.installed ? "is-installed" : "is-missing"
-                                }`}
-                                title={
-                                  model.installed
-                                    ? `Use ${model.name}`
-                                    : "Model download support coming soon."
-                                }
-                                onClick={() => {
-                                  if (!model.selectable) {
-                                    setModelNotice(
-                                      "Model download support coming soon.",
-                                    );
-                                    return;
-                                  }
-
-                                  setSelectedModelName(model.name);
-                                  window.localStorage.setItem(
-                                    MODEL_PREFERENCE_KEY,
-                                    model.name,
-                                  );
-                                  setModelNotice(null);
-                                  setModelSearch("");
-                                  setIsModelMenuOpen(false);
-                                }}
-                              >
-                                <span className="ic-model-option-main">
-                                  <strong>{model.name}</strong>
-                                  {model.parameter_size ||
-                                  model.quantization_level ? (
-                                    <small>
-                                      {[
-                                        model.parameter_size,
-                                        model.quantization_level,
-                                      ]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                    </small>
-                                  ) : null}
-                                </span>
-
-                                {model.installed ? (
-                                  <span
-                                    className="ic-model-installed-dot"
-                                    aria-label="Installed"
-                                  />
-                                ) : (
-                                  <span
-                                    className="ic-model-download-icon"
-                                    aria-label="Download support coming soon"
-                                  >
-                                    <DownloadIcon />
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-
-                          {!isLoadingModels && filteredModelOptions.length === 0 ? (
-                            <p className="ic-model-empty">No matching models.</p>
-                          ) : null}
-                        </div>
-
-                        {modelNotice || modelError ? (
-                          <p
-                            className={`ic-model-menu-status ${
-                              modelError ? "is-error" : ""
-                            }`}
-                            role="status"
-                          >
-                            {modelNotice ?? modelError}
-                          </p>
-                        ) : null}
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
-                </div>
 
                 <button
                   type="button"
@@ -2385,7 +2385,7 @@ export function ChatShell() {
                           ? "Create a conversation first"
                           : !selectedModelName
                             ? "Select an installed model first"
-                            : "Message IntraCore AI..."
+                            : "Work with Codex"
                       }
                       onKeyDown={(event) => {
                         if (
@@ -2400,45 +2400,154 @@ export function ChatShell() {
                     />
 
                     <div className="ic-composer-footer">
-                      <div className="ic-composer-context">
-                        <span className="ic-private-dot" />
-                        <span>Local and durable</span>
+                      <div className="ic-composer-tools">
+                        <button type="button" className="ic-composer-tool" aria-label="Add attachment">
+                          <PlusIcon />
+                        </button>
                       </div>
 
-                      <motion.button
-                        type="button"
-                        onClick={() => {
-                          if (isSendingMessage) {
-                            stopGenerating();
-                          } else {
-                            void sendMessage();
+                      <div className="ic-composer-actions">
+                        <div className="ic-composer-model-wrap" ref={modelMenuRef}>
+                          <button
+                            type="button"
+                            className="ic-composer-model-trigger"
+                            aria-label="Choose local model"
+                            aria-haspopup="listbox"
+                            aria-expanded={isModelMenuOpen}
+                            disabled={isSendingMessage}
+                            onClick={() => {
+                              setIsModelMenuOpen((current) => !current);
+                              setModelNotice(null);
+                            }}
+                          >
+                            <span className="ic-composer-model-icon" aria-hidden="true">⚡</span>
+                            <span className="ic-composer-model-name">
+                              {isLoadingModels
+                                ? "Finding models…"
+                                : selectedModelName ?? "No model"}
+                            </span>
+                            <span className={`ic-model-chevron${isModelMenuOpen ? " is-open" : ""}`}>
+                              <ChevronIcon />
+                            </span>
+                          </button>
+
+                          <AnimatePresence>
+                            {isModelMenuOpen ? (
+                              <motion.div
+                                className="ic-model-menu ic-model-menu-up"
+                                initial={{ opacity: 0, y: 6, scale: 0.985 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 4, scale: 0.99 }}
+                                transition={{ duration: 0.16 }}
+                              >
+                                <div className="ic-model-menu-search">
+                                  <input
+                                    value={modelSearch}
+                                    onChange={(event) => {
+                                      setModelSearch(event.target.value);
+                                      setModelNotice(null);
+                                    }}
+                                    placeholder="Find model…"
+                                    aria-label="Find model"
+                                    autoFocus
+                                  />
+                                </div>
+
+                                <div
+                                  className="ic-model-options"
+                                  role="listbox"
+                                  aria-label="Available local models"
+                                >
+                                  {filteredModelOptions.map((model) => {
+                                    const isSelected = model.name === selectedModelName;
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={model.name}
+                                        role="option"
+                                        aria-selected={isSelected}
+                                        className={`ic-model-option ${isSelected ? "is-selected" : ""} ${model.installed ? "is-installed" : "is-missing"}`}
+                                        title={model.installed ? `Use ${model.name}` : "Model download support coming soon."}
+                                        onClick={() => {
+                                          if (!model.selectable) {
+                                            setModelNotice("Model download support coming soon.");
+                                            return;
+                                          }
+                                          setSelectedModelName(model.name);
+                                          window.localStorage.setItem(MODEL_PREFERENCE_KEY, model.name);
+                                          setModelNotice(null);
+                                          setModelSearch("");
+                                          setIsModelMenuOpen(false);
+                                        }}
+                                      >
+                                        <span className="ic-model-option-main">
+                                          <strong>{model.name}</strong>
+                                          {model.parameter_size || model.quantization_level ? (
+                                            <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" · ")}</small>
+                                          ) : null}
+                                        </span>
+                                        {model.installed ? (
+                                          <span className="ic-model-installed-dot" aria-label="Installed" />
+                                        ) : (
+                                          <span className="ic-model-download-icon" aria-label="Download support coming soon">
+                                            <DownloadIcon />
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                  {!isLoadingModels && filteredModelOptions.length === 0 ? (
+                                    <p className="ic-model-empty">No matching models.</p>
+                                  ) : null}
+                                </div>
+
+                                {modelNotice || modelError ? (
+                                  <p className={`ic-model-menu-status${modelError ? " is-error" : ""}`} role="status">
+                                    {modelNotice ?? modelError}
+                                  </p>
+                                ) : null}
+                              </motion.div>
+                            ) : null}
+                          </AnimatePresence>
+                        </div>
+                        <button type="button" className="ic-composer-tool ic-microphone-tool" aria-label="Use voice input">
+                          <MicrophoneIcon />
+                        </button>
+                        <motion.button
+                          type="button"
+                          onClick={() => {
+                            if (isSendingMessage) {
+                              stopGenerating();
+                            } else {
+                              void sendMessage();
+                            }
+                          }}
+                          disabled={
+                            !isSendingMessage &&
+                            (!activeChat ||
+                              isMessageViewLoading ||
+                              !selectedModelName ||
+                              draftMessage.trim().length === 0)
                           }
-                        }}
-                        disabled={
-                          !isSendingMessage &&
-                          (!activeChat ||
-                            isMessageViewLoading ||
-                            !selectedModelName ||
-                            draftMessage.trim().length === 0)
-                        }
-                        aria-label={
-                          isSendingMessage ? "Stop generating" : "Send message"
-                        }
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.94 }}
-                        className={`ic-primary-action ${
-                          isSendingMessage ? "is-stop" : "is-send"
-                        }`}
-                      >
-                        {isSendingMessage ? (
-                          <>
-                            <StopIcon />
-                            <span>Stop</span>
-                          </>
-                        ) : (
-                          <SendIcon />
-                        )}
-                      </motion.button>
+                          aria-label={
+                            isSendingMessage ? "Stop generating" : "Send message"
+                          }
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.94 }}
+                          className={`ic-primary-action ${
+                            isSendingMessage ? "is-stop" : "is-send"
+                          }`}
+                        >
+                          {isSendingMessage ? (
+                            <>
+                              <StopIcon />
+                              <span>Stop</span>
+                            </>
+                          ) : (
+                            <SendIcon />
+                          )}
+                        </motion.button>
+                      </div>
                     </div>
                   </div>
 

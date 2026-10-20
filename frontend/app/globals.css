@@ -117,14 +117,14 @@ textarea:focus-visible {
   width: 252px;
   flex: 0 0 252px;
   flex-direction: column;
-  background: #ffffff;
-  border-right: 1px solid rgba(0 0 0 / 0.07);
+  background: #f9f9f9;
+  border-right: 0;
 }
 
 /* ── Sidebar top / brand ── */
 
 .ic-sidebar-top {
-  padding: 12px 12px 5px;
+  padding: 12px 14px 5px;
 }
 
 .ic-sidebar-header-row {
@@ -142,40 +142,20 @@ textarea:focus-visible {
   min-width: 0;
 }
 
-.ic-brand-mark {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  place-items: center;
-  border-radius: 8px;
-  background: rgba(0 0 0 / 0.05);
-  border: 1px solid rgba(0 0 0 / 0.08);
-}
-
-.ic-brand-logo {
-  display: block;
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  filter: brightness(0);
-  opacity: 0.75;
-}
-
 .ic-brand-name {
   overflow: hidden;
   color: #0d0d0d;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 20px;
-  letter-spacing: -0.02em;
+  line-height: 24px;
+  letter-spacing: -0.03em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .ic-brand-chevron {
   flex: 0 0 auto;
-  margin-left: -4px;
+  margin-left: -3px;
   color: #8a8a8a;
 }
 
@@ -223,7 +203,7 @@ textarea:focus-visible {
   width: 100%;
   min-height: 36px;
   padding: 7px 6px;
-  margin-top: 11px;
+  margin-top: 13px;
   background: transparent;
   border: none;
   border-radius: 8px;
@@ -249,7 +229,7 @@ textarea:focus-visible {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  color: #4f5358;
+  color: #40444a;
 }
 
 /* Desktop sidebar collapsed state */
@@ -3462,40 +3442,307 @@ textarea:focus-visible {
   flex-shrink: 0;
 }
 
-/* ── Sidebar conversation search ───────────────────────────────────────────── */
+/* ── ChatGPT-style conversation search dialog ─────────────────────────────── */
 
-.ic-chat-search-wrap {
-  padding: 0 10px 8px;
+.ic-search-overlay {
+  position: fixed;
+  z-index: 500;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px 20px 24px;
+  background: transparent;
 }
 
-.ic-chat-search {
-  width: 100%;
-  background: #f4f4f5;
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  color: #18181b;
-  font-size: 0.8rem;
-  padding: 6px 10px;
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.ic-chat-search:focus {
-  border-color: #a1a1aa;
+.ic-search-dialog {
+  width: min(720px, 100%);
+  max-height: min(460px, calc(100vh - 40px));
+  overflow: hidden;
   background: #ffffff;
+  border: 1px solid rgba(0 0 0 / 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0 0 0 / 0.14), 0 1px 4px rgba(0 0 0 / 0.08);
+  animation: ic-search-dialog-in 160ms ease-out both;
 }
 
-.ic-chat-search::placeholder {
-  color: #a1a1aa;
+@keyframes ic-search-dialog-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.ic-chat-search-empty {
-  font-size: 0.78rem;
-  color: #a1a1aa;
-  text-align: center;
-  padding: 16px 12px;
+.ic-search-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 22px 12px;
+}
+
+.ic-search-dialog-close {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #686868;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ic-search-dialog-close:hover {
+  background: #f1f1f1;
+  color: #202123;
+}
+
+.ic-search-dialog-input {
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #303030;
+  font: inherit;
+  font-size: 15px;
+}
+
+.ic-search-dialog-input::placeholder {
+  color: #9a9a9a;
+}
+
+.ic-search-dialog-section-title {
+  padding: 6px 24px 12px;
+  color: #6f6f6f;
+  font-size: 13px;
+}
+
+.ic-search-dialog-results {
+  max-height: 350px;
+  overflow-y: auto;
+  padding: 0 22px 22px;
+}
+
+.ic-search-result {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #202123;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.ic-search-result:hover,
+.ic-search-result:focus-visible {
+  outline: none;
+  background: #f3f3f3;
+}
+
+.ic-search-result-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  color: #202123;
+}
+
+.ic-search-result-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ic-search-result-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ic-search-result-copy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ic-search-result-copy small {
+  color: #999999;
+  font-size: 11px;
+}
+
+.ic-search-dialog-empty {
   margin: 0;
+  padding: 28px 14px 34px;
+  color: #8a8a8a;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Minimal conversation toolbar ──────────────────────────────────────────
+   The old title header is collapsed visually; only the overflow menu remains
+   floating above the thread, while the model selector sits beside the composer. */
+
+.ic-header {
+  position: static;
+  z-index: auto;
+  height: 0 !important;
+  flex-basis: 0 !important;
+  overflow: visible;
+  padding: 0 !important;
+  border-bottom: 0;
+  pointer-events: none;
+}
+
+.ic-header-title,
+.ic-header-actions > .ic-export-btn,
+.ic-header-actions > .ic-memory-trigger,
+.ic-mobile-new-chat {
+  display: none !important;
+}
+
+.ic-header-actions {
+  position: fixed;
+  z-index: 40;
+  top: 10px;
+  right: 14px;
+  display: flex;
+  pointer-events: auto;
+}
+
+.ic-chat-options {
+  position: relative;
+}
+
+.ic-chat-options-trigger {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #656565;
+  cursor: pointer;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.ic-chat-options-trigger:hover,
+.ic-chat-options-trigger[aria-expanded="true"] {
+  background: #f0f0f0;
+  color: #202123;
+}
+
+.ic-chat-options-trigger span {
+  position: relative;
+  top: -3px;
+  font-size: 16px;
+}
+
+.ic-chat-options-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid rgba(0 0 0 / 0.1);
+  border-radius: 11px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(0 0 0 / 0.14);
+}
+
+.ic-chat-options-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #303030;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.ic-chat-options-menu button:hover {
+  background: #f4f4f4;
+}
+
+.ic-chat-options-menu button svg {
+  width: 15px;
+  height: 15px;
+  color: #656565;
+}
+
+.ic-chat-options-menu button small {
+  margin-left: auto;
+  color: #8a8a8a;
+  font-size: 11px;
+}
+
+.ic-header-actions .ic-model-selector {
+  position: fixed !important;
+  z-index: 35;
+  /* Match the Codex composer: the model control lives in the lower action
+     row, immediately before the microphone/send controls. */
+  bottom: 49px;
+  left: calc(50% + 80px) !important;
+  right: auto;
+}
+
+.ic-header-actions .ic-model-menu {
+  top: auto;
+  right: 0;
+  left: auto;
+  bottom: calc(100% + 10px);
+}
+
+/* On wider chat panes, keep the model control in the same lower-row position
+   as the reference composer, rather than letting it drift toward the center. */
+@media (min-width: 768px) {
+  .ic-header-actions .ic-model-selector {
+    left: auto !important;
+    right: 92px;
+  }
+}
+
+/* The composer version is an inline control, rather than a floating pill. */
+.ic-header-actions .ic-model-chip {
+  border-color: transparent;
+  background: transparent;
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+.ic-header-actions .ic-model-chip:hover:not(:disabled),
+.ic-header-actions .ic-model-chip:focus-visible {
+  border-color: transparent;
+  background: #f4f4f5;
+}
+
+.ic-hamburger {
+  position: fixed;
+  z-index: 41;
+  top: 8px;
+  left: 10px;
+  pointer-events: auto;
 }
 
 /* ── Inline rename input (commit 2) ────────────────────────────────────────── */
@@ -3725,4 +3972,198 @@ textarea:focus-visible {
   color: #a1a1aa;
   margin: 2px 0 0;
   font-weight: 400;
+}
+
+/* ── Codex-style composer actions ───────────────────────────────────────── */
+
+.ic-composer-tools,
+.ic-composer-actions {
+  display: flex;
+  align-items: center;
+}
+
+.ic-composer-tools {
+  gap: 3px;
+  min-width: 0;
+}
+
+.ic-composer-actions {
+  gap: 10px;
+  margin-right: -2px;
+}
+
+.ic-composer-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #6f7078;
+  cursor: pointer;
+  font: inherit;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.ic-composer-tool {
+  width: 30px;
+}
+
+.ic-composer-tool:hover {
+  background: #f4f4f5;
+  color: #202124;
+}
+
+.ic-composer-tool svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.ic-microphone-tool {
+  width: 28px;
+  color: #34353b;
+}
+
+.ic-header-actions .ic-model-selector {
+  position: fixed !important;
+  right: 0;
+  bottom: 0;
+  left: auto !important;
+  z-index: 35;
+}
+
+/* The visible trigger now lives in the composer. The header keeps only the
+   existing menu state/portal so model selection continues to work. */
+.ic-header-actions .ic-model-chip {
+  display: none;
+}
+
+.ic-composer-model-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ic-composer-model-trigger {
+  display: inline-flex;
+  max-width: 200px;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0 0 0 / 0.1);
+  border-radius: 999px;
+  background: transparent;
+  color: #34353b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.ic-composer-model-trigger:hover:not(:disabled),
+.ic-composer-model-trigger:focus-visible {
+  background: #f4f4f5;
+  border-color: rgba(0 0 0 / 0.18);
+  outline: none;
+}
+
+.ic-composer-model-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ic-composer-model-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ic-composer-model-icon {
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+
+/* Dropdown opens upward from composer */
+.ic-model-menu.ic-model-menu-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+/* The selector is visually part of the composer footer, matching the
+   reference layout: model, microphone, then send. */
+.ic-header-actions .ic-model-live-dot {
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ic-header-actions .ic-model-live-dot::before {
+  color: #202124;
+  content: "⚡";
+  font-size: 13px;
+  line-height: 1;
+}
+
+.ic-header-actions .ic-model-live-dot.is-unavailable::before {
+  color: #a1a1aa;
+}
+
+.ic-header-actions .ic-model-chip {
+  border-color: transparent;
+  background: transparent;
+  padding: 4px 4px 4px 6px;
+  color: #34353b;
+}
+
+.ic-header-actions .ic-model-chip:hover:not(:disabled),
+.ic-header-actions .ic-model-chip:focus-visible {
+  border-color: transparent;
+  background: #f4f4f5;
+}
+
+.ic-header-actions .ic-model-menu {
+  position: fixed;
+  top: auto;
+  right: 92px;
+  bottom: 95px;
+}
+
+.ic-primary-action.is-send {
+  background: #3d82ed;
+}
+
+.ic-primary-action.is-send:hover:not(:disabled) {
+  background: #2f71da;
+}
+
+.ic-primary-action:disabled {
+  background: #3d82ed;
+  color: #ffffff;
+  opacity: 0.68;
+}
+
+@media (max-width: 767px) {
+  .ic-header-actions .ic-model-selector {
+    right: 0;
+    bottom: 0;
+  }
+
+  .ic-header-actions .ic-model-menu {
+    right: 72px;
+    bottom: 95px;
+  }
+
+  .ic-composer-model-trigger {
+    max-width: 145px;
+    font-size: 11px;
+  }
+
 }
