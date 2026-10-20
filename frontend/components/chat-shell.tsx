@@ -550,6 +550,8 @@ export function ChatShell() {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<{ id: number; message: string }[]>([]);
   const toastIdRef = useRef(1);
@@ -1628,6 +1630,24 @@ export function ChatShell() {
                 <div className="ic-sidebar-actions">
                   <button
                     type="button"
+                    className={`ic-sidebar-action-btn${isSearchOpen ? " is-active" : ""}`}
+                    aria-label="Search conversations"
+                    onClick={() => {
+                      setIsSearchOpen((v) => !v);
+                      if (!isSearchOpen) {
+                        setTimeout(() => searchInputRef.current?.focus(), 50);
+                      } else {
+                        setChatSearch("");
+                      }
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8"/>
+                      <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
                     className="ic-sidebar-action-btn"
                     aria-label="New conversation"
                     disabled={isCreatingChat}
@@ -1662,15 +1682,22 @@ export function ChatShell() {
                 <span>{chats.length}</span>
               </div>
 
-              {chats.length > 0 ? (
+              {isSearchOpen ? (
                 <div className="ic-chat-search-wrap">
                   <input
+                    ref={searchInputRef}
                     className="ic-chat-search"
                     type="search"
                     placeholder="Search conversations…"
                     value={chatSearch}
                     onChange={(e) => setChatSearch(e.target.value)}
                     aria-label="Search conversations"
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setIsSearchOpen(false);
+                        setChatSearch("");
+                      }
+                    }}
                   />
                 </div>
               ) : null}

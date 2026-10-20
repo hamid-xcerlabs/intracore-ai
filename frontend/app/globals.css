@@ -203,6 +203,11 @@ textarea:focus-visible {
   opacity: 0.4;
 }
 
+.ic-sidebar-action-btn.is-active {
+  color: #18181b;
+  background: rgba(0 0 0 / 0.08);
+}
+
 /* Desktop sidebar collapsed state */
 .ic-workspace.sidebar-collapsed .ic-sidebar {
   width: 0;
