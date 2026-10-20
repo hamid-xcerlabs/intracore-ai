@@ -208,6 +208,40 @@ textarea:focus-visible {
   background: rgba(0 0 0 / 0.08);
 }
 
+/* ── New chat nav row (ChatGPT-style) ── */
+.ic-new-chat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 12px;
+  margin-top: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #18181b;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.ic-new-chat-row:hover {
+  background: rgba(0 0 0 / 0.06);
+}
+
+.ic-new-chat-row:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.ic-new-chat-row svg {
+  flex-shrink: 0;
+  color: #52525b;
+}
+
 /* Desktop sidebar collapsed state */
 .ic-workspace.sidebar-collapsed .ic-sidebar {
   width: 0;
