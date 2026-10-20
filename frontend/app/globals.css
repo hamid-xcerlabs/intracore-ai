@@ -694,14 +694,14 @@ textarea:focus-visible {
   top: calc(100% + 10px);
   left: 0;
   z-index: 30;
-  width: min(360px, calc(100vw - 30px));
+  width: min(250px, calc(100vw - 30px));
   overflow: hidden;
   border: 1px solid rgba(82, 69, 94, 0.12);
-  border-radius: 17px;
+  border-radius: 13px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow:
-    0 24px 55px -24px rgba(43, 31, 54, 0.34),
-    0 8px 24px -18px rgba(43, 31, 54, 0.25),
+    0 18px 38px -20px rgba(43, 31, 54, 0.28),
+    0 5px 16px -12px rgba(43, 31, 54, 0.18),
     inset 0 1px 0 #fff;
   backdrop-filter: blur(24px);
 }
@@ -727,8 +727,8 @@ textarea:focus-visible {
   justify-content: space-between;
   gap: 12px;
   border: 0;
-  border-radius: 11px;
-  padding: 9px 10px;
+  border-radius: 9px;
+  padding: 8px 10px;
   background: transparent;
   color: #403b45;
   cursor: pointer;
@@ -741,11 +741,7 @@ textarea:focus-visible {
 .ic-model-option:hover,
 .ic-model-option:focus-visible,
 .ic-model-option.is-selected {
-  background: linear-gradient(
-    135deg,
-    rgba(246, 239, 252, 0.9),
-    rgba(244, 249, 252, 0.88)
-  );
+  background: #f1f1f1;
   outline: none;
 }
 
@@ -762,13 +758,12 @@ textarea:focus-visible {
 
 .ic-model-option-main strong {
   font-size: 12px;
-  font-weight: 590;
-  word-break: break-all;
+  font-weight: 500;
+  word-break: break-word;
 }
 
 .ic-model-option-main small {
-  color: #aaa3ad;
-  font-size: 9px;
+  display: none;
 }
 
 .ic-model-check {
@@ -1795,7 +1790,7 @@ textarea:focus-visible {
   position: relative;
   z-index: 6;
   flex: 0 0 auto;
-  padding: 10px 24px 20px;
+  padding: 10px 20px 18px;
   background: transparent;
 }
 
@@ -1908,10 +1903,6 @@ textarea:focus-visible {
   padding: 0 14px;
   font-size: 11px;
   font-weight: 600;
-}
-
-.ic-primary-action.is-stop:hover {
-  background: #27272a;
 }
 
 .ic-stop-square {
@@ -2683,7 +2674,7 @@ textarea:focus-visible {
 
 /* ChatGPT-style composer */
 .ic-composer-wrap {
-  width: min(100%, 760px);
+  width: min(100%, 820px);
 }
 
 .ic-composer {
@@ -2692,10 +2683,10 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 0;
   border: 1px solid #e4e4e7;
-  border-radius: 16px;
+  border-radius: 18px;
   background: #ffffff;
-  padding: 10px 12px 8px;
-  box-shadow: 0 1px 6px rgba(0 0 0 / 0.06);
+  padding: 11px 12px 9px;
+  box-shadow: 0 1px 5px rgba(0 0 0 / 0.06);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -2716,10 +2707,10 @@ textarea:focus-visible {
 .ic-composer textarea {
   width: 100%;
   height: 24px;
-  min-height: 24px;
+  min-height: 30px;
   max-height: 200px;
   overflow-y: auto;
-  padding: 0;
+  padding: 2px 0 0;
   color: #18181b;
   font-size: 14px;
   font-weight: 400;
@@ -2736,7 +2727,8 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
+  margin-top: 7px;
+  padding-top: 0;
 }
 
 .ic-composer-context {
@@ -2868,10 +2860,6 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 6px;
-}
-
-.ic-primary-action.is-stop:hover {
-  background: #3f3f46;
 }
 
 .ic-primary-action:disabled {
@@ -4021,7 +4009,7 @@ textarea:focus-visible {
   height: 32px;
   padding: 0 8px;
   overflow: hidden;
-  border: 1px solid rgba(0 0 0 / 0.1);
+  border: 0;
   border-radius: 999px;
   background: transparent;
   color: #34353b;
@@ -4036,7 +4024,7 @@ textarea:focus-visible {
 .ic-composer-model-trigger:hover:not(:disabled),
 .ic-composer-model-trigger:focus-visible {
   background: #f4f4f5;
-  border-color: rgba(0 0 0 / 0.18);
+  border-color: transparent;
   outline: none;
 }
 
@@ -4053,6 +4041,7 @@ textarea:focus-visible {
 .ic-composer-model-icon {
   flex: 0 0 auto;
   font-size: 13px;
+  filter: grayscale(1) brightness(0.2);
 }
 
 /* Dropdown opens upward from composer */
@@ -4112,17 +4101,26 @@ textarea:focus-visible {
 }
 
 .ic-primary-action.is-send {
-  background: #3d82ed;
+  background: #18181b;
 }
 
 .ic-primary-action.is-send:hover:not(:disabled) {
-  background: #2f71da;
+  background: #27272a;
 }
 
 .ic-primary-action:disabled {
-  background: #3d82ed;
+  background: #18181b;
   color: #ffffff;
-  opacity: 0.68;
+  opacity: 0.72;
+}
+
+.ic-primary-action.is-stop {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  gap: 0;
+  transition: none;
 }
 
 @media (max-width: 767px) {

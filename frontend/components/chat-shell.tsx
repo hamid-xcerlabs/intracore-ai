@@ -2516,17 +2516,13 @@ export function ChatShell() {
                           aria-label={
                             isSendingMessage ? "Stop generating" : "Send message"
                           }
-                          whileHover={{ scale: 1.04 }}
                           whileTap={{ scale: 0.94 }}
                           className={`ic-primary-action ${
                             isSendingMessage ? "is-stop" : "is-send"
                           }`}
                         >
                           {isSendingMessage ? (
-                            <>
-                              <StopIcon />
-                              <span>Stop</span>
-                            </>
+                            <StopIcon />
                           ) : (
                             <SendIcon />
                           )}
