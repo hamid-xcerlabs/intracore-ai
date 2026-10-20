@@ -121,102 +121,98 @@ textarea:focus-visible {
   border-right: 1px solid rgba(0 0 0 / 0.07);
 }
 
-/* ── Brand ── */
+/* ── Sidebar top / brand ── */
 
 .ic-sidebar-top {
-  padding: 18px 14px 12px;
+  padding: 10px 10px 4px;
 }
 
-.ic-brand {
+.ic-sidebar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 4px;
+}
+
+.ic-brand-inline {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 4px 16px;
+  min-width: 0;
 }
 
 .ic-brand-mark {
   display: grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   place-items: center;
   border-radius: 8px;
-  background: rgba(0 0 0 / 0.04);
+  background: rgba(0 0 0 / 0.05);
   border: 1px solid rgba(0 0 0 / 0.08);
 }
 
 .ic-brand-logo {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   filter: brightness(0);
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
-.ic-brand-copy {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.ic-brand-copy strong {
+.ic-brand-name {
   overflow: hidden;
   color: #111118;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ic-brand-copy span {
-  color: rgba(0 0 0 / 0.38);
-  font-size: 10.5px;
-  letter-spacing: 0.01em;
+/* Action icon buttons in sidebar header */
+.ic-sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
-/* ── New conversation button ── */
-
-.ic-new-chat {
+.ic-sidebar-action-btn {
   display: flex;
-  width: 100%;
-  height: 34px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid rgba(0 0 0 / 0.12);
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
   border-radius: 8px;
-  background: rgba(0 0 0 / 0.04);
-  color: rgba(0 0 0 / 0.65);
+  color: #71717a;
   cursor: pointer;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.005em;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  transition: color 120ms ease, background 120ms ease;
 }
 
-.ic-new-chat:hover {
-  background: rgba(0 0 0 / 0.07);
-  border-color: rgba(0 0 0 / 0.18);
-  color: #111118;
+.ic-sidebar-action-btn:hover {
+  color: #18181b;
+  background: rgba(0 0 0 / 0.06);
 }
 
-.ic-new-chat:active {
-  transform: scale(0.988);
-}
-
-.ic-new-chat:disabled {
+.ic-sidebar-action-btn:disabled {
   cursor: wait;
   opacity: 0.4;
 }
 
-.ic-plus {
-  font-size: 16px;
-  font-weight: 300;
-  line-height: 1;
-  color: rgba(0 0 0 / 0.4);
+/* Desktop sidebar collapsed state */
+.ic-workspace.sidebar-collapsed .ic-sidebar {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  flex: none;
+}
+
+.ic-workspace.sidebar-collapsed .ic-main {
+  flex: 1;
 }
 
 /* ── Sidebar content ── */
@@ -2289,9 +2285,31 @@ textarea:focus-visible {
   }
 }
 
-/* ── Hamburger button — hidden on desktop ── */
+/* ── Hamburger/sidebar-open button ── */
+/* Hidden on desktop by default; shown when sidebar is collapsed or on mobile */
 .ic-hamburger {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #52525b;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.ic-hamburger:hover {
+  color: #18181b;
+  background: rgba(0 0 0 / 0.05);
+}
+
+/* Show on desktop when sidebar is collapsed */
+.ic-hamburger.is-visible {
+  display: flex;
 }
 
 /* ── Sidebar backdrop — hidden by default ── */
@@ -2349,29 +2367,10 @@ textarea:focus-visible {
     flex-direction: row;
   }
 
-  /* Hamburger visible */
+  /* Hamburger always visible on mobile */
   .ic-hamburger {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #52525b;
     margin-right: 2px;
-  }
-
-  .ic-hamburger:hover {
-    background: rgba(0 0 0 / 0.05);
-  }
-
-  .ic-hamburger svg {
-    width: 18px;
-    height: 18px;
   }
 
   /* Header */

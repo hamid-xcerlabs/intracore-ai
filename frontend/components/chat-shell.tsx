@@ -563,8 +563,9 @@ export function ChatShell() {
   const [menuOpenChatId, setMenuOpenChatId] = useState<number | null>(null);
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Mobile sidebar drawer
+  // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [modelOptions, setModelOptions] = useState<ChatModelOption[]>([]);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
@@ -1595,7 +1596,7 @@ export function ChatShell() {
         <div className="ic-app-aurora ic-app-aurora-one" aria-hidden="true" />
         <div className="ic-app-aurora ic-app-aurora-two" aria-hidden="true" />
 
-        <div className="ic-workspace">
+        <div className={`ic-workspace${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
           {/* ── Mobile sidebar backdrop ── */}
           {isSidebarOpen ? (
             <div
@@ -1608,33 +1609,51 @@ export function ChatShell() {
           {/* ── Sidebar ── */}
           <aside className={`ic-sidebar${isSidebarOpen ? " is-open" : ""}`}>
             <div className="ic-sidebar-top">
-              <div className="ic-brand">
-                <div className="ic-brand-mark">
-                  <Image
-                    className="ic-brand-logo"
-                    src="/intracore-mark.png"
-                    alt="IntraCore AI"
-                    width={40}
-                    height={40}
-                    priority
-                  />
+              {/* Row 1: brand + action icons */}
+              <div className="ic-sidebar-header-row">
+                <div className="ic-brand-inline">
+                  <div className="ic-brand-mark">
+                    <Image
+                      className="ic-brand-logo"
+                      src="/intracore-mark.png"
+                      alt="IntraCore AI"
+                      width={40}
+                      height={40}
+                      priority
+                    />
+                  </div>
+                  <strong className="ic-brand-name">IntraCore AI</strong>
                 </div>
 
-                <div className="ic-brand-copy">
-                  <strong>IntraCore AI</strong>
-                  <span>Local intelligence</span>
+                <div className="ic-sidebar-actions">
+                  <button
+                    type="button"
+                    className="ic-sidebar-action-btn"
+                    aria-label="New conversation"
+                    disabled={isCreatingChat}
+                    onClick={() => void createChat()}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-sidebar-action-btn"
+                    aria-label="Close sidebar"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      setIsSidebarCollapsed(true);
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                      <rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.8"/>
+                      <path d="M9 3.5v17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={() => void createChat()}
-                disabled={isCreatingChat}
-                className="ic-new-chat"
-              >
-                <span className="ic-plus">+</span>
-                <span>{isCreatingChat ? "Creating..." : "New conversation"}</span>
-              </button>
             </div>
 
             <div className="ic-sidebar-content">
@@ -1797,12 +1816,16 @@ export function ChatShell() {
             <header className="ic-header">
               <button
                 type="button"
-                className="ic-hamburger"
+                className={`ic-hamburger${isSidebarCollapsed ? " is-visible" : ""}`}
                 aria-label="Open conversations"
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => {
+                  setIsSidebarOpen(true);
+                  setIsSidebarCollapsed(false);
+                }}
               >
-                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                  <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                  <rect x="3" y="3" width="18" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.8"/>
+                  <path d="M9 3.5v17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
               </button>
 
