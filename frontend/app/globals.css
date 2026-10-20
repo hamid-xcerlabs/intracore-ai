@@ -692,9 +692,9 @@ textarea:focus-visible {
 .ic-model-menu {
   position: absolute;
   top: calc(100% + 10px);
-  right: 0;
+  left: 0;
   z-index: 30;
-  width: min(310px, calc(100vw - 30px));
+  width: min(360px, calc(100vw - 30px));
   overflow: hidden;
   border: 1px solid rgba(82, 69, 94, 0.12);
   border-radius: 17px;
@@ -780,11 +780,9 @@ textarea:focus-visible {
 }
 
 .ic-model-option-main strong {
-  overflow: hidden;
   font-size: 12px;
   font-weight: 590;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
 }
 
 .ic-model-option-main small {
@@ -2080,7 +2078,7 @@ textarea:focus-visible {
   position: absolute;
   width: 1px;
   height: 1px;
-  overflow: hidden;
+  overflow: visible;
   margin: -1px;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -4043,6 +4041,7 @@ textarea:focus-visible {
 
 .ic-composer-model-wrap {
   position: relative;
+  z-index: 30;
   display: flex;
   align-items: center;
 }
@@ -4093,6 +4092,9 @@ textarea:focus-visible {
 .ic-model-menu.ic-model-menu-up {
   top: auto;
   bottom: calc(100% + 8px);
+  left: auto;
+  right: 0;
+  z-index: 100;
 }
 
 /* The selector is visually part of the composer footer, matching the
@@ -4133,7 +4135,13 @@ textarea:focus-visible {
   position: fixed;
   top: auto;
   right: 92px;
-  bottom: 95px;
+  bottom: 86px;
+  z-index: 1000;
+  max-height: min(420px, calc(100vh - 108px));
+}
+
+.ic-header-actions .ic-model-options {
+  max-height: min(310px, calc(100vh - 220px));
 }
 
 .ic-primary-action.is-send {
@@ -4158,7 +4166,8 @@ textarea:focus-visible {
 
   .ic-header-actions .ic-model-menu {
     right: 72px;
-    bottom: 95px;
+    bottom: 86px;
+    max-height: calc(100vh - 100px);
   }
 
   .ic-composer-model-trigger {
