@@ -386,6 +386,93 @@ async def stream_chat_message(
     )
 
 
+# POST /chats/{chat_id}/messages/stream/regenerate deletes the last assistant
+# message and re-streams a fresh response from the last user message.
+@router.post("/{chat_id}/messages/stream/regenerate")
+async def regenerate_stream(
+    chat_id: int,
+    payload: MessageCreate,
+    request: Request,
+    session: DatabaseSession,
+) -> StreamingResponse:
+    chat = await chat_repository.get_by_id(session=session, chat_id=chat_id)
+
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat not found.",
+        )
+
+    model_name = await resolve_message_model(payload)
+
+    # Load existing history and find the last user message.
+    history = await message_repository.list_for_chat(session=session, chat_id=chat_id)
+    last_user = next((m for m in reversed(history) if m.role == "user"), None)
+
+    if last_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="No user message to regenerate from.",
+        )
+
+    # Delete the last assistant message if present (may not exist on first try).
+    last_assistant = next((m for m in reversed(history) if m.role == "assistant"), None)
+    if last_assistant is not None:
+        await message_repository.delete_message(session=session, message_id=last_assistant.id)
+
+    # Reload history without the deleted assistant message.
+    history = await message_repository.list_for_chat(session=session, chat_id=chat_id)
+    from app.services.memory_service import memory_service as _mem_svc
+    memory_context = await _mem_svc.build_context(session)
+    await session.commit()
+
+    from app.services.conversation_service import ConversationService
+    graph_messages = ConversationService._to_graph_messages(history)
+
+    first_user = next((m for m in history if m.role == "user"), last_user)
+
+    async def event_stream() -> AsyncIterator[str]:
+        yield ResponseStartedEvent(chat_id=chat_id).model_dump_json() + "\n"
+
+        try:
+            async for item in conversation_service.stream_durable_assistant(
+                session=session,
+                chat_id=chat_id,
+                graph_messages=graph_messages,
+                memory_context=memory_context,
+                title_source=first_user.content,
+                should_generate_title=False,
+                model_name=model_name,
+                should_stop=lambda: request.is_disconnected(),
+            ):
+                if isinstance(item, str):
+                    yield AssistantDeltaEvent(delta=item).model_dump_json() + "\n"
+                elif isinstance(item, MessageModel):
+                    yield AssistantMessageEvent(
+                        message=MessageResponse.model_validate(item)
+                    ).model_dump_json() + "\n"
+                elif isinstance(item, ConversationTitleUpdate):
+                    yield ChatTitleUpdatedEvent(
+                        chat_id=chat_id,
+                        title=item.chat.title,
+                    ).model_dump_json() + "\n"
+        except ConversationStoppedError:
+            yield ResponseStoppedEvent(chat_id=chat_id).model_dump_json() + "\n"
+        except (ConversationGenerationError, Exception):
+            yield StreamingErrorEvent(
+                detail="Failed to regenerate response."
+            ).model_dump_json() + "\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 # GET /chats/{chat_id} returns one persistent conversation.
 @router.get(
     "/{chat_id}",

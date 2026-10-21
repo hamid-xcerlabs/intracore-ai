@@ -1,5 +1,5 @@
 # select and update create SQLAlchemy ORM statements.
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 
 # IntegrityError identifies database constraint conflicts during commits.
 from sqlalchemy.exc import IntegrityError
@@ -142,6 +142,31 @@ class MessageRepository:
         await session.refresh(message)
 
         return message
+
+
+    async def get_last_assistant_message(
+        self,
+        session: AsyncSession,
+        chat_id: int,
+    ) -> Message | None:
+        statement = (
+            select(Message)
+            .where(Message.chat_id == chat_id, Message.role == "assistant")
+            .order_by(Message.sequence_number.desc())
+            .limit(1)
+        )
+        result = await session.execute(statement)
+        return result.scalar_one_or_none()
+
+    async def delete_message(
+        self,
+        session: AsyncSession,
+        message_id: int,
+    ) -> None:
+        await session.execute(
+            delete(Message).where(Message.id == message_id)
+        )
+        await session.commit()
 
 
 # Export one stateless repository instance for route reuse.

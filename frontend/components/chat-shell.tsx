@@ -1537,13 +1537,150 @@ export function ChatShell() {
   async function regenerateLastResponse() {
     if (isSendingMessage || !activeChat || !selectedModelName) return;
 
-    const lastUserMessage = [...activeMessages]
-      .reverse()
-      .find((m) => m.role === "user");
+    const targetChatId = activeChatId;
+    if (targetChatId === null) return;
 
-    if (!lastUserMessage) return;
+    // Optimistically remove the last assistant message from UI.
+    const lastAssistant = [...activeMessages].reverse().find((m) => m.role === "assistant");
+    if (lastAssistant) {
+      setMessages((current) => current.filter((m) => m.id !== lastAssistant.id));
+    }
 
-    void sendMessage(lastUserMessage.content);
+    const requestId = nextStreamRequestIdRef.current;
+    nextStreamRequestIdRef.current += 1;
+    activeStreamRequestIdRef.current = requestId;
+    pendingAssistantDeltaRef.current = "";
+    clearDeltaFlushTimer();
+
+    const abortController = new AbortController();
+    streamAbortControllerRef.current = abortController;
+
+    setIsSendingMessage(true);
+    setSendError(null);
+
+    setStreamingAssistant({
+      requestId,
+      chatId: targetChatId,
+      optimisticMessageId: 0,
+      content: "",
+      status: "starting",
+      startedAt: Date.now(),
+      modelName: selectedModelName,
+    });
+
+    let receivedTerminalEvent = false;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/chats/${targetChatId}/messages/stream/regenerate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: "", model_name: selectedModelName }),
+          signal: abortController.signal,
+        },
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Regenerate failed (${response.status})`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let eventBuffer = "";
+
+      async function handleRegenEvent(event: StreamingEvent) {
+        if (activeStreamRequestIdRef.current !== requestId) return;
+
+        if (event.type === "response_started") {
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId
+              ? { ...current, status: "thinking" }
+              : current,
+          );
+          return;
+        }
+
+        if (event.type === "assistant_delta") {
+          pendingAssistantDeltaRef.current += event.delta;
+          scheduleAssistantDeltaFlush(requestId);
+          return;
+        }
+
+        if (event.type === "assistant_message") {
+          receivedTerminalEvent = true;
+          pendingAssistantDeltaRef.current = "";
+          clearDeltaFlushTimer();
+          setMessages((current) => uniqueMessages([...current, event.message]));
+          setMessagesChatId(targetChatId);
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId ? null : current,
+          );
+          setSendError(null);
+          return;
+        }
+
+        if (event.type === "chat_title_updated") {
+          setChats((current) => [
+            event.chat,
+            ...current.filter((c) => c.id !== event.chat.id),
+          ]);
+          return;
+        }
+
+        if (event.type === "response_stopped") {
+          receivedTerminalEvent = true;
+          flushAssistantDeltas(requestId);
+          setStreamingAssistant((current) =>
+            current?.requestId === requestId
+              ? { ...current, status: "stopped" }
+              : current,
+          );
+          await reloadDurableHistory(targetChatId);
+          return;
+        }
+
+        receivedTerminalEvent = true;
+        flushAssistantDeltas(requestId);
+        setStreamingAssistant((current) =>
+          current?.requestId === requestId
+            ? { ...current, status: "interrupted" }
+            : current,
+        );
+        await reloadDurableHistory(targetChatId);
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          eventBuffer += decoder.decode();
+          break;
+        }
+        eventBuffer += decoder.decode(value, { stream: true });
+        let newlineIndex = eventBuffer.indexOf("\n");
+        while (newlineIndex >= 0) {
+          const line = eventBuffer.slice(0, newlineIndex).trim();
+          eventBuffer = eventBuffer.slice(newlineIndex + 1);
+          if (line) await handleRegenEvent(JSON.parse(line) as StreamingEvent);
+          newlineIndex = eventBuffer.indexOf("\n");
+        }
+      }
+      if (eventBuffer.trim()) {
+        await handleRegenEvent(JSON.parse(eventBuffer.trim()) as StreamingEvent);
+      }
+    } catch {
+      // ignore abort / network errors
+    } finally {
+      if (!receivedTerminalEvent) {
+        flushAssistantDeltas(requestId);
+        setStreamingAssistant((current) =>
+          current?.requestId === requestId
+            ? { ...current, status: "interrupted" }
+            : current,
+        );
+      }
+      setIsSendingMessage(false);
+    }
   }
 
   async function copyMessage(message: Message) {
