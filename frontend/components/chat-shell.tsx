@@ -458,17 +458,6 @@ function StreamingAssistantView({
       transition={{ duration: 0.22 }}
       className="ic-message ic-message-assistant ic-stream-message"
     >
-      <div className="ic-assistant-avatar ic-avatar-live">
-        <Image
-          className="ic-assistant-logo"
-          src="/intracore-mark.png"
-          alt=""
-          width={32}
-          height={32}
-          aria-hidden="true"
-        />
-      </div>
-
       <div className="ic-assistant-column">
         <div className="ic-message-identity">
           <span>IntraCore</span>
@@ -491,10 +480,12 @@ function StreamingAssistantView({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="ic-thinking-dots"
+              className="ic-thinking-shimmer"
               aria-label="Thinking"
             >
-              <span /><span /><span />
+              <span className="ic-shimmer-line" style={{ width: "60%" }} />
+              <span className="ic-shimmer-line" style={{ width: "80%" }} />
+              <span className="ic-shimmer-line" style={{ width: "45%" }} />
             </motion.div>
           ) : hasAnswer ? (
             <motion.div
@@ -521,9 +512,11 @@ function StreamingAssistantView({
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="ic-thinking-dots"
+              className="ic-thinking-shimmer"
             >
-              <span /><span /><span />
+              <span className="ic-shimmer-line" style={{ width: "60%" }} />
+              <span className="ic-shimmer-line" style={{ width: "80%" }} />
+              <span className="ic-shimmer-line" style={{ width: "45%" }} />
             </motion.div>
           )}
         </AnimatePresence>
