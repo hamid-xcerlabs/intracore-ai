@@ -2454,6 +2454,7 @@ export function ChatShell() {
 
                     <textarea
                       ref={composerTextareaRef}
+                      rows={1}
                       value={draftMessage}
                       onChange={(event) => {
                         setDraftMessage(event.target.value);
