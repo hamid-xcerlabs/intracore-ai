@@ -453,8 +453,7 @@ async def regenerate_stream(
                     ).model_dump_json() + "\n"
                 elif isinstance(item, ConversationTitleUpdate):
                     yield ChatTitleUpdatedEvent(
-                        chat_id=chat_id,
-                        title=item.chat.title,
+                        chat=ChatResponse.model_validate(item.chat)
                     ).model_dump_json() + "\n"
         except ConversationStoppedError:
             yield ResponseStoppedEvent(chat_id=chat_id).model_dump_json() + "\n"
