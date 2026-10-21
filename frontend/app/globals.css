@@ -1524,31 +1524,6 @@ textarea:focus-visible {
   font-size: 11px;
 }
 
-.ic-thinking-shimmer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 4px 0 6px;
-}
-
-.ic-shimmer-line {
-  display: block;
-  height: 14px;
-  border-radius: 6px;
-  background: linear-gradient(
-    90deg,
-    #e4e4e7 0%,
-    #f4f4f5 40%,
-    #e4e4e7 80%
-  );
-  background-size: 200% 100%;
-  animation: ic-shimmer-sweep 1.4s ease-in-out infinite;
-}
-
-@keyframes ic-shimmer-sweep {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 
 .ic-user-bubble {
   max-width: min(68%, 560px);

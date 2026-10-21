@@ -480,12 +480,10 @@ function StreamingAssistantView({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
-              className="ic-thinking-shimmer"
+              className="ic-activity-dots"
               aria-label="Thinking"
             >
-              <span className="ic-shimmer-line" style={{ width: "60%" }} />
-              <span className="ic-shimmer-line" style={{ width: "80%" }} />
-              <span className="ic-shimmer-line" style={{ width: "45%" }} />
+              <span /><span /><span />
             </motion.div>
           ) : hasAnswer ? (
             <motion.div
@@ -512,11 +510,9 @@ function StreamingAssistantView({
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="ic-thinking-shimmer"
+              className="ic-activity-dots"
             >
-              <span className="ic-shimmer-line" style={{ width: "60%" }} />
-              <span className="ic-shimmer-line" style={{ width: "80%" }} />
-              <span className="ic-shimmer-line" style={{ width: "45%" }} />
+              <span /><span /><span />
             </motion.div>
           )}
         </AnimatePresence>
