@@ -453,7 +453,6 @@ function StreamingAssistantView({
     <motion.article
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
       transition={{ duration: 0.22 }}
       className="ic-message ic-message-assistant ic-stream-message"
     >
@@ -2162,7 +2161,7 @@ export function ChatShell() {
                   !activeMessageError &&
                   hasConversationContent ? (
                     <div className="ic-message-list">
-                      <AnimatePresence initial={false} mode="popLayout">
+                      <AnimatePresence initial={false} mode="sync">
                         {activeMessages.map((message) => {
                           const isUser = message.role === "user";
                           const isCopied = copiedMessageId === message.id;
@@ -2176,7 +2175,7 @@ export function ChatShell() {
                           return (
                             <motion.article
                               key={`message-${message.chat_id}-${message.sequence_number}-${message.role}`}
-                              initial={{ opacity: 0, y: 8 }}
+                              initial={isUser ? { opacity: 0, y: 8 } : false}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0 }}
                               transition={{ duration: 0.18 }}
