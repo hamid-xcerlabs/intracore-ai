@@ -57,9 +57,11 @@ textarea {
 }
 
 button:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(119, 83, 159, 0.62);
-  outline-offset: 3px;
+textarea:focus-visible,
+input:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
 }
 
 ::selection {
@@ -1764,8 +1766,7 @@ textarea:focus-visible {
 }
 
 .ic-composer:focus-within {
-  border-color: #a1a1aa;
-  box-shadow: 0 0 0 3px rgba(0 0 0 / 0.04);
+  border-color: #e4e4e7;
 }
 
 .ic-composer.is-generating {
