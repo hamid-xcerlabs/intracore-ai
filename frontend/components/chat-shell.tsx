@@ -2446,6 +2446,12 @@ export function ChatShell() {
                       isSendingMessage ? "is-generating" : ""
                     }`}
                   >
+                    <div className="ic-composer-tools">
+                      <button type="button" className="ic-composer-tool" aria-label="Add attachment">
+                        <PlusIcon />
+                      </button>
+                    </div>
+
                     <textarea
                       ref={composerTextareaRef}
                       value={draftMessage}
@@ -2483,13 +2489,6 @@ export function ChatShell() {
                         }
                       }}
                     />
-
-                    <div className="ic-composer-footer">
-                      <div className="ic-composer-tools">
-                        <button type="button" className="ic-composer-tool" aria-label="Add attachment">
-                          <PlusIcon />
-                        </button>
-                      </div>
 
                       <div className="ic-composer-actions">
                         <div className="ic-composer-model-wrap" ref={modelMenuRef}>
@@ -2613,7 +2612,6 @@ export function ChatShell() {
                           )}
                         </motion.button>
                       </div>
-                    </div>
                   </div>
 
                   {!isSendingMessage && activeSendError ? (

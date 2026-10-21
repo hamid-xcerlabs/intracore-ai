@@ -56,11 +56,8 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:focus-visible,
-textarea:focus-visible,
-input:focus-visible,
-a:focus-visible,
-[tabindex]:focus-visible {
+*:focus,
+*:focus-visible {
   outline: none;
 }
 
@@ -1758,11 +1755,14 @@ a:focus-visible,
 }
 
 .ic-composer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   border: 1px solid #e4e4e7;
-  border-radius: 12px;
+  border-radius: 9999px;
   background: #ffffff;
-  padding: 6px 6px 6px 14px;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  padding: 6px 6px 6px 8px;
+  transition: border-color 150ms ease;
 }
 
 .ic-composer:focus-within {
@@ -1775,19 +1775,20 @@ a:focus-visible,
 }
 
 .ic-composer textarea {
-  display: block;
-  width: 100%;
-  min-height: 40px;
-  max-height: 160px;
+  flex: 1;
+  min-width: 0;
+  min-height: 22px;
+  max-height: 140px;
   resize: none;
   overflow-y: auto;
   border: 0;
   background: transparent;
-  padding: 8px 0;
+  padding: 6px 0;
   color: #18181b;
   font-size: 14px;
   line-height: 1.5;
   outline: 0;
+  align-self: center;
 }
 
 .ic-composer textarea::placeholder {
@@ -1800,11 +1801,7 @@ a:focus-visible,
 }
 
 .ic-composer-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 2px 0 0;
+  display: none;
 }
 
 .ic-composer-context {
@@ -1825,10 +1822,10 @@ a:focus-visible,
 
 .ic-primary-action {
   display: flex;
-  height: 36px;
+  height: 34px;
   align-items: center;
   justify-content: center;
-  border-radius: 9px;
+  border-radius: 9999px;
   color: #fff;
   cursor: pointer;
   transition: background 140ms ease;
@@ -1846,7 +1843,7 @@ a:focus-visible,
 }
 
 .ic-primary-action.is-send {
-  width: 36px;
+  width: 34px;
   background: #18181b;
 }
 
@@ -2628,58 +2625,8 @@ a:focus-visible,
   width: min(100%, 820px);
 }
 
-.ic-composer {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid #e4e4e7;
-  border-radius: 18px;
-  background: #ffffff;
-  padding: 11px 12px 9px;
-  box-shadow: 0 1px 5px rgba(0 0 0 / 0.06);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-.ic-composer::before {
-  display: none;
-}
-
-.ic-composer:focus-within {
-  border-color: #c4c4c8;
-  box-shadow: 0 2px 16px rgba(0 0 0 / 0.1);
-}
-
-.ic-composer.is-generating {
-  border-color: #d4d4d8;
-  background: #fafafa;
-}
-
-.ic-composer textarea {
-  width: 100%;
-  height: 24px;
-  min-height: 30px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 2px 0 0;
-  color: #18181b;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.5;
-  resize: none;
-}
-
-.ic-composer textarea::placeholder {
-  color: #b0b0b8;
-  opacity: 1;
-}
-
 .ic-composer-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 7px;
-  padding-top: 0;
+  display: none;
 }
 
 .ic-composer-context {
@@ -3961,8 +3908,8 @@ a:focus-visible,
 }
 
 .ic-composer-actions {
-  gap: 10px;
-  margin-right: -2px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .ic-composer-tool {
