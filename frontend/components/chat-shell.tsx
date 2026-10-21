@@ -451,10 +451,9 @@ function StreamingAssistantView({
 
   return (
     <motion.article
-      layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
+      exit={{ opacity: 0 }}
       transition={{ duration: 0.22 }}
       className="ic-message ic-message-assistant ic-stream-message"
     >
@@ -472,7 +471,7 @@ function StreamingAssistantView({
           )}
         </div>
 
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="sync" initial={false}>
           {!hasAnswer && isActive ? (
             <motion.div
               key="thinking"
@@ -2176,12 +2175,11 @@ export function ChatShell() {
 
                           return (
                             <motion.article
-                              layout
                               key={`message-${message.chat_id}-${message.sequence_number}-${message.role}`}
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -4 }}
-                              transition={{ duration: 0.2 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.18 }}
                               className={`ic-message ${
                                 isUser
                                   ? "ic-message-user"
@@ -2339,7 +2337,9 @@ export function ChatShell() {
                       onKeyDown={(event) => {
                         if (
                           event.key === "Enter" &&
-                          (event.ctrlKey || event.metaKey) &&
+                          !event.shiftKey &&
+                          !event.ctrlKey &&
+                          !event.metaKey &&
                           !isSendingMessage
                         ) {
                           event.preventDefault();
