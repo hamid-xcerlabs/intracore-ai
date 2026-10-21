@@ -2188,18 +2188,6 @@ export function ChatShell() {
                                   : "ic-message-assistant"
                               }`}
                             >
-                              {!isUser ? (
-                                <div className="ic-assistant-avatar">
-                                  <Image
-                                    className="ic-assistant-logo"
-                                    src="/intracore-mark.png"
-                                    alt=""
-                                    width={32}
-                                    height={32}
-                                    aria-hidden="true"
-                                  />
-                                </div>
-                              ) : null}
 
                               <div
                                 className={
