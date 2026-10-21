@@ -2471,10 +2471,10 @@ export function ChatShell() {
                       }
                       placeholder={
                         !activeChat
-                          ? "Create a conversation first"
+                          ? "Start a new conversation first"
                           : !selectedModelName
                             ? "Select an installed model first"
-                            : "Work with Codex"
+                            : "Ask anything…"
                       }
                       onKeyDown={(event) => {
                         if (

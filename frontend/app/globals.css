@@ -1757,11 +1757,11 @@ textarea {
 .ic-composer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   border: 1px solid #e4e4e7;
   border-radius: 9999px;
   background: #ffffff;
-  padding: 6px 6px 6px 8px;
+  padding: 7px 7px 7px 10px;
   transition: border-color 150ms ease;
 }
 
@@ -1770,8 +1770,8 @@ textarea {
 }
 
 .ic-composer.is-generating {
-  border-color: #d4d4d8;
-  background: #fafafa;
+  border-color: #e4e4e7;
+  background: #ffffff;
 }
 
 .ic-composer textarea {
@@ -1783,7 +1783,7 @@ textarea {
   overflow-y: auto;
   border: 0;
   background: transparent;
-  padding: 6px 0;
+  padding: 5px 0;
   color: #18181b;
   font-size: 14px;
   line-height: 1.5;
@@ -1796,8 +1796,10 @@ textarea {
 }
 
 .ic-composer textarea:disabled {
-  cursor: not-allowed;
-  color: #a1a1aa;
+  cursor: default;
+  color: #18181b;
+  -webkit-text-fill-color: #18181b;
+  opacity: 1;
 }
 
 .ic-composer-footer {
@@ -3916,19 +3918,17 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 30px;
   height: 30px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 9999px;
   background: transparent;
-  color: #6f7078;
+  color: #71717a;
   cursor: pointer;
   font: inherit;
   transition: color 140ms ease, background 140ms ease;
-}
-
-.ic-composer-tool {
-  width: 30px;
+  flex-shrink: 0;
 }
 
 .ic-composer-tool:hover {
