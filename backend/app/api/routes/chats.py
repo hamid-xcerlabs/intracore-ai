@@ -48,6 +48,7 @@ from app.schemas.messages import (
     DurableGenerationResponse,
     MessageCreate,
     MessageResponse,
+    RegenerateRequest,
     ResponseStartedEvent,
     ResponseStoppedEvent,
     StreamingErrorEvent,
@@ -77,7 +78,7 @@ router = APIRouter(
 )
 
 
-async def resolve_message_model(payload: MessageCreate) -> str:
+async def resolve_message_model(payload: MessageCreate | RegenerateRequest) -> str:
     """Validate model selection before any durable user write occurs."""
 
     requested_model = payload.model_name
@@ -391,7 +392,7 @@ async def stream_chat_message(
 @router.post("/{chat_id}/messages/stream/regenerate")
 async def regenerate_stream(
     chat_id: int,
-    payload: MessageCreate,
+    payload: RegenerateRequest,
     request: Request,
     session: DatabaseSession,
 ) -> StreamingResponse:

@@ -103,3 +103,7 @@ class StreamingErrorEvent(BaseModel):
     code: str
     message: str
     user_message_saved: bool = True
+
+
+class RegenerateRequest(BaseModel):
+    model_name: str | None = Field(default=None, min_length=1)
