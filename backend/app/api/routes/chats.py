@@ -71,6 +71,22 @@ DatabaseSession = Annotated[
 ]
 
 
+async def build_chat_response(
+    session: AsyncSession,
+    chat: Chat,
+) -> ChatResponse:
+    """Return one chat with the current durable message count."""
+
+    message_count = await session.scalar(
+        sa_select(func.count(MessageModel.id)).where(
+            MessageModel.chat_id == chat.id,
+        )
+    )
+    data = chat.__dict__.copy()
+    data["message_count"] = message_count or 0
+    return ChatResponse.model_validate(data)
+
+
 # All endpoints in this router begin with /chats.
 router = APIRouter(
     prefix="/chats",
@@ -137,7 +153,7 @@ async def create_chat(
     )
 
     # Convert the ORM object into the stable public response schema.
-    return ChatResponse.model_validate(chat)
+    return await build_chat_response(session, chat)
 
 
 # GET /chats returns all persistent conversations.
@@ -496,7 +512,7 @@ async def get_chat(
         )
 
     # Convert the ORM object into the public response contract.
-    return ChatResponse.model_validate(chat)
+    return await build_chat_response(session, chat)
 
 
 # PATCH /chats/{chat_id} renames one conversation.
@@ -540,7 +556,7 @@ async def rename_chat(
     )
 
     # Return the updated durable record.
-    return ChatResponse.model_validate(updated_chat)
+    return await build_chat_response(session, updated_chat)
 
 
 # DELETE /chats/{chat_id} permanently removes one conversation.
