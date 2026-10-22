@@ -137,6 +137,8 @@ function CodeBlock({ children }: { children?: ReactNode }) {
     }
   });
 
+  const lineCount = codeText ? codeText.split("\n").length : 0;
+
   const handleCopy = () => {
     void navigator.clipboard.writeText(codeText).then(() => {
       setCopied(true);
@@ -157,7 +159,16 @@ function CodeBlock({ children }: { children?: ReactNode }) {
           <span>{copied ? "Copied" : "Copy code"}</span>
         </button>
       </div>
-      <pre>{children}</pre>
+      <div className="ic-code-body">
+        {lineCount > 1 ? (
+          <div className="ic-line-numbers" aria-hidden="true">
+            {Array.from({ length: lineCount }, (_, i) => (
+              <span key={i + 1}>{i + 1}</span>
+            ))}
+          </div>
+        ) : null}
+        <pre>{children}</pre>
+      </div>
     </div>
   );
 }
