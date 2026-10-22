@@ -2900,10 +2900,16 @@ export function ChatShell() {
                     </div>
                   ) : null}
 
+                  <AnimatePresence initial={false}>
                   {!isLoadingMemories
-                    ? memories.map((memory) => (
-                        <article
+                    ? memories.map((memory, index) => (
+                        <motion.article
                           key={memory.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                          transition={{ duration: 0.2, delay: index * 0.04 }}
+                          layout
                           className={`ic-memory-card ${
                             memory.is_enabled ? "" : "is-disabled"
                           }`}
@@ -2962,9 +2968,10 @@ export function ChatShell() {
                               Delete
                             </button>
                           </div>
-                        </article>
+                        </motion.article>
                       ))
                     : null}
+                  </AnimatePresence>
                 </div>
               </motion.aside>
             </>
