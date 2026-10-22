@@ -448,9 +448,9 @@ export function SettingsDialog({
       id: "general",
       label: "General",
       icon: (
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-          <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.6"/>
-          <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
       ),
     },
@@ -458,9 +458,9 @@ export function SettingsDialog({
       id: "appearance",
       label: "Appearance",
       icon: (
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-          <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.6"/>
-          <path d="M10 2.5v15M2.5 10h15" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="2 2"/>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
     },
@@ -468,9 +468,9 @@ export function SettingsDialog({
       id: "memory",
       label: "Memory",
       icon: (
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-          <rect x="2.5" y="5.5" width="15" height="9" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-          <path d="M6 9.5h2M6 12h3M12 9.5h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26C17.81 13.47 19 11.38 19 9c0-3.87-3.13-7-7-7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M9 21h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
       ),
     },
@@ -478,8 +478,8 @@ export function SettingsDialog({
       id: "data",
       label: "Data & Privacy",
       icon: (
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-          <path d="M10 2.5L3.5 5v5c0 3.6 2.8 6.9 6.5 7.5 3.7-.6 6.5-3.9 6.5-7.5V5L10 2.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
         </svg>
       ),
     },
@@ -487,9 +487,9 @@ export function SettingsDialog({
       id: "about",
       label: "About",
       icon: (
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
-          <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.6"/>
-          <path d="M10 9v5M10 7v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 8h.01M11 12h1v4h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
     },
