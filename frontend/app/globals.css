@@ -4743,3 +4743,86 @@ textarea {
 .ic-theme-option-icon {
   display: flex;
 }
+
+/* ── Dark mode ──────────────────────────────────────────────────────────── */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f0ecf8;
+  --muted: #9490a0;
+  --muted-strong: #b0aaba;
+  --line: rgba(200, 180, 230, 0.1);
+  --line-strong: rgba(180, 140, 220, 0.18);
+  --surface: rgba(30, 24, 40, 0.92);
+  --surface-strong: rgba(36, 28, 50, 0.98);
+  --lilac: #a07cd0;
+  --lilac-soft: rgba(120, 80, 180, 0.2);
+  --lilac-pale: rgba(120, 80, 180, 0.1);
+}
+
+:root[data-theme="dark"] body {
+  background: #1a1525;
+}
+
+:root[data-theme="dark"] .ic-workspace {
+  background: #1a1525;
+}
+
+:root[data-theme="dark"] .ic-sidebar {
+  background: rgba(28, 22, 40, 0.96);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .ic-main {
+  background: #1e1830;
+}
+
+:root[data-theme="dark"] .ic-composer-wrap {
+  background: rgba(40, 32, 58, 0.95);
+  border-color: var(--line-strong);
+}
+
+:root[data-theme="dark"] .ic-user-bubble {
+  color: #e8e2f4;
+}
+
+:root[data-theme="dark"] .ic-assistant-content {
+  color: #e8e2f4;
+}
+
+:root[data-theme="dark"] .ic-chat-row {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .ic-chat-row:hover {
+  background: rgba(255 255 255 / 0.05);
+}
+
+:root[data-theme="dark"] .ic-chat-row.is-active {
+  background: rgba(160, 124, 208, 0.15);
+}
+
+:root[data-theme="dark"] .ic-settings-dialog {
+  background: #2a2040;
+}
+
+:root[data-theme="dark"] .ic-settings-nav {
+  background: rgba(0,0,0,0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --ink: #f0ecf8;
+    --muted: #9490a0;
+    --muted-strong: #b0aaba;
+    --line: rgba(200, 180, 230, 0.1);
+    --line-strong: rgba(180, 140, 220, 0.18);
+    --surface: rgba(30, 24, 40, 0.92);
+    --surface-strong: rgba(36, 28, 50, 0.98);
+    --lilac: #a07cd0;
+    --lilac-soft: rgba(120, 80, 180, 0.2);
+    --lilac-pale: rgba(120, 80, 180, 0.1);
+  }
+  :root:not([data-theme]) body { background: #1a1525; }
+}

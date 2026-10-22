@@ -591,6 +591,18 @@ export function ChatShell() {
     document.documentElement.setAttribute("data-font-size", settings.fontSize);
   }, [settings.fontSize]);
 
+  // Apply theme setting to root
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === "dark") {
+      root.setAttribute("data-theme", "dark");
+    } else if (settings.theme === "system") {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", "light");
+    }
+  }, [settings.theme]);
+
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
