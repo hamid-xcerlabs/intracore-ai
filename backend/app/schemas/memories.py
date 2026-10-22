@@ -19,7 +19,7 @@ def normalize_memory_content(value: str) -> str:
 class MemoryCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    content: str
+    content: str = Field(max_length=20_000)
     kind: MemoryKind
     is_enabled: bool = True
     source_chat_id: int | None = Field(default=None, gt=0)
@@ -31,7 +31,7 @@ class MemoryCreate(BaseModel):
 class MemoryUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    content: str | None = None
+    content: str | None = Field(default=None, max_length=20_000)
     kind: MemoryKind | None = None
     is_enabled: bool | None = None
     source_chat_id: int | None = Field(default=None, gt=0)

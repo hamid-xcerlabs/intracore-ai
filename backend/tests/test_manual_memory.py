@@ -105,6 +105,10 @@ class ManualMemoryTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValidationError):
             MemoryCreate(content="valid", kind="unsupported")
         with self.assertRaises(ValidationError):
+            MemoryCreate(content="x" * 20_001, kind="fact")
+        with self.assertRaises(ValidationError):
+            MemoryUpdate(content="x" * 20_001)
+        with self.assertRaises(ValidationError):
             MemoryUpdate()
 
     async def test_create_list_update_disable_and_hard_delete(self):
