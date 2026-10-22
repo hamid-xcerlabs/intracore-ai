@@ -1815,6 +1815,35 @@ export function ChatShell() {
       )
     : chats;
 
+  function getChatGroup(updatedAt: string): string {
+    const date = parseApiDate(updatedAt);
+    if (Number.isNaN(date.getTime())) return "Older";
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+    const chatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (chatDay >= today) return "Today";
+    if (chatDay >= yesterday) return "Yesterday";
+    if (chatDay >= weekAgo) return "This week";
+    return "Older";
+  }
+
+  const GROUP_ORDER = ["Today", "Yesterday", "This week", "Older"];
+
+  const groupedChats: Record<string, typeof filteredChats> = {};
+  for (const chat of filteredChats) {
+    const group = chatSearch.trim() ? "Results" : getChatGroup(chat.updated_at);
+    if (!groupedChats[group]) groupedChats[group] = [];
+    groupedChats[group].push(chat);
+  }
+
+  const chatGroups = chatSearch.trim()
+    ? (groupedChats["Results"] ? [{ label: "Results", chats: groupedChats["Results"] }] : [])
+    : GROUP_ORDER.filter((g) => groupedChats[g]?.length).map((g) => ({ label: g, chats: groupedChats[g] }));
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -2018,7 +2047,10 @@ export function ChatShell() {
               ) : null}
 
               <div className="ic-chat-list">
-                {filteredChats.map((chat) => {
+                {chatGroups.map(({ label, chats: groupChats }) => (
+                  <div key={label} className="ic-chat-group">
+                    <p className="ic-chat-group-label">{label}</p>
+                    {groupChats.map((chat) => {
                   const isActive = chat.id === activeChatId;
                   const isRenaming = renamingChatId === chat.id;
 
@@ -2113,6 +2145,8 @@ export function ChatShell() {
                     </motion.div>
                   );
                 })}
+                  </div>
+                ))}
               </div>
             </div>
 

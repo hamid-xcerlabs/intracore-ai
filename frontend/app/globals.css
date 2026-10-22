@@ -4350,3 +4350,18 @@ textarea {
 }
 
 .ic-offline-retry:hover { background: #b45309; }
+
+/* ── Sidebar chat group labels ──────────────────────────────────────────────── */
+
+.ic-chat-group { margin-bottom: 4px; }
+
+.ic-chat-group-label {
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0;
+  user-select: none;
+}
