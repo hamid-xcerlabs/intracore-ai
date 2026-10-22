@@ -461,13 +461,14 @@ function StreamingAssistantView({
         <div className="ic-message-identity">
           <span>IntraCore</span>
           {!hasAnswer && isActive ? null : (
-            <span className="ic-message-time">
-              {stream.status === "stopped"
-                ? "Stopped"
-                : stream.status === "interrupted"
-                  ? "Interrupted"
-                  : null}
-            </span>
+            (stream.status === "stopped" || stream.status === "interrupted") ? (
+              <span className="ic-stream-status-chip">
+                <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" width="10" height="10">
+                  <rect x="2" y="2" width="8" height="8" rx="1.5"/>
+                </svg>
+                {stream.status === "stopped" ? "Stopped" : "Interrupted"}
+              </span>
+            ) : null
           )}
         </div>
 

@@ -1678,6 +1678,20 @@ textarea {
   font-size: 10.5px;
 }
 
+.ic-stream-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: color-mix(in srgb, #e5323a 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, #e5323a 25%, transparent);
+  color: #c0313a;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 @keyframes ic-compact-beam {
   0% {
     opacity: 0;
