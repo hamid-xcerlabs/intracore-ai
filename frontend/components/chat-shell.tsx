@@ -55,10 +55,12 @@ import {
 const MODEL_PREFERENCE_KEY = "intracore.chatModel";
 
 const STARTER_PROMPTS = [
-  "Explain this concept simply:",
-  "Help me write a clear email about:",
-  "What are the pros and cons of:",
-  "Summarise what you know about:",
+  "Explain this to me like I'm new to it:",
+  "Help me write a clear, professional email about:",
+  "What are the key trade-offs of:",
+  "Give me a step-by-step plan for:",
+  "Review and improve this text:",
+  "What questions should I be asking about:",
 ] as const;
 
 const PRE_RESPONSE_STATUS_LABELS = [
