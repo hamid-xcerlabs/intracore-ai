@@ -551,6 +551,7 @@ export function ChatShell() {
   // Delete confirmation dialog state
   const [deletingChat, setDeletingChat] = useState<{ id: number; title: string } | null>(null);
   const [deletingMemory, setDeletingMemory] = useState<MemoryRecord | null>(null);
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false);
 
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -2405,7 +2406,7 @@ export function ChatShell() {
                                           type="button"
                                           className="ic-regen-btn"
                                           aria-label="Regenerate response"
-                                          onClick={() => void regenerateLastResponse()}
+                                          onClick={() => setShowRegenConfirm(true)}
                                         >
                                           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -2894,6 +2895,54 @@ export function ChatShell() {
                     onClick={() => void deleteChat(deletingChat.id)}
                   >
                     Delete chat
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* ── Regenerate confirmation dialog ── */}
+        <AnimatePresence>
+          {showRegenConfirm ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setShowRegenConfirm(false)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-regen-dialog-title"
+              >
+                <h2 id="ic-regen-dialog-title" className="ic-dialog-title">Regenerate response?</h2>
+                <p className="ic-dialog-body">
+                  This will replace the current response with a new one.
+                </p>
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => setShowRegenConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-confirm"
+                    style={{ background: "var(--lilac)" }}
+                    onClick={() => { setShowRegenConfirm(false); void regenerateLastResponse(); }}
+                  >
+                    Regenerate
                   </button>
                 </div>
               </motion.div>
