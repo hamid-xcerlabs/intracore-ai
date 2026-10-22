@@ -576,6 +576,30 @@ textarea {
   border-top: 1px solid rgba(0 0 0 / 0.07);
 }
 
+.ic-sidebar-theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-strong);
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease;
+  text-align: left;
+}
+
+.ic-sidebar-theme-toggle:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .ic-sidebar-theme-toggle:hover {
+  background: rgba(255,255,255,0.07);
+}
+
 .ic-sidebar-settings-btn {
   display: flex;
   align-items: center;
