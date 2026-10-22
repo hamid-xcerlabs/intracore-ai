@@ -539,8 +539,8 @@ function StreamingAssistantView({
               {stream.status === "stopped" || stream.status === "interrupted" ? (
                 <p className="ic-stream-note">
                   {stream.status === "stopped"
-                    ? "Stopped â€" this partial response is not saved."
-                    : "Response interrupted â€" this partial response is not saved."}
+                    ? "Stopped — this partial response is not saved."
+                    : "Response interrupted — this partial response is not saved."}
                 </p>
               ) : null}
             </motion.div>
@@ -958,7 +958,7 @@ export function ChatShell() {
     if (isExportingChats || chats.length === 0) return;
     setIsExportingChats(true);
     try {
-      const parts: string[] = [`# IntraCore AI â€" Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
+      const parts: string[] = [`# IntraCore AI — Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
       for (const chat of chats) {
         parts.push(`\n## ${chat.title || "Untitled"}\n`);
         try {
@@ -1151,7 +1151,7 @@ export function ChatShell() {
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
 
-      // Ctrl+K â€" toggle search
+      // Ctrl+K — toggle search
       if (mod && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen((v) => {
@@ -1162,14 +1162,14 @@ export function ChatShell() {
         return;
       }
 
-      // Ctrl+N â€" new chat
+      // Ctrl+N — new chat
       if (mod && e.key === "n") {
         e.preventDefault();
         requestNewChatRef.current();
         return;
       }
 
-      // Ctrl+, â€" settings
+      // Ctrl+, — settings
       if (mod && e.key === ",") {
         e.preventDefault();
         setIsSettingsOpen((v) => !v);
@@ -1609,7 +1609,7 @@ export function ChatShell() {
     const lines: string[] = [
       `# ${activeChat.title}`,
       ``,
-      `*Exported from IntraCore AI â€" ${new Date().toLocaleString()}*`,
+      `*Exported from IntraCore AI — ${new Date().toLocaleString()}*`,
       ``,
     ];
 
@@ -1998,7 +1998,7 @@ export function ChatShell() {
   // Update browser tab title when active chat changes
   useEffect(() => {
     document.title = activeChat?.title
-      ? `${activeChat.title} â€" IntraCore AI`
+      ? `${activeChat.title} — IntraCore AI`
       : "IntraCore AI";
   }, [activeChat?.title]);
 
@@ -2189,7 +2189,7 @@ export function ChatShell() {
                   <path d="M13.5 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M16.7 3.8a2.12 2.12 0 0 1 3 3L11 15.5l-3.5.9.9-3.5 8.3-9.1Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span>{isCreatingChat ? "Creatingâ€¦" : "New chat"}</span>
+                <span>{isCreatingChat ? "Creating…" : "New chat"}</span>
               </button>
             </div>
 
@@ -2418,7 +2418,7 @@ export function ChatShell() {
 
                   <p>
                     {activeChat
-                      ? `Local conversation Â· Updated ${formatChatDate(activeChat.updated_at)}`
+                      ? `Local conversation · Updated ${formatChatDate(activeChat.updated_at)}`
                       : "Private local AI workspace"}
                   </p>
                 </div>
@@ -2837,7 +2837,7 @@ export function ChatShell() {
                           ? "Start a new conversation first"
                           : !selectedModelName
                             ? "Select an installed model first"
-                            : "Ask anythingâ€¦"
+                            : "Ask anything…"
                       }
                       onKeyDown={(event) => {
                         if (
@@ -2881,7 +2881,7 @@ export function ChatShell() {
                             <span className="ic-composer-model-icon" aria-hidden="true">âš¡</span>
                             <span className="ic-composer-model-name">
                               {isLoadingModels
-                                ? "Finding modelsâ€¦"
+                                ? "Finding models…"
                                 : selectedModelName ?? "No model"}
                             </span>
                             <span className={`ic-model-chevron${isModelMenuOpen ? " is-open" : ""}`}>
@@ -2930,7 +2930,7 @@ export function ChatShell() {
                                         <span className="ic-model-option-main">
                                           <strong>{model.name}</strong>
                                           {model.parameter_size || model.quantization_level ? (
-                                            <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" Â· ")}</small>
+                                            <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" · ")}</small>
                                           ) : null}
                                         </span>
                                         {isSelected ? (
@@ -3082,7 +3082,7 @@ export function ChatShell() {
                     {/* Commit 9: active / total count */}
                     {totalMemoryCount > 0 ? (
                       <p className="ic-memory-count">
-                        {enabledMemoryCount} active Â· {totalMemoryCount} total
+                        {enabledMemoryCount} active · {totalMemoryCount} total
                       </p>
                     ) : (
                       <p>
@@ -3111,7 +3111,7 @@ export function ChatShell() {
                       setMemoryContent(event.target.value);
                       setMemoryError(null);
                     }}
-                    placeholder="Add a fact, preference, or instructionâ€¦"
+                    placeholder="Add a fact, preference, or instruction…"
                     disabled={isSavingMemory}
                   />
 
@@ -3146,7 +3146,7 @@ export function ChatShell() {
                         disabled={isSavingMemory || !memoryContent.trim()}
                       >
                         {isSavingMemory
-                          ? "Savingâ€¦"
+                          ? "Saving…"
                           : editingMemoryId === null
                             ? "Add memory"
                             : "Save changes"}
@@ -3163,7 +3163,7 @@ export function ChatShell() {
 
                 <div className="ic-memory-list" aria-live="polite">
                   {isLoadingMemories ? (
-                    <p className="ic-memory-list-state">Loading memoriesâ€¦</p>
+                    <p className="ic-memory-list-state">Loading memories…</p>
                   ) : null}
 
                   {!isLoadingMemories && memories.length === 0 ? (
@@ -3217,7 +3217,7 @@ export function ChatShell() {
                                 ? ` chat ${memory.source_chat_id}`
                                 : ""}
                               {memory.source_message_id
-                                ? ` Â· message ${memory.source_message_id}`
+                                ? ` · message ${memory.source_message_id}`
                                 : ""}
                             </small>
                           ) : null}
