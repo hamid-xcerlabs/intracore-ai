@@ -209,6 +209,7 @@ class OllamaProvider:                         #Yeh Ollama-related functionality 
             installed_models = await self.get_installed_models() #Pehle Ollama se installed models leta hai., Agar successful hua, iska matlab connection working hai.
 
             return {
+                "status": "ready",
                 "connected": True,
                 "ollama_url": self.base_url,
                 "chat_model": self.chat_model,
@@ -222,6 +223,7 @@ class OllamaProvider:                         #Yeh Ollama-related functionality 
 
         except OllamaUnavailableError:
             return {
+                "status": "unavailable",
                 "connected": False,
                 "error": "Could not connect to Ollama.",
                 "ollama_url": self.base_url,

@@ -72,6 +72,21 @@ messages remain isolated to their own conversation.
 
 The larger product is still being shaped.
 
+## Local verification
+
+Run the repeatable verification script from the repository root:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+The backend exposes these local readiness checks:
+
+- `GET /health` confirms the API process is running.
+- `GET /health/database` checks SQLite connectivity.
+- `GET /health/ollama` checks the local Ollama runtime.
+- `GET /health/ready` aggregates SQLite and Ollama and returns HTTP 503 when the chat runtime is unavailable.
+
 ## What Comes Next
 
 IntraCore is being built as a long-term systems project, not a temporary local-model wrapper.

@@ -1,6 +1,9 @@
 # APIRouter allows this file to define related HTTP endpoints separately
 # from the main FastAPI application entry point.
+import asyncio
+
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 # Import the database connectivity diagnostic from the database layer.
 from app.db.session import check_database_connection
 
@@ -63,3 +66,29 @@ async def database_health_check() -> dict[str, object]:
     # Delegate database-specific work to app/db/session.py.
     # The API route only exposes the result over HTTP.
     return await check_database_connection()
+
+
+# GET /health/ready reports whether the backend can serve chat requests.
+@router.get("/ready")
+async def readiness_check() -> JSONResponse:
+    # Run independent dependency checks concurrently so readiness probes do
+    # not add avoidable latency when both local services are available.
+    ollama_result, database_result = await asyncio.gather(
+        ollama_provider.check_connection(),
+        check_database_connection(),
+    )
+    checks = {
+        "ollama": ollama_result,
+        "database": database_result,
+    }
+    ready = bool(ollama_result.get("connected")) and bool(
+        database_result.get("connected")
+    )
+
+    return JSONResponse(
+        status_code=200 if ready else 503,
+        content={
+            "status": "ready" if ready else "unavailable",
+            "checks": checks,
+        },
+    )
