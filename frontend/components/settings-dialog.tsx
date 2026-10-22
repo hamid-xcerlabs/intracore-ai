@@ -548,7 +548,17 @@ export function SettingsDialog({
                 </button>
               </div>
               <div className="ic-settings-content-body">
-                {children}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeSection}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -6 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    {children}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </motion.div>

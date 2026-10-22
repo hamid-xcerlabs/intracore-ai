@@ -4882,3 +4882,54 @@ textarea {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+/* ── Settings dialog - responsive + polish ──────────────────────────────── */
+
+@media (max-width: 600px) {
+  .ic-settings-dialog {
+    flex-direction: column;
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .ic-settings-nav {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px 8px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    gap: 4px;
+  }
+
+  .ic-settings-nav-title {
+    display: none;
+  }
+
+  .ic-settings-nav-item {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .ic-settings-nav-icon {
+    display: none;
+  }
+}
+
+/* Active nav item indicator bar */
+.ic-settings-nav-item.is-active {
+  position: relative;
+}
+
+/* Divider between rows */
+.ic-setting-row + .ic-setting-row {
+  border-top: none;
+}
+
+/* Scroll into view on mobile */
+.ic-settings-content-body {
+  scroll-behavior: smooth;
+}
