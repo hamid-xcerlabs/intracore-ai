@@ -3662,6 +3662,37 @@ textarea {
   white-space: pre;
 }
 
+/* Basic syntax highlighting via CSS attribute selectors on language classes */
+.ic-code-block pre code.language-js,
+.ic-code-block pre code.language-jsx,
+.ic-code-block pre code.language-ts,
+.ic-code-block pre code.language-tsx,
+.ic-code-block pre code.language-python,
+.ic-code-block pre code.language-py,
+.ic-code-block pre code.language-bash,
+.ic-code-block pre code.language-sh,
+.ic-code-block pre code.language-css,
+.ic-code-block pre code.language-html,
+.ic-code-block pre code.language-json,
+.ic-code-block pre code.language-yaml,
+.ic-code-block pre code.language-sql {
+  color: #e4e4e7;
+}
+
+/* string-like content (spans from react-syntax-highlighter if added later) */
+.token.string, .token.char, .token.attr-value { color: #86efac; }
+.token.keyword, .token.operator { color: #93c5fd; }
+.token.function, .token.method { color: #fde68a; }
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6b7280; font-style: italic; }
+.token.number, .token.boolean, .token.constant { color: #f9a8d4; }
+.token.class-name, .token.builtin { color: #6ee7b7; }
+.token.punctuation { color: #a1a1aa; }
+.token.tag { color: #f87171; }
+.token.attr-name { color: #fde68a; }
+.token.selector { color: #a78bfa; }
+.token.property { color: #93c5fd; }
+.token.variable { color: #e4e4e7; }
+
 /* ── Regenerate button ──────────────────────────────────────────────────────── */
 
 .ic-regen-btn {
