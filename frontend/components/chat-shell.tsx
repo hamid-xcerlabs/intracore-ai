@@ -290,7 +290,7 @@ function uniqueMessages(messages: Message[]): Message[] {
   );
 }
 
-// â”€â”€â”€ Icons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Icons â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function SendIcon() {
   return (
@@ -442,7 +442,7 @@ function MicrophoneIcon() {
   );
 }
 
-// â”€â”€â”€ Streaming assistant view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Streaming assistant view â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 function StreamingAssistantView({
   stream,
@@ -539,8 +539,8 @@ function StreamingAssistantView({
               {stream.status === "stopped" || stream.status === "interrupted" ? (
                 <p className="ic-stream-note">
                   {stream.status === "stopped"
-                    ? "Stopped â€” this partial response is not saved."
-                    : "Response interrupted â€” this partial response is not saved."}
+                    ? "Stopped â€" this partial response is not saved."
+                    : "Response interrupted â€" this partial response is not saved."}
                 </p>
               ) : null}
             </motion.div>
@@ -564,7 +564,7 @@ function StreamingAssistantView({
   );
 }
 
-// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â"€â"€â"€ Main component â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
 export function ChatShell() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -958,7 +958,7 @@ export function ChatShell() {
     if (isExportingChats || chats.length === 0) return;
     setIsExportingChats(true);
     try {
-      const parts: string[] = [`# IntraCore AI â€” Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
+      const parts: string[] = [`# IntraCore AI â€" Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
       for (const chat of chats) {
         parts.push(`\n## ${chat.title || "Untitled"}\n`);
         try {
@@ -1017,7 +1017,7 @@ export function ChatShell() {
     }
   }
 
-  // â”€â”€â”€ Effects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€â"€ Effects â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -1151,7 +1151,7 @@ export function ChatShell() {
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
 
-      // Ctrl+K â€” toggle search
+      // Ctrl+K â€" toggle search
       if (mod && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen((v) => {
@@ -1162,14 +1162,14 @@ export function ChatShell() {
         return;
       }
 
-      // Ctrl+N â€” new chat
+      // Ctrl+N â€" new chat
       if (mod && e.key === "n") {
         e.preventDefault();
         requestNewChatRef.current();
         return;
       }
 
-      // Ctrl+, â€” settings
+      // Ctrl+, â€" settings
       if (mod && e.key === ",") {
         e.preventDefault();
         setIsSettingsOpen((v) => !v);
@@ -1177,21 +1177,21 @@ export function ChatShell() {
       }
 
       // ? — keyboard shortcuts
-      if (e.key === “?” && !isInput) {
+      if (e.key === "?" && !isInput) {
         e.preventDefault();
         setIsShortcutsOpen((v) => !v);
         return;
       }
 
       // Escape — close any open overlay/dialog
-      if (e.key === “Escape” && !isInput) {
+      if (e.key === "Escape" && !isInput) {
         setIsSettingsOpen(false);
         setIsShortcutsOpen(false);
         setShowNewChatConfirm(false);
         setShowRegenConfirm(false);
         setDeletingChat(null);
         setDeletingMemory(null);
-        setIsSearchOpen((v) => { if (!v) return v; setChatSearch(“”); return false; });
+        setIsSearchOpen((v) => { if (!v) return v; setChatSearch(""); return false; });
       }
     }
 
@@ -1293,7 +1293,7 @@ export function ChatShell() {
     return () => window.cancelAnimationFrame(frameId);
   }, [activeChatId, messages, streamingAssistant]);
 
-  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€â"€ Actions â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   function resizeComposer() {
     const el = composerTextareaRef.current;
@@ -1609,7 +1609,7 @@ export function ChatShell() {
     const lines: string[] = [
       `# ${activeChat.title}`,
       ``,
-      `*Exported from IntraCore AI â€” ${new Date().toLocaleString()}*`,
+      `*Exported from IntraCore AI â€" ${new Date().toLocaleString()}*`,
       ``,
     ];
 
@@ -1926,7 +1926,7 @@ export function ChatShell() {
     }
   }
 
-  // â”€â”€â”€ Derived state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€â"€ Derived state â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   const activeChat =
     chats.find((chat) => chat.id === activeChatId) ?? null;
@@ -1998,7 +1998,7 @@ export function ChatShell() {
   // Update browser tab title when active chat changes
   useEffect(() => {
     document.title = activeChat?.title
-      ? `${activeChat.title} â€” IntraCore AI`
+      ? `${activeChat.title} â€" IntraCore AI`
       : "IntraCore AI";
   }, [activeChat?.title]);
 
@@ -2011,7 +2011,7 @@ export function ChatShell() {
     }
   }, [activeChatId]);
 
-  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â"€â"€â"€ Render â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
 
   return (
     <MotionConfig reducedMotion="user">
@@ -2103,7 +2103,7 @@ export function ChatShell() {
         ) : null}
 
         <div className={`ic-workspace${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-          {/* â”€â”€ Mobile sidebar backdrop â”€â”€ */}
+          {/* â"€â"€ Mobile sidebar backdrop â"€â"€ */}
           {isSidebarOpen ? (
             <div
               className="ic-sidebar-backdrop"
@@ -2112,7 +2112,7 @@ export function ChatShell() {
             />
           ) : null}
 
-          {/* â”€â”€ Sidebar â”€â”€ */}
+          {/* â"€â"€ Sidebar â"€â"€ */}
           <aside className={`ic-sidebar${isSidebarOpen ? " is-open" : ""}`}>
             <div className="ic-sidebar-top">
               {/* Row 1: brand + action icons */}
@@ -2379,7 +2379,7 @@ export function ChatShell() {
             </div>
           </aside>
 
-          {/* â”€â”€ Main panel â”€â”€ */}
+          {/* â"€â"€ Main panel â"€â"€ */}
           <section className="ic-main">
             <header className="ic-header">
               <button
@@ -2934,7 +2934,7 @@ export function ChatShell() {
                                           ) : null}
                                         </span>
                                         {isSelected ? (
-                                          <span className="ic-model-check" aria-label="Selected">âœ“</span>
+                                          <span className="ic-model-check" aria-label="Selected">âœ"</span>
                                         ) : null}
                                       </button>
                                     );
@@ -3051,7 +3051,7 @@ export function ChatShell() {
           </section>
         </div>
 
-        {/* â”€â”€ Memory panel â”€â”€ */}
+        {/* â"€â"€ Memory panel â"€â"€ */}
         <AnimatePresence>
           {isMemoryPanelOpen ? (
             <>
@@ -3253,7 +3253,7 @@ export function ChatShell() {
             </>
           ) : null}
         </AnimatePresence>
-        {/* â”€â”€ Toast notifications â”€â”€ */}
+        {/* â"€â"€ Toast notifications â"€â"€ */}
         <div className="ic-toast-container" aria-live="polite">
           <AnimatePresence>
             {toasts.map((toast) => (
@@ -3286,7 +3286,7 @@ export function ChatShell() {
         <AnimatePresence>
           {isShortcutsOpen ? (
             <motion.div
-              className=”ic-dialog-backdrop”
+              className="ic-dialog-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -3294,35 +3294,35 @@ export function ChatShell() {
               onClick={() => setIsShortcutsOpen(false)}
             >
               <motion.div
-                className=”ic-dialog ic-shortcuts-dialog”
+                className="ic-dialog ic-shortcuts-dialog"
                 initial={{ opacity: 0, scale: 0.96, y: 8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.15 }}
                 onClick={(e) => e.stopPropagation()}
-                role=”dialog”
-                aria-modal=”true”
-                aria-labelledby=”ic-shortcuts-title”
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-shortcuts-title"
               >
-                <h2 id=”ic-shortcuts-title” className=”ic-dialog-title”>Keyboard shortcuts</h2>
-                <div className=”ic-shortcuts-list”>
+                <h2 id="ic-shortcuts-title" className="ic-dialog-title">Keyboard shortcuts</h2>
+                <div className="ic-shortcuts-list">
                   {[
-                    [“Ctrl+N”, “New chat”],
-                    [“Ctrl+K”, “Search chats”],
-                    [“Ctrl+,”, “Settings”],
-                    [“?”, “Keyboard shortcuts”],
-                    [“Enter”, “Send message”],
-                    [“Shift+Enter”, “New line”],
-                    [“Escape”, “Close dialog”],
+                    ["Ctrl+N", "New chat"],
+                    ["Ctrl+K", "Search chats"],
+                    ["Ctrl+,", "Settings"],
+                    ["?", "Keyboard shortcuts"],
+                    ["Enter", "Send message"],
+                    ["Shift+Enter", "New line"],
+                    ["Escape", "Close dialog"],
                   ].map(([key, label]) => (
-                    <div key={key} className=”ic-shortcut-row”>
-                      <kbd className=”ic-kbd”>{key}</kbd>
+                    <div key={key} className="ic-shortcut-row">
+                      <kbd className="ic-kbd">{key}</kbd>
                       <span>{label}</span>
                     </div>
                   ))}
                 </div>
-                <div className=”ic-dialog-actions”>
-                  <button type=”button” className=”ic-dialog-btn ic-dialog-btn-primary” onClick={() => setIsShortcutsOpen(false)}>
+                <div className="ic-dialog-actions">
+                  <button type="button" className="ic-dialog-btn ic-dialog-btn-primary" onClick={() => setIsShortcutsOpen(false)}>
                     Close
                   </button>
                 </div>
@@ -3379,7 +3379,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â”€â”€ New chat confirmation dialog â”€â”€ */}
+        {/* â"€â"€ New chat confirmation dialog â"€â"€ */}
         <AnimatePresence>
           {showNewChatConfirm ? (
             <motion.div
@@ -3417,7 +3417,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â”€â”€ Regenerate confirmation dialog â”€â”€ */}
+        {/* â"€â"€ Regenerate confirmation dialog â"€â"€ */}
         <AnimatePresence>
           {showRegenConfirm ? (
             <motion.div
@@ -3465,7 +3465,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â”€â”€ Delete memory confirmation dialog â”€â”€ */}
+        {/* â"€â"€ Delete memory confirmation dialog â"€â"€ */}
         <AnimatePresence>
           {deletingMemory ? (
             <motion.div
@@ -3513,7 +3513,7 @@ export function ChatShell() {
         </AnimatePresence>
       </main>
 
-      {/* â”€â”€ Settings dialog â”€â”€ */}
+      {/* â"€â"€ Settings dialog â"€â"€ */}
       <SettingsDialog
         open={isSettingsOpen}
         activeSection={settingsSection}
