@@ -1976,6 +1976,15 @@ export function ChatShell() {
       : "IntraCore AI";
   }, [activeChat?.title]);
 
+  // Auto-focus composer textarea when active chat changes
+  useEffect(() => {
+    if (activeChatId) {
+      window.setTimeout(() => {
+        composerTextareaRef.current?.focus();
+      }, 60);
+    }
+  }, [activeChatId]);
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
