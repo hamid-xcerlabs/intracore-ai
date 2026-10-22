@@ -4422,6 +4422,76 @@ textarea {
   opacity: 0.88;
 }
 
+/* ── Keyboard shortcuts dialog ──────────────────────────────────────────────── */
+
+.ic-shortcuts-dialog {
+  width: 400px;
+}
+
+.ic-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0 20px;
+}
+
+.ic-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.ic-shortcut-row:nth-child(odd) {
+  background: rgba(0,0,0,0.03);
+}
+
+:root[data-theme="dark"] .ic-shortcut-row:nth-child(odd) {
+  background: rgba(255,255,255,0.04);
+}
+
+.ic-shortcut-row span {
+  font-size: 13px;
+  color: var(--muted-strong);
+}
+
+.ic-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 500;
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ic-dialog-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.12s, opacity 0.12s;
+}
+
+.ic-dialog-btn-primary {
+  background: var(--ink);
+  color: var(--surface-strong);
+}
+
+.ic-dialog-btn-primary:hover {
+  opacity: 0.85;
+}
+
 /* ── Sidebar empty / loading states ─────────────────────────────────────────── */
 
 .ic-sidebar-loading {

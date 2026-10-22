@@ -583,6 +583,7 @@ export function ChatShell() {
 
   // Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [settings, setSettings] = useState<SettingsState>(() => {
     if (typeof window === "undefined") return { fontSize: "medium", sendOnEnter: true };
@@ -1158,14 +1159,22 @@ export function ChatShell() {
         return;
       }
 
-      // Escape â€” close any open overlay/dialog
-      if (e.key === "Escape" && !isInput) {
+      // ? — keyboard shortcuts
+      if (e.key === “?” && !isInput) {
+        e.preventDefault();
+        setIsShortcutsOpen((v) => !v);
+        return;
+      }
+
+      // Escape — close any open overlay/dialog
+      if (e.key === “Escape” && !isInput) {
         setIsSettingsOpen(false);
+        setIsShortcutsOpen(false);
         setShowNewChatConfirm(false);
         setShowRegenConfirm(false);
         setDeletingChat(null);
         setDeletingMemory(null);
-        setIsSearchOpen((v) => { if (!v) return v; setChatSearch(""); return false; });
+        setIsSearchOpen((v) => { if (!v) return v; setChatSearch(“”); return false; });
       }
     }
 
@@ -3217,7 +3226,56 @@ export function ChatShell() {
           </AnimatePresence>
         </div>
 
-        {/* â”€â”€ Delete confirmation dialog â”€â”€ */}
+        {/* ── Keyboard shortcuts dialog ── */}
+        <AnimatePresence>
+          {isShortcutsOpen ? (
+            <motion.div
+              className=”ic-dialog-backdrop”
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setIsShortcutsOpen(false)}
+            >
+              <motion.div
+                className=”ic-dialog ic-shortcuts-dialog”
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role=”dialog”
+                aria-modal=”true”
+                aria-labelledby=”ic-shortcuts-title”
+              >
+                <h2 id=”ic-shortcuts-title” className=”ic-dialog-title”>Keyboard shortcuts</h2>
+                <div className=”ic-shortcuts-list”>
+                  {[
+                    [“Ctrl+N”, “New chat”],
+                    [“Ctrl+K”, “Search chats”],
+                    [“Ctrl+,”, “Settings”],
+                    [“?”, “Keyboard shortcuts”],
+                    [“Enter”, “Send message”],
+                    [“Shift+Enter”, “New line”],
+                    [“Escape”, “Close dialog”],
+                  ].map(([key, label]) => (
+                    <div key={key} className=”ic-shortcut-row”>
+                      <kbd className=”ic-kbd”>{key}</kbd>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className=”ic-dialog-actions”>
+                  <button type=”button” className=”ic-dialog-btn ic-dialog-btn-primary” onClick={() => setIsShortcutsOpen(false)}>
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* ── Delete confirmation dialog ── */}
         <AnimatePresence>
           {deletingChat ? (
             <motion.div
