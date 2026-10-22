@@ -392,6 +392,16 @@ async def stream_chat_message(
                     "Your message was saved."
                 ),
             ).model_dump_json() + "\n"
+        except Exception:
+            # Keep unexpected stream failures within the NDJSON contract so
+            # clients can render a controlled error and reload durable state.
+            yield StreamingErrorEvent(
+                code="stream_failed",
+                message=(
+                    "The response stream was interrupted. "
+                    "Your message was saved."
+                ),
+            ).model_dump_json() + "\n"
 
     return StreamingResponse(
         event_stream(),
