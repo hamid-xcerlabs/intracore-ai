@@ -195,6 +195,20 @@ function formatMessageTime(value: string): string {
   }).format(date);
 }
 
+function formatFullDate(value: string): string {
+  const date = parseApiDate(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
 function formatChatDate(value: string): string {
   const date = parseApiDate(value);
 
@@ -599,6 +613,7 @@ export function ChatShell() {
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
 
   const activeChatIdRef = useRef(activeChatId);
+  const requestNewChatRef = useRef<() => void>(() => {});
   const nextOptimisticMessageIdRef = useRef(-1);
   const nextStreamRequestIdRef = useRef(1);
   const activeStreamRequestIdRef = useRef<number | null>(null);
@@ -992,6 +1007,46 @@ export function ChatShell() {
         window.clearTimeout(deltaFlushTimerRef.current);
       }
     };
+  }, []);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    function handleGlobalKey(e: KeyboardEvent) {
+      const mod = e.ctrlKey || e.metaKey;
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+
+      // Ctrl+K — toggle search
+      if (mod && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen((v) => {
+          if (!v) setTimeout(() => searchInputRef.current?.focus(), 50);
+          else setChatSearch("");
+          return !v;
+        });
+        return;
+      }
+
+      // Ctrl+N — new chat
+      if (mod && e.key === "n") {
+        e.preventDefault();
+        requestNewChatRef.current();
+        return;
+      }
+
+      // Escape — close any open overlay/dialog
+      if (e.key === "Escape" && !isInput) {
+        setShowNewChatConfirm(false);
+        setShowRegenConfirm(false);
+        setDeletingChat(null);
+        setDeletingMemory(null);
+        setIsSearchOpen((v) => { if (!v) return v; setChatSearch(""); return false; });
+      }
+    }
+
+    document.addEventListener("keydown", handleGlobalKey);
+    return () => document.removeEventListener("keydown", handleGlobalKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -1471,6 +1526,7 @@ export function ChatShell() {
       void createChat();
     }
   }
+  requestNewChatRef.current = requestNewChat;
 
   async function confirmDeleteChat(chatId: number, chatTitle: string) {
     setDeletingChat({ id: chatId, title: chatTitle });
@@ -2354,7 +2410,7 @@ export function ChatShell() {
                                 {!isUser ? (
                                   <div className="ic-message-identity">
                                     <span>IntraCore</span>
-                                    <span className="ic-message-time">
+                                    <span className="ic-message-time" title={formatFullDate(message.created_at)}>
                                       {formatMessageTime(message.created_at)}
                                     </span>
                                   </div>
@@ -2371,6 +2427,7 @@ export function ChatShell() {
                                     <time
                                       className="ic-saved-user-time"
                                       dateTime={message.created_at}
+                                      title={formatFullDate(message.created_at)}
                                     >
                                       {formatMessageTime(message.created_at)}
                                     </time>
