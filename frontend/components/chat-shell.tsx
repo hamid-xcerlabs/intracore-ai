@@ -552,6 +552,7 @@ export function ChatShell() {
   const [deletingChat, setDeletingChat] = useState<{ id: number; title: string } | null>(null);
   const [deletingMemory, setDeletingMemory] = useState<MemoryRecord | null>(null);
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
 
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1462,6 +1463,14 @@ export function ChatShell() {
     }
   }
 
+  function requestNewChat() {
+    if (activeMessages.length > 0) {
+      setShowNewChatConfirm(true);
+    } else {
+      void createChat();
+    }
+  }
+
   async function confirmDeleteChat(chatId: number, chatTitle: string) {
     setDeletingChat({ id: chatId, title: chatTitle });
   }
@@ -1916,7 +1925,7 @@ export function ChatShell() {
                 type="button"
                 className="ic-new-chat-row"
                 disabled={isCreatingChat}
-                onClick={() => void createChat()}
+                onClick={requestNewChat}
               >
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
                   <path d="M13.5 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2187,7 +2196,7 @@ export function ChatShell() {
 
                 <button
                   type="button"
-                  onClick={() => void createChat()}
+                  onClick={requestNewChat}
                   disabled={isCreatingChat}
                   className="ic-mobile-new-chat"
                   aria-label="Create new chat"
@@ -2895,6 +2904,44 @@ export function ChatShell() {
                     onClick={() => void deleteChat(deletingChat.id)}
                   >
                     Delete chat
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* ── New chat confirmation dialog ── */}
+        <AnimatePresence>
+          {showNewChatConfirm ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setShowNewChatConfirm(false)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+              >
+                <h2 className="ic-dialog-title">Start a new chat?</h2>
+                <p className="ic-dialog-body">Your current conversation will remain in the sidebar.</p>
+                <div className="ic-dialog-actions">
+                  <button className="ic-dialog-cancel" onClick={() => setShowNewChatConfirm(false)}>Cancel</button>
+                  <button
+                    className="ic-dialog-confirm"
+                    style={{ background: "var(--lilac)" }}
+                    onClick={() => { setShowNewChatConfirm(false); void createChat(); }}
+                  >
+                    New chat
                   </button>
                 </div>
               </motion.div>
