@@ -42,6 +42,7 @@ import {
 import {
   SettingsDialog,
   GeneralSection,
+  AppearanceSection,
   type SettingsSection,
   type SettingsState,
   loadSettings,
@@ -3249,6 +3250,15 @@ export function ChatShell() {
       >
         {settingsSection === "general" ? (
           <GeneralSection
+            settings={settings}
+            onChange={(patch) => {
+              const next = { ...settings, ...patch };
+              setSettings(next);
+              saveSettings(next);
+            }}
+          />
+        ) : settingsSection === "appearance" ? (
+          <AppearanceSection
             settings={settings}
             onChange={(patch) => {
               const next = { ...settings, ...patch };

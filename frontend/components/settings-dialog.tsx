@@ -15,11 +15,15 @@ export type SettingsSection =
 export interface SettingsState {
   fontSize: "small" | "medium" | "large";
   sendOnEnter: boolean;
+  theme: "light" | "dark" | "system";
+  sidebarDefault: "open" | "collapsed";
 }
 
 export const DEFAULT_SETTINGS: SettingsState = {
   fontSize: "medium",
   sendOnEnter: true,
+  theme: "light",
+  sidebarDefault: "open",
 };
 
 export const SETTINGS_KEY = "intracore.settings";
@@ -146,6 +150,86 @@ export function GeneralSection({
           checked={settings.sendOnEnter}
           onChange={(v) => onChange({ sendOnEnter: v })}
         />
+      </SettingRow>
+    </div>
+  );
+}
+
+// ── Appearance section ─────────────────────────────────────────────────────
+
+export function AppearanceSection({
+  settings,
+  onChange,
+}: {
+  settings: SettingsState;
+  onChange: (patch: Partial<SettingsState>) => void;
+}) {
+  const themes: { value: SettingsState["theme"]; label: string; icon: ReactNode }[] = [
+    {
+      value: "light",
+      label: "Light",
+      icon: (
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+          <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.6"/>
+          <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      value: "dark",
+      label: "Dark",
+      icon: (
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+          <path d="M17 11.5A7 7 0 1 1 8.5 3a5 5 0 0 0 8.5 8.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      value: "system",
+      label: "System",
+      icon: (
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+          <rect x="2" y="3.5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+          <path d="M7 17h6M10 14.5v2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div className="ic-settings-section-body">
+      <SettingRow label="Theme" hint="Choose your preferred color scheme">
+        <div className="ic-theme-picker">
+          {themes.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              className={`ic-theme-option${settings.theme === t.value ? " is-active" : ""}`}
+              onClick={() => onChange({ theme: t.value })}
+            >
+              <span className="ic-theme-option-icon">{t.icon}</span>
+              <span>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </SettingRow>
+
+      <SettingRow
+        label="Sidebar default"
+        hint="How the sidebar appears when you open the app"
+      >
+        <div className="ic-segmented">
+          {(["open", "collapsed"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              className={`ic-segmented-btn${settings.sidebarDefault === v ? " is-active" : ""}`}
+              onClick={() => onChange({ sidebarDefault: v })}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
       </SettingRow>
     </div>
   );
