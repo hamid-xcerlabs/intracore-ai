@@ -4166,7 +4166,9 @@ textarea {
 .ic-dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px) saturate(0.9);
+  -webkit-backdrop-filter: blur(6px) saturate(0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4176,11 +4178,11 @@ textarea {
 .ic-dialog {
   background: var(--surface-strong);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 18px;
+  padding: 26px 24px 22px;
   width: 360px;
   max-width: calc(100vw - 32px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .ic-dialog-title {
@@ -4205,8 +4207,8 @@ textarea {
 
 .ic-dialog-cancel,
 .ic-dialog-confirm {
-  padding: 7px 16px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
