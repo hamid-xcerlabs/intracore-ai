@@ -2940,7 +2940,16 @@ export function ChatShell() {
                                     );
                                   })}
                                   {!isLoadingModels && modelOptions.length === 0 ? (
-                                    <p className="ic-model-empty">No models found.</p>
+                                    <div className="ic-model-empty-state">
+                                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="28" height="28">
+                                        <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                                        <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                                        <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                                        <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                                      </svg>
+                                      <strong>No models installed</strong>
+                                      <p>Run <code>ollama pull llama3.2</code> in your terminal to get started.</p>
+                                    </div>
                                   ) : null}
                                 </div>
 
