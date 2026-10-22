@@ -1877,6 +1877,34 @@ textarea {
   text-align: center;
 }
 
+.ic-send-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0 0;
+  padding: 8px 10px;
+  background: color-mix(in srgb, #e5323a 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, #e5323a 30%, transparent);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #c0313a;
+}
+.ic-send-error-icon { flex-shrink: 0; color: #c0313a; }
+.ic-send-error-banner span { flex: 1; }
+.ic-send-error-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: transparent;
+  color: #c0313a;
+  padding: 0;
+}
+.ic-send-error-dismiss:hover { background: color-mix(in srgb, #e5323a 16%, transparent); }
+
 .ic-disclaimer {
   margin: 9px 0 0;
   color: #aaa5ad;

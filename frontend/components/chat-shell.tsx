@@ -2636,9 +2636,23 @@ export function ChatShell() {
                   </div>
 
                   {!isSendingMessage && activeSendError ? (
-                    <p className="ic-send-error" role="alert">
-                      {activeSendError}
-                    </p>
+                    <div className="ic-send-error-banner" role="alert">
+                      <svg className="ic-send-error-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" width="16" height="16">
+                        <circle cx="10" cy="10" r="8.5" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M10 6.5v4M10 13.5h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                      </svg>
+                      <span>{activeSendError}</span>
+                      <button
+                        type="button"
+                        className="ic-send-error-dismiss"
+                        aria-label="Dismiss error"
+                        onClick={() => setSendError(null)}
+                      >
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="14" height="14">
+                          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   ) : null}
 
                   <p className="ic-disclaimer">
