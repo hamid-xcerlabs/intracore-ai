@@ -625,6 +625,7 @@ export function ChatShell() {
   const [editingMemoryId, setEditingMemoryId] = useState<number | null>(null);
   const [isSavingMemory, setIsSavingMemory] = useState(false);
   const [busyMemoryId, setBusyMemoryId] = useState<number | null>(null);
+  const [isClearingMemories, setIsClearingMemories] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesChatId, setMessagesChatId] = useState<number | null>(null);
@@ -914,6 +915,37 @@ export function ChatShell() {
       );
     } finally {
       setBusyMemoryId(null);
+    }
+  }
+
+  async function clearAllMemories() {
+    if (isClearingMemories || memories.length === 0) return;
+    setIsClearingMemories(true);
+    try {
+      await Promise.all(memories.map((m) => apiDeleteMemory(m.id)));
+      setMemories([]);
+      showToast("All memories cleared.");
+    } catch {
+      showToast("Could not clear all memories. Please try again.");
+    } finally {
+      setIsClearingMemories(false);
+    }
+  }
+
+  async function toggleAllMemories(enabled: boolean) {
+    try {
+      const targets = memories.filter((m) => m.is_enabled !== enabled);
+      await Promise.all(
+        targets.map((m) =>
+          apiUpdateMemory(m.id, { is_enabled: enabled }).then((updated) => {
+            setMemories((cur) =>
+              cur.map((x) => (x.id === updated.id ? updated : x)),
+            );
+          }),
+        ),
+      );
+    } catch {
+      showToast("Could not update memories.");
     }
   }
 
@@ -3283,13 +3315,14 @@ export function ChatShell() {
           <MemorySection
             memoryCount={memories.length}
             memoriesEnabled={memories.some((m) => m.is_enabled)}
-            onToggleMemories={() => {}}
+            onToggleMemories={(v) => void toggleAllMemories(v)}
             onOpenMemoryPanel={() => {
               setIsSettingsOpen(false);
               setIsMemoryPanelOpen(true);
+              void loadMemories();
             }}
-            onClearAll={() => {}}
-            isClearing={false}
+            onClearAll={() => void clearAllMemories()}
+            isClearing={isClearingMemories}
           />
         ) : (
           <div className="ic-settings-placeholder">
