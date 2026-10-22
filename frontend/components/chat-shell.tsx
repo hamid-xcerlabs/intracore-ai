@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   AnimatePresence,
   motion,
@@ -451,9 +452,9 @@ function StreamingAssistantView({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
       className="ic-message ic-message-assistant ic-stream-message"
     >
       <div className="ic-assistant-column">
@@ -1238,26 +1239,27 @@ export function ChatShell() {
 
         if (event.type === "assistant_message") {
           receivedTerminalEvent = true;
-          pendingAssistantDeltaRef.current = "";
           clearDeltaFlushTimer();
+          pendingAssistantDeltaRef.current = "";
 
           setChats((current) =>
             updateChatActivity(current, targetChatId, event.message.created_at),
           );
 
-          if (activeChatIdRef.current === targetChatId) {
-            setMessages((current) =>
-              uniqueMessages([
-                ...current.filter((message) => message.id !== optimisticMessageId),
-                event.message,
-              ]),
+          flushSync(() => {
+            if (activeChatIdRef.current === targetChatId) {
+              setMessages((current) =>
+                uniqueMessages([
+                  ...current.filter((m) => optimisticMessageId === -1 || m.id !== optimisticMessageId),
+                  event.message,
+                ]),
+              );
+              setMessagesChatId(targetChatId);
+            }
+            setStreamingAssistant((current) =>
+              current?.requestId === requestId ? null : current,
             );
-            setMessagesChatId(targetChatId);
-          }
-
-          setStreamingAssistant((current) =>
-            current?.requestId === requestId ? null : current,
-          );
+          });
 
           setSendError(null);
           return;
@@ -1609,13 +1611,21 @@ export function ChatShell() {
 
         if (event.type === "assistant_message") {
           receivedTerminalEvent = true;
-          pendingAssistantDeltaRef.current = "";
           clearDeltaFlushTimer();
-          setMessages((current) => uniqueMessages([...current, event.message]));
-          setMessagesChatId(targetChatId);
-          setStreamingAssistant((current) =>
-            current?.requestId === requestId ? null : current,
-          );
+          pendingAssistantDeltaRef.current = "";
+
+          flushSync(() => {
+            if (activeChatIdRef.current === targetChatId) {
+              setMessages((current) =>
+                uniqueMessages([...current, event.message]),
+              );
+              setMessagesChatId(targetChatId);
+            }
+            setStreamingAssistant((current) =>
+              current?.requestId === requestId ? null : current,
+            );
+          });
+
           setSendError(null);
           return;
         }
