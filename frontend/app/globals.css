@@ -4463,3 +4463,225 @@ textarea {
   margin: 0;
   user-select: none;
 }
+
+/* ── Settings dialog ────────────────────────────────────────────────────────── */
+
+.ic-settings-dialog {
+  display: flex;
+  width: min(780px, 96vw);
+  height: min(520px, 90vh);
+  border-radius: 18px;
+  background: var(--surface-strong);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.ic-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+  flex-shrink: 0;
+  padding: 20px 10px;
+  border-right: 1px solid var(--line);
+  background: rgba(0,0,0,0.02);
+}
+
+.ic-settings-nav-title {
+  padding: 4px 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.ic-settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-strong);
+  background: transparent;
+  text-align: left;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.ic-settings-nav-item:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--ink);
+}
+
+.ic-settings-nav-item.is-active {
+  background: var(--lilac-soft);
+  color: var(--lilac);
+  font-weight: 600;
+}
+
+.ic-settings-nav-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.ic-settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ic-settings-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.ic-settings-content-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ic-settings-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ic-settings-close:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--ink);
+}
+
+.ic-settings-content-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.ic-settings-section-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.ic-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ic-setting-row:last-child {
+  border-bottom: none;
+}
+
+.ic-setting-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ic-setting-row-label span {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.ic-setting-row-label small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.ic-setting-row-control {
+  flex-shrink: 0;
+}
+
+/* Segmented control */
+.ic-segmented {
+  display: flex;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  background: rgba(0,0,0,0.03);
+}
+
+.ic-segmented-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-strong);
+  background: transparent;
+  border-right: 1px solid var(--line-strong);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ic-segmented-btn:last-child {
+  border-right: none;
+}
+
+.ic-segmented-btn:hover {
+  background: rgba(0,0,0,0.05);
+  color: var(--ink);
+}
+
+.ic-segmented-btn.is-active {
+  background: var(--lilac);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Toggle switch */
+.ic-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 99px;
+  background: rgba(0,0,0,0.15);
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ic-toggle.is-on {
+  background: var(--lilac);
+}
+
+.ic-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.ic-toggle.is-on .ic-toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* Placeholder for unimplemented sections */
+.ic-settings-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--muted);
+  font-size: 13px;
+}

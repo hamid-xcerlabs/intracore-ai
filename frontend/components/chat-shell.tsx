@@ -39,6 +39,14 @@ import {
   apiUpdateMemory,
   apiDeleteMemory,
 } from "../lib/api";
+import {
+  SettingsDialog,
+  GeneralSection,
+  type SettingsSection,
+  type SettingsState,
+  loadSettings,
+  saveSettings,
+} from "./settings-dialog";
 
 const MODEL_PREFERENCE_KEY = "intracore.chatModel";
 
@@ -569,6 +577,14 @@ export function ChatShell() {
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
 
+  // Settings
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
+  const [settings, setSettings] = useState<SettingsState>(() => {
+    if (typeof window === "undefined") return { fontSize: "medium", sendOnEnter: true };
+    return loadSettings();
+  });
+
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -1034,8 +1050,16 @@ export function ChatShell() {
         return;
       }
 
+      // Ctrl+, — settings
+      if (mod && e.key === ",") {
+        e.preventDefault();
+        setIsSettingsOpen((v) => !v);
+        return;
+      }
+
       // Escape — close any open overlay/dialog
       if (e.key === "Escape" && !isInput) {
+        setIsSettingsOpen(false);
         setShowNewChatConfirm(false);
         setShowRegenConfirm(false);
         setDeletingChat(null);
@@ -1971,6 +1995,19 @@ export function ChatShell() {
                 </div>
 
                 <div className="ic-sidebar-actions">
+                  <button
+                    type="button"
+                    className={`ic-sidebar-action-btn${isSettingsOpen ? " is-active" : ""}`}
+                    aria-label="Settings"
+                    title="Settings (Ctrl+,)"
+                    data-tooltip="Ctrl+,"
+                    onClick={() => { setIsSettingsOpen((v) => !v); setSettingsSection("general"); }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
+                      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     className={`ic-sidebar-action-btn${isSearchOpen ? " is-active" : ""}`}
@@ -3186,6 +3223,29 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
       </main>
+
+      {/* ── Settings dialog ── */}
+      <SettingsDialog
+        open={isSettingsOpen}
+        activeSection={settingsSection}
+        onSectionChange={setSettingsSection}
+        onClose={() => setIsSettingsOpen(false)}
+      >
+        {settingsSection === "general" ? (
+          <GeneralSection
+            settings={settings}
+            onChange={(patch) => {
+              const next = { ...settings, ...patch };
+              setSettings(next);
+              saveSettings(next);
+            }}
+          />
+        ) : (
+          <div className="ic-settings-placeholder">
+            <span>Coming soon</span>
+          </div>
+        )}
+      </SettingsDialog>
     </MotionConfig>
   );
 }
