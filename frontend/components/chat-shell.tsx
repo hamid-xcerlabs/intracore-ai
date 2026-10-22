@@ -661,6 +661,7 @@ export function ChatShell() {
   const [streamingAssistant, setStreamingAssistant] =
     useState<StreamingAssistant | null>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [sendError, setSendError] = useState<{
     chatId: number;
     message: string;
@@ -2527,6 +2528,8 @@ export function ChatShell() {
                   if (isNearBottom) {
                     setShowJumpToLatest(false);
                   }
+
+                  setShowScrollToTop(container.scrollTop > 300);
                 }}
                 className="ic-thread"
               >
@@ -2773,6 +2776,27 @@ export function ChatShell() {
                   >
                     <SendIcon />
                     Jump to latest
+                  </motion.button>
+                ) : null}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {showScrollToTop && activeChat ? (
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      conversationScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.92 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                    className="ic-scroll-top-button"
+                    aria-label="Scroll to top"
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="14" height="14">
+                      <path d="M8 12V4M4 7l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </motion.button>
                 ) : null}
               </AnimatePresence>

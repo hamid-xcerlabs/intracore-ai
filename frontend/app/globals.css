@@ -1931,6 +1931,30 @@ textarea {
   transform: rotate(180deg);
 }
 
+.ic-scroll-top-button {
+  position: absolute;
+  z-index: 10;
+  top: 16px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  color: var(--muted-strong);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ic-scroll-top-button:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
 .ic-composer-zone {
   position: relative;
   z-index: 6;
