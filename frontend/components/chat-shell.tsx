@@ -3006,6 +3006,11 @@ export function ChatShell() {
 
                   <p className="ic-disclaimer">
                     IntraCore may make mistakes. Verify important information.
+                    {activeChat && selectedModelName && !isSendingMessage ? (
+                      <span className="ic-send-hint">
+                        {settings.sendOnEnter ? "Enter to send  ·  Shift+Enter for new line" : "Ctrl+Enter to send  ·  Enter for new line"}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
               </div>

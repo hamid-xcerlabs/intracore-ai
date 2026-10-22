@@ -2098,6 +2098,16 @@ textarea {
   color: #aaa5ad;
   font-size: 9px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.ic-send-hint {
+  color: #a1a1aa;
+  font-size: 9px;
+  opacity: 0.7;
 }
 
 .assistant-markdown {
