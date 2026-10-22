@@ -2098,19 +2098,6 @@ export function ChatShell() {
                 <div className="ic-sidebar-actions">
                   <button
                     type="button"
-                    className={`ic-sidebar-action-btn${isSettingsOpen ? " is-active" : ""}`}
-                    aria-label="Settings"
-                    title="Settings (Ctrl+,)"
-                    data-tooltip="Ctrl+,"
-                    onClick={() => { setIsSettingsOpen((v) => !v); setSettingsSection("general"); }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
-                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8"/>
-                      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
                     className={`ic-sidebar-action-btn${isSearchOpen ? " is-active" : ""}`}
                     aria-label="Search conversations"
                     title="Search (Ctrl+K)"
@@ -2297,6 +2284,21 @@ export function ChatShell() {
             </div>
 
             <div className="ic-sidebar-footer">
+              <button
+                type="button"
+                className={`ic-sidebar-settings-btn${isSettingsOpen ? " is-active" : ""}`}
+                aria-label="Settings"
+                title="Settings (Ctrl+,)"
+                onClick={() => { setIsSettingsOpen((v) => !v); setSettingsSection("general"); }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="16" height="16">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7"/>
+                  <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+                </svg>
+                <span>Settings</span>
+                <span className="ic-settings-shortcut">⌘,</span>
+              </button>
+
               <div className="ic-local-card">
                 <span className="ic-local-status">
                   <span />
