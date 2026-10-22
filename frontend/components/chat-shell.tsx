@@ -2161,7 +2161,7 @@ export function ChatShell() {
               {/* New chat nav row */}
               <button
                 type="button"
-                className="ic-new-chat-row"
+                className={`ic-new-chat-row${!isLoadingChats && chats.length === 0 ? " ic-new-chat-pulse" : ""}`}
                 disabled={isCreatingChat}
                 title="New chat (Ctrl+N)"
                 data-tooltip="Ctrl+N"
