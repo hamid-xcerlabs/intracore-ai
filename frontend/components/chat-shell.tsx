@@ -1969,6 +1969,13 @@ export function ChatShell() {
     ? (groupedChats["Results"] ? [{ label: "Results", chats: groupedChats["Results"] }] : [])
     : GROUP_ORDER.filter((g) => groupedChats[g]?.length).map((g) => ({ label: g, chats: groupedChats[g] }));
 
+  // Update browser tab title when active chat changes
+  useEffect(() => {
+    document.title = activeChat?.title
+      ? `${activeChat.title} — IntraCore AI`
+      : "IntraCore AI";
+  }, [activeChat?.title]);
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
