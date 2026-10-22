@@ -128,6 +128,10 @@ textarea {
   flex-direction: column;
   background: #f9f9f9;
   border-right: 0;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.22s ease;
+  overflow: hidden;
 }
 
 /* ── Sidebar top / brand ── */
@@ -245,8 +249,9 @@ textarea {
 .ic-workspace.sidebar-collapsed .ic-sidebar {
   width: 0;
   min-width: 0;
-  overflow: hidden;
+  flex-basis: 0;
   flex: none;
+  opacity: 0;
 }
 
 .ic-workspace.sidebar-collapsed .ic-main {
@@ -545,6 +550,7 @@ textarea {
   flex: 1;
   flex-direction: column;
   background: #ffffff;
+  transition: flex 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ic-header {
