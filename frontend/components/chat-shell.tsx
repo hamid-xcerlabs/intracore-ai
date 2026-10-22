@@ -1528,7 +1528,7 @@ export function ChatShell() {
         current.map((c) => (c.id === chatId ? updated : c)),
       );
     } catch {
-      // Non-fatal: leave existing title in place.
+      showToast("Could not rename chat. Please try again.");
     }
   }
 
