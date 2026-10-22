@@ -2646,13 +2646,23 @@ export function ChatShell() {
                                       </p>
                                     </div>
 
-                                    <time
-                                      className="ic-saved-user-time"
-                                      dateTime={message.created_at}
-                                      title={formatFullDate(message.created_at)}
-                                    >
-                                      {formatMessageTime(message.created_at)}
-                                    </time>
+                                    <div className="ic-user-message-footer">
+                                      <time
+                                        className="ic-saved-user-time"
+                                        dateTime={message.created_at}
+                                        title={formatFullDate(message.created_at)}
+                                      >
+                                        {formatMessageTime(message.created_at)}
+                                      </time>
+                                      <button
+                                        type="button"
+                                        className={`ic-user-copy-btn${copiedMessageId === message.id ? " is-copied" : ""}`}
+                                        aria-label={copiedMessageId === message.id ? "Copied" : "Copy message"}
+                                        onClick={() => void copyMessage(message)}
+                                      >
+                                        {copiedMessageId === message.id ? <CheckIcon /> : <CopyIcon />}
+                                      </button>
+                                    </div>
                                   </>
                                 ) : (
                                   <>
