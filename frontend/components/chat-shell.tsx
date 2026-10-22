@@ -1975,6 +1975,8 @@ export function ChatShell() {
                     type="button"
                     className={`ic-sidebar-action-btn${isSearchOpen ? " is-active" : ""}`}
                     aria-label="Search conversations"
+                    title="Search (Ctrl+K)"
+                    data-tooltip="Ctrl+K"
                     onClick={() => {
                       setIsSearchOpen((v) => !v);
                       if (!isSearchOpen) {
@@ -2011,6 +2013,8 @@ export function ChatShell() {
                 type="button"
                 className="ic-new-chat-row"
                 disabled={isCreatingChat}
+                title="New chat (Ctrl+N)"
+                data-tooltip="Ctrl+N"
                 onClick={requestNewChat}
               >
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
