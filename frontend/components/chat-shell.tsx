@@ -548,6 +548,9 @@ export function ChatShell() {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [isChatOptionsOpen, setIsChatOptionsOpen] = useState(false);
 
+  // Delete confirmation dialog state
+  const [deletingChat, setDeletingChat] = useState<{ id: number; title: string } | null>(null);
+
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -1457,16 +1460,12 @@ export function ChatShell() {
     }
   }
 
-  // Commit 1: confirmation before deleting
-  async function deleteChat(chatId: number) {
-    if (
-      !window.confirm(
-        "Delete this conversation? This cannot be undone.",
-      )
-    ) {
-      return;
-    }
+  async function confirmDeleteChat(chatId: number, chatTitle: string) {
+    setDeletingChat({ id: chatId, title: chatTitle });
+  }
 
+  async function deleteChat(chatId: number) {
+    setDeletingChat(null);
     setError(null);
 
     try {
@@ -2034,7 +2033,7 @@ export function ChatShell() {
                                 className="is-danger"
                                 onClick={() => {
                                   setMenuOpenChatId(null);
-                                  void deleteChat(chat.id);
+                                  void confirmDeleteChat(chat.id, chat.title);
                                 }}
                               >
                                 Delete
@@ -2852,6 +2851,54 @@ export function ChatShell() {
             ))}
           </AnimatePresence>
         </div>
+
+        {/* ── Delete confirmation dialog ── */}
+        <AnimatePresence>
+          {deletingChat ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setDeletingChat(null)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-dialog-title"
+              >
+                <h2 id="ic-dialog-title" className="ic-dialog-title">Delete chat?</h2>
+                <p className="ic-dialog-body">
+                  This will permanently delete{" "}
+                  <strong>{deletingChat.title}</strong>. This can&apos;t be undone.
+                </p>
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => setDeletingChat(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-confirm"
+                    onClick={() => void deleteChat(deletingChat.id)}
+                  >
+                    Delete chat
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </main>
     </MotionConfig>
   );

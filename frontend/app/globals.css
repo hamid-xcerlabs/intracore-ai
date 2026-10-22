@@ -4109,3 +4109,73 @@ textarea {
   }
 
 }
+
+/* ── Delete confirmation dialog ─────────────────────────────────────────────── */
+.ic-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ic-dialog {
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+}
+
+.ic-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+
+.ic-dialog-body {
+  font-size: 14px;
+  color: var(--muted-strong);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.ic-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ic-dialog-cancel,
+.ic-dialog-confirm {
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.12s, opacity 0.12s;
+}
+
+.ic-dialog-cancel {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.ic-dialog-cancel:hover {
+  background: var(--line-strong);
+}
+
+.ic-dialog-confirm {
+  background: #e5323a;
+  color: #fff;
+}
+
+.ic-dialog-confirm:hover {
+  opacity: 0.88;
+}
