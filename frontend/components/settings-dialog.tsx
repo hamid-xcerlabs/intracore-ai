@@ -291,6 +291,70 @@ export function MemorySection({
   );
 }
 
+// ── Data & Privacy section ────────────────────────────────────────────────
+
+export function DataSection({
+  chatCount,
+  onExportChats,
+  onDeleteAllChats,
+  isDeleting,
+  isExporting,
+}: {
+  chatCount: number;
+  onExportChats: () => void;
+  onDeleteAllChats: () => void;
+  isDeleting: boolean;
+  isExporting: boolean;
+}) {
+  return (
+    <div className="ic-settings-section-body">
+      <SettingRow
+        label="Export conversations"
+        hint={`Download all ${chatCount} chat${chatCount === 1 ? "" : "s"} as a Markdown file`}
+      >
+        <button
+          type="button"
+          className="ic-settings-action-btn"
+          onClick={onExportChats}
+          disabled={isExporting || chatCount === 0}
+        >
+          {isExporting ? "Exporting…" : "Export .md"}
+        </button>
+      </SettingRow>
+
+      <SettingRow
+        label="Delete all conversations"
+        hint="Permanently remove every chat and its messages"
+      >
+        <button
+          type="button"
+          className="ic-settings-action-btn is-danger"
+          onClick={onDeleteAllChats}
+          disabled={isDeleting || chatCount === 0}
+        >
+          {isDeleting ? "Deleting…" : "Delete all"}
+        </button>
+      </SettingRow>
+
+      <SettingRow
+        label="Reset preferences"
+        hint="Clear saved model, font size and theme choices"
+      >
+        <button
+          type="button"
+          className="ic-settings-action-btn"
+          onClick={() => {
+            window.localStorage.clear();
+            window.location.reload();
+          }}
+        >
+          Reset
+        </button>
+      </SettingRow>
+    </div>
+  );
+}
+
 // ── Main dialog ────────────────────────────────────────────────────────────
 
 export function SettingsDialog({

@@ -44,6 +44,7 @@ import {
   GeneralSection,
   AppearanceSection,
   MemorySection,
+  DataSection,
   type SettingsSection,
   type SettingsState,
   loadSettings,
@@ -3323,6 +3324,14 @@ export function ChatShell() {
             }}
             onClearAll={() => void clearAllMemories()}
             isClearing={isClearingMemories}
+          />
+        ) : settingsSection === "data" ? (
+          <DataSection
+            chatCount={chats.length}
+            onExportChats={() => {}}
+            onDeleteAllChats={() => {}}
+            isDeleting={false}
+            isExporting={false}
           />
         ) : (
           <div className="ic-settings-placeholder">
