@@ -442,21 +442,31 @@ async def regenerate_stream(
             detail="No user message to regenerate from.",
         )
 
-    # Delete the last assistant message if present (may not exist on first try).
-    last_assistant = next((m for m in reversed(history) if m.role == "assistant"), None)
-    if last_assistant is not None:
-        await message_repository.delete_message(session=session, message_id=last_assistant.id)
+    # Keep the previous answer until the replacement is durably saved.
+    last_assistant = next(
+        (
+            m
+            for m in reversed(history)
+            if m.role == "assistant" and m.sequence_number > last_user.sequence_number
+        ),
+        None,
+    )
 
-    # Reload history without the deleted assistant message.
-    history = await message_repository.list_for_chat(session=session, chat_id=chat_id)
+    # Exclude only the previous answer from the model context. It remains in
+    # SQLite until stream_durable_assistant saves its replacement.
+    history_for_generation = [
+        message
+        for message in history
+        if last_assistant is None or message.id != last_assistant.id
+    ]
     from app.services.memory_service import memory_service as _mem_svc
     memory_context = await _mem_svc.build_context(session)
     await session.commit()
 
     from app.services.conversation_service import ConversationService
-    graph_messages = ConversationService._to_graph_messages(history)
+    graph_messages = ConversationService._to_graph_messages(history_for_generation)
 
-    first_user = next((m for m in history if m.role == "user"), last_user)
+    first_user = next((m for m in history_for_generation if m.role == "user"), last_user)
 
     async def event_stream() -> AsyncIterator[str]:
         yield ResponseStartedEvent(chat_id=chat_id).model_dump_json() + "\n"
@@ -471,6 +481,7 @@ async def regenerate_stream(
                 should_generate_title=False,
                 model_name=model_name,
                 should_stop=lambda: request.is_disconnected(),
+                replace_message_id=(last_assistant.id if last_assistant else None),
             ):
                 if isinstance(item, str):
                     yield AssistantDeltaEvent(delta=item).model_dump_json() + "\n"
@@ -483,10 +494,18 @@ async def regenerate_stream(
                         chat=ChatResponse.model_validate(item.chat)
                     ).model_dump_json() + "\n"
         except ConversationStoppedError:
-            yield ResponseStoppedEvent(chat_id=chat_id).model_dump_json() + "\n"
-        except (ConversationGenerationError, Exception):
+            yield ResponseStoppedEvent().model_dump_json() + "\n"
+        except ConversationGenerationError:
             yield StreamingErrorEvent(
-                detail="Failed to regenerate response."
+                code="regenerate_failed",
+                message="Could not regenerate the response. The previous answer was kept.",
+                user_message_saved=False,
+            ).model_dump_json() + "\n"
+        except Exception:
+            yield StreamingErrorEvent(
+                code="regenerate_failed",
+                message="Could not regenerate the response. The previous answer was kept.",
+                user_message_saved=False,
             ).model_dump_json() + "\n"
 
     return StreamingResponse(

@@ -286,6 +286,7 @@ class ConversationService:
         should_generate_title: bool,
         model_name: str,
         should_stop: Callable[[], Awaitable[bool]],
+        replace_message_id: int | None = None,
     ) -> AsyncIterator[str | Message | ConversationTitleUpdate]:
         answer_filter = AnswerTextFilter()
         answer_parts: list[str] = []
@@ -342,6 +343,16 @@ class ConversationService:
                 content=assistant_content,
                 model_name=model_name,
             )
+
+            # Keep the previous assistant answer until the replacement has
+            # been generated and durably saved. Failed regenerations therefore
+            # leave the original answer available for the user.
+            if replace_message_id is not None:
+                await message_repository.delete_message(
+                    session=session,
+                    message_id=replace_message_id,
+                )
+
             yield assistant_message
 
             updated_chat = await chat_title_service.generate_for_first_turn(
