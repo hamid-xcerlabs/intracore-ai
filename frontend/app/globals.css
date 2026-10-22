@@ -4826,3 +4826,34 @@ textarea {
   }
   :root:not([data-theme]) body { background: #1a1525; }
 }
+
+/* ── Settings action buttons ────────────────────────────────────────────── */
+
+.ic-settings-action-btn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(0,0,0,0.06);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ic-settings-action-btn:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.ic-settings-action-btn.is-danger {
+  background: rgba(220, 50, 50, 0.08);
+  color: #c0313a;
+  border-color: rgba(220, 50, 50, 0.2);
+}
+
+.ic-settings-action-btn.is-danger:hover:not(:disabled) {
+  background: rgba(220, 50, 50, 0.14);
+}
+
+.ic-settings-action-btn:disabled {
+  opacity: 0.4;
+}

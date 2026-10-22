@@ -43,6 +43,7 @@ import {
   SettingsDialog,
   GeneralSection,
   AppearanceSection,
+  MemorySection,
   type SettingsSection,
   type SettingsState,
   loadSettings,
@@ -3277,6 +3278,18 @@ export function ChatShell() {
               setSettings(next);
               saveSettings(next);
             }}
+          />
+        ) : settingsSection === "memory" ? (
+          <MemorySection
+            memoryCount={memories.length}
+            memoriesEnabled={memories.some((m) => m.is_enabled)}
+            onToggleMemories={() => {}}
+            onOpenMemoryPanel={() => {
+              setIsSettingsOpen(false);
+              setIsMemoryPanelOpen(true);
+            }}
+            onClearAll={() => {}}
+            isClearing={false}
           />
         ) : (
           <div className="ic-settings-placeholder">

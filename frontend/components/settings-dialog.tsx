@@ -235,6 +235,62 @@ export function AppearanceSection({
   );
 }
 
+// ── Memory section ────────────────────────────────────────────────────────
+
+export function MemorySection({
+  memoryCount,
+  memoriesEnabled,
+  onToggleMemories,
+  onOpenMemoryPanel,
+  onClearAll,
+  isClearing,
+}: {
+  memoryCount: number;
+  memoriesEnabled: boolean;
+  onToggleMemories: (v: boolean) => void;
+  onOpenMemoryPanel: () => void;
+  onClearAll: () => void;
+  isClearing: boolean;
+}) {
+  return (
+    <div className="ic-settings-section-body">
+      <SettingRow
+        label="Enable memories"
+        hint="IntraCore will remember facts across conversations"
+      >
+        <Toggle checked={memoriesEnabled} onChange={onToggleMemories} />
+      </SettingRow>
+
+      <SettingRow
+        label="Saved memories"
+        hint={`${memoryCount} memor${memoryCount === 1 ? "y" : "ies"} stored`}
+      >
+        <button
+          type="button"
+          className="ic-settings-action-btn"
+          onClick={onOpenMemoryPanel}
+        >
+          View all
+        </button>
+      </SettingRow>
+
+      <SettingRow
+        label="Clear all memories"
+        hint="Permanently delete every saved memory"
+      >
+        <button
+          type="button"
+          className="ic-settings-action-btn is-danger"
+          onClick={onClearAll}
+          disabled={isClearing || memoryCount === 0}
+        >
+          {isClearing ? "Clearing…" : "Clear all"}
+        </button>
+      </SettingRow>
+    </div>
+  );
+}
+
 // ── Main dialog ────────────────────────────────────────────────────────────
 
 export function SettingsDialog({
