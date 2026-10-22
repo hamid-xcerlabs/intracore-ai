@@ -585,6 +585,11 @@ export function ChatShell() {
     return loadSettings();
   });
 
+  // Apply font-size setting to root
+  useEffect(() => {
+    document.documentElement.setAttribute("data-font-size", settings.fontSize);
+  }, [settings.fontSize]);
+
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -2641,7 +2646,18 @@ export function ChatShell() {
                           !event.shiftKey &&
                           !event.ctrlKey &&
                           !event.metaKey &&
-                          !isSendingMessage
+                          !isSendingMessage &&
+                          settings.sendOnEnter
+                        ) {
+                          event.preventDefault();
+                          void sendMessage();
+                        }
+                        // When sendOnEnter is off, Ctrl/Cmd+Enter sends
+                        if (
+                          event.key === "Enter" &&
+                          (event.ctrlKey || event.metaKey) &&
+                          !isSendingMessage &&
+                          !settings.sendOnEnter
                         ) {
                           event.preventDefault();
                           void sendMessage();

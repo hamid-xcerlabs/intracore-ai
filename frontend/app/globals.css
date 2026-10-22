@@ -1203,8 +1203,8 @@ textarea {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 13.5px;
-  line-height: 1.62;
+  font-size: var(--chat-font-size, 13.5px);
+  line-height: var(--chat-line-height, 1.62);
 }
 
 .ic-user-bubble time {
@@ -1263,8 +1263,8 @@ textarea {
 
 .ic-assistant-content {
   color: #18181b;
-  font-size: 14px;
-  line-height: 1.75;
+  font-size: var(--chat-font-size, 14px);
+  line-height: var(--chat-line-height, 1.75);
 }
 
 .ic-stream-message {
@@ -4684,4 +4684,22 @@ textarea {
   height: 200px;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* ── Font size setting ──────────────────────────────────────────────────────── */
+
+:root[data-font-size="small"] {
+  --chat-font-size: 13px;
+  --chat-line-height: 1.6;
+}
+
+:root[data-font-size="medium"],
+:root:not([data-font-size]) {
+  --chat-font-size: 14.5px;
+  --chat-line-height: 1.7;
+}
+
+:root[data-font-size="large"] {
+  --chat-font-size: 16px;
+  --chat-line-height: 1.75;
 }
