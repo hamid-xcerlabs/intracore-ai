@@ -550,6 +550,7 @@ export function ChatShell() {
 
   // Delete confirmation dialog state
   const [deletingChat, setDeletingChat] = useState<{ id: number; title: string } | null>(null);
+  const [deletingMemory, setDeletingMemory] = useState<MemoryRecord | null>(null);
 
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -834,13 +835,13 @@ export function ChatShell() {
     }
   }
 
+  function confirmDeleteMemory(memory: MemoryRecord) {
+    if (busyMemoryId !== null) return;
+    setDeletingMemory(memory);
+  }
+
   async function deleteMemory(memory: MemoryRecord) {
-    if (
-      busyMemoryId !== null ||
-      !window.confirm("Permanently delete this memory?")
-    ) {
-      return;
-    }
+    setDeletingMemory(null);
     setBusyMemoryId(memory.id);
     setMemoryError(null);
 
@@ -2821,7 +2822,7 @@ export function ChatShell() {
                               type="button"
                               className="is-danger"
                               disabled={busyMemoryId !== null}
-                              onClick={() => void deleteMemory(memory)}
+                              onClick={() => confirmDeleteMemory(memory)}
                             >
                               Delete
                             </button>
@@ -2893,6 +2894,53 @@ export function ChatShell() {
                     onClick={() => void deleteChat(deletingChat.id)}
                   >
                     Delete chat
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* ── Delete memory confirmation dialog ── */}
+        <AnimatePresence>
+          {deletingMemory ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setDeletingMemory(null)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-memory-dialog-title"
+              >
+                <h2 id="ic-memory-dialog-title" className="ic-dialog-title">Delete memory?</h2>
+                <p className="ic-dialog-body">
+                  This will permanently delete this memory. This can&apos;t be undone.
+                </p>
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => setDeletingMemory(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-confirm"
+                    onClick={() => void deleteMemory(deletingMemory)}
+                  >
+                    Delete memory
                   </button>
                 </div>
               </motion.div>
