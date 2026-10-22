@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import {
@@ -71,10 +71,10 @@ const PRE_RESPONSE_STATUS_LABELS = [
 const PRE_RESPONSE_STATUS_DURATION_MS = 10000;
 
 const ANIMATED_EMOJI_PATTERN =
-  /((?:\p{Regional_Indicator}{2})|(?:\p{Extended_Pictographic}(?:️|︎)?(?:\p{Emoji_Modifier})?(?:‍\p{Extended_Pictographic}(?:️|︎)?(?:\p{Emoji_Modifier})?)*))/gu;
+  /((?:\p{Regional_Indicator}{2})|(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:â€\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*))/gu;
 
 const EMOJI_ONLY_PATTERN =
-  /^(?:\p{Regional_Indicator}{2})$|^(?:\p{Extended_Pictographic}(?:️|︎)?(?:\p{Emoji_Modifier})?(?:‍\p{Extended_Pictographic}(?:️|︎)?(?:\p{Emoji_Modifier})?)*)$/u;
+  /^(?:\p{Regional_Indicator}{2})$|^(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:â€\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*)$/u;
 
 type StreamLifecycle =
   | "starting"
@@ -277,7 +277,7 @@ function uniqueMessages(messages: Message[]): Message[] {
   );
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Icons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SendIcon() {
   return (
@@ -429,7 +429,7 @@ function MicrophoneIcon() {
   );
 }
 
-// ─── Streaming assistant view ─────────────────────────────────────────────────
+// â”€â”€â”€ Streaming assistant view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StreamingAssistantView({
   stream,
@@ -526,8 +526,8 @@ function StreamingAssistantView({
               {stream.status === "stopped" || stream.status === "interrupted" ? (
                 <p className="ic-stream-note">
                   {stream.status === "stopped"
-                    ? "Stopped — this partial response is not saved."
-                    : "Response interrupted — this partial response is not saved."}
+                    ? "Stopped â€” this partial response is not saved."
+                    : "Response interrupted â€” this partial response is not saved."}
                 </p>
               ) : null}
             </motion.div>
@@ -551,7 +551,7 @@ function StreamingAssistantView({
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function ChatShell() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -562,7 +562,7 @@ export function ChatShell() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<{ id: number; message: string }[]>([]);
+  const [toasts, setToasts] = useState<{ id: number; message: string; kind?: "success" | "error" }[]>([]);
   const toastIdRef = useRef(1);
 
   // Inline rename state
@@ -928,9 +928,9 @@ export function ChatShell() {
     try {
       await Promise.all(memories.map((m) => apiDeleteMemory(m.id)));
       setMemories([]);
-      showToast("All memories cleared.");
+      showToast("All memories cleared.", "success");
     } catch {
-      showToast("Could not clear all memories. Please try again.");
+      showToast("Could not clear all memories. Please try again.", "error");
     } finally {
       setIsClearingMemories(false);
     }
@@ -940,7 +940,7 @@ export function ChatShell() {
     if (isExportingChats || chats.length === 0) return;
     setIsExportingChats(true);
     try {
-      const parts: string[] = [`# IntraCore AI — Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
+      const parts: string[] = [`# IntraCore AI â€” Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
       for (const chat of chats) {
         parts.push(`\n## ${chat.title || "Untitled"}\n`);
         try {
@@ -959,9 +959,9 @@ export function ChatShell() {
       a.download = `intracore-chats-${new Date().toISOString().slice(0, 10)}.md`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast("Chats exported successfully.");
+      showToast("Chats exported successfully.", "success");
     } catch {
-      showToast("Export failed. Please try again.");
+      showToast("Export failed. Please try again.", "error");
     } finally {
       setIsExportingChats(false);
     }
@@ -974,9 +974,9 @@ export function ChatShell() {
       await Promise.all(chats.map((c) => apiDeleteChat(c.id)));
       setChats([]);
       setActiveChatId(null);
-      showToast("All conversations deleted.");
+      showToast("All conversations deleted.", "success");
     } catch {
-      showToast("Could not delete all chats. Please try again.");
+      showToast("Could not delete all chats. Please try again.", "error");
     } finally {
       setIsDeletingAllChats(false);
     }
@@ -995,11 +995,11 @@ export function ChatShell() {
         ),
       );
     } catch {
-      showToast("Could not update memories.");
+      showToast("Could not update memories.", "error");
     }
   }
 
-  // ─── Effects ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Effects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -1133,7 +1133,7 @@ export function ChatShell() {
       const tag = (e.target as HTMLElement)?.tagName;
       const isInput = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
 
-      // Ctrl+K — toggle search
+      // Ctrl+K â€” toggle search
       if (mod && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen((v) => {
@@ -1144,21 +1144,21 @@ export function ChatShell() {
         return;
       }
 
-      // Ctrl+N — new chat
+      // Ctrl+N â€” new chat
       if (mod && e.key === "n") {
         e.preventDefault();
         requestNewChatRef.current();
         return;
       }
 
-      // Ctrl+, — settings
+      // Ctrl+, â€” settings
       if (mod && e.key === ",") {
         e.preventDefault();
         setIsSettingsOpen((v) => !v);
         return;
       }
 
-      // Escape — close any open overlay/dialog
+      // Escape â€” close any open overlay/dialog
       if (e.key === "Escape" && !isInput) {
         setIsSettingsOpen(false);
         setShowNewChatConfirm(false);
@@ -1267,7 +1267,7 @@ export function ChatShell() {
     return () => window.cancelAnimationFrame(frameId);
   }, [activeChatId, messages, streamingAssistant]);
 
-  // ─── Actions ───────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function resizeComposer() {
     const el = composerTextareaRef.current;
@@ -1564,10 +1564,10 @@ export function ChatShell() {
     }
   }
 
-  function showToast(message: string) {
+  function showToast(message: string, kind?: "success" | "error") {
     const id = toastIdRef.current;
     toastIdRef.current += 1;
-    setToasts((current) => [...current, { id, message }]);
+    setToasts((current) => [...current, { id, message, kind }]);
     window.setTimeout(() => {
       setToasts((current) => current.filter((t) => t.id !== id));
     }, 4000);
@@ -1583,7 +1583,7 @@ export function ChatShell() {
     const lines: string[] = [
       `# ${activeChat.title}`,
       ``,
-      `*Exported from IntraCore AI — ${new Date().toLocaleString()}*`,
+      `*Exported from IntraCore AI â€” ${new Date().toLocaleString()}*`,
       ``,
     ];
 
@@ -1710,7 +1710,7 @@ export function ChatShell() {
         current.map((c) => (c.id === chatId ? updated : c)),
       );
     } catch {
-      showToast("Could not rename chat. Please try again.");
+      showToast("Could not rename chat. Please try again.", "error");
     }
   }
 
@@ -1889,18 +1889,18 @@ export function ChatShell() {
     try {
       await navigator.clipboard.writeText(message.content);
       setCopiedMessageId(message.id);
-      showToast("Copied to clipboard");
+      showToast("Copied to clipboard", "success");
       window.setTimeout(() => {
         setCopiedMessageId((current) =>
           current === message.id ? null : current,
         );
       }, 2000);
     } catch {
-      showToast("Could not access clipboard.");
+      showToast("Could not access clipboard.", "error");
     }
   }
 
-  // ─── Derived state ─────────────────────────────────────────────────────────
+  // â”€â”€â”€ Derived state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const activeChat =
     chats.find((chat) => chat.id === activeChatId) ?? null;
@@ -1972,7 +1972,7 @@ export function ChatShell() {
   // Update browser tab title when active chat changes
   useEffect(() => {
     document.title = activeChat?.title
-      ? `${activeChat.title} — IntraCore AI`
+      ? `${activeChat.title} â€” IntraCore AI`
       : "IntraCore AI";
   }, [activeChat?.title]);
 
@@ -1985,7 +1985,7 @@ export function ChatShell() {
     }
   }, [activeChatId]);
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
     <MotionConfig reducedMotion="user">
@@ -2034,7 +2034,7 @@ export function ChatShell() {
                     setChatSearch("");
                   }}
                 >
-                  <span aria-hidden="true">×</span>
+                  <span aria-hidden="true">Ã—</span>
                 </button>
               </header>
 
@@ -2077,7 +2077,7 @@ export function ChatShell() {
         ) : null}
 
         <div className={`ic-workspace${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-          {/* ── Mobile sidebar backdrop ── */}
+          {/* â”€â”€ Mobile sidebar backdrop â”€â”€ */}
           {isSidebarOpen ? (
             <div
               className="ic-sidebar-backdrop"
@@ -2086,7 +2086,7 @@ export function ChatShell() {
             />
           ) : null}
 
-          {/* ── Sidebar ── */}
+          {/* â”€â”€ Sidebar â”€â”€ */}
           <aside className={`ic-sidebar${isSidebarOpen ? " is-open" : ""}`}>
             <div className="ic-sidebar-top">
               {/* Row 1: brand + action icons */}
@@ -2162,7 +2162,7 @@ export function ChatShell() {
                   <path d="M13.5 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M16.7 3.8a2.12 2.12 0 0 1 3 3L11 15.5l-3.5.9.9-3.5 8.3-9.1Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span>{isCreatingChat ? "Creating…" : "New chat"}</span>
+                <span>{isCreatingChat ? "Creatingâ€¦" : "New chat"}</span>
               </button>
             </div>
 
@@ -2336,7 +2336,7 @@ export function ChatShell() {
                   <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
                 </svg>
                 <span>Settings</span>
-                <span className="ic-settings-shortcut">⌘,</span>
+                <span className="ic-settings-shortcut">âŒ˜,</span>
               </button>
 
               <div className="ic-local-card">
@@ -2352,7 +2352,7 @@ export function ChatShell() {
             </div>
           </aside>
 
-          {/* ── Main panel ── */}
+          {/* â”€â”€ Main panel â”€â”€ */}
           <section className="ic-main">
             <header className="ic-header">
               <button
@@ -2390,7 +2390,7 @@ export function ChatShell() {
 
                   <p>
                     {activeChat
-                      ? `Local conversation · Updated ${formatChatDate(activeChat.updated_at)}`
+                      ? `Local conversation Â· Updated ${formatChatDate(activeChat.updated_at)}`
                       : "Private local AI workspace"}
                   </p>
                 </div>
@@ -2405,7 +2405,7 @@ export function ChatShell() {
                     aria-expanded={isChatOptionsOpen}
                     onClick={() => setIsChatOptionsOpen((current) => !current)}
                   >
-                    <span aria-hidden="true">•••</span>
+                    <span aria-hidden="true">â€¢â€¢â€¢</span>
                   </button>
 
                   {isChatOptionsOpen ? (
@@ -2786,7 +2786,7 @@ export function ChatShell() {
                           ? "Start a new conversation first"
                           : !selectedModelName
                             ? "Select an installed model first"
-                            : "Ask anything…"
+                            : "Ask anythingâ€¦"
                       }
                       onKeyDown={(event) => {
                         if (
@@ -2827,10 +2827,10 @@ export function ChatShell() {
                               setModelNotice(null);
                             }}
                           >
-                            <span className="ic-composer-model-icon" aria-hidden="true">⚡</span>
+                            <span className="ic-composer-model-icon" aria-hidden="true">âš¡</span>
                             <span className="ic-composer-model-name">
                               {isLoadingModels
-                                ? "Finding models…"
+                                ? "Finding modelsâ€¦"
                                 : selectedModelName ?? "No model"}
                             </span>
                             <span className={`ic-model-chevron${isModelMenuOpen ? " is-open" : ""}`}>
@@ -2879,11 +2879,11 @@ export function ChatShell() {
                                         <span className="ic-model-option-main">
                                           <strong>{model.name}</strong>
                                           {model.parameter_size || model.quantization_level ? (
-                                            <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" · ")}</small>
+                                            <small>{[model.parameter_size, model.quantization_level].filter(Boolean).join(" Â· ")}</small>
                                           ) : null}
                                         </span>
                                         {isSelected ? (
-                                          <span className="ic-model-check" aria-label="Selected">✓</span>
+                                          <span className="ic-model-check" aria-label="Selected">âœ“</span>
                                         ) : null}
                                       </button>
                                     );
@@ -2986,7 +2986,7 @@ export function ChatShell() {
           </section>
         </div>
 
-        {/* ── Memory panel ── */}
+        {/* â”€â”€ Memory panel â”€â”€ */}
         <AnimatePresence>
           {isMemoryPanelOpen ? (
             <>
@@ -3017,7 +3017,7 @@ export function ChatShell() {
                     {/* Commit 9: active / total count */}
                     {totalMemoryCount > 0 ? (
                       <p className="ic-memory-count">
-                        {enabledMemoryCount} active · {totalMemoryCount} total
+                        {enabledMemoryCount} active Â· {totalMemoryCount} total
                       </p>
                     ) : (
                       <p>
@@ -3030,7 +3030,7 @@ export function ChatShell() {
                     aria-label="Close memories"
                     onClick={() => setIsMemoryPanelOpen(false)}
                   >
-                    ×
+                    Ã—
                   </button>
                 </header>
 
@@ -3046,7 +3046,7 @@ export function ChatShell() {
                       setMemoryContent(event.target.value);
                       setMemoryError(null);
                     }}
-                    placeholder="Add a fact, preference, or instruction…"
+                    placeholder="Add a fact, preference, or instructionâ€¦"
                     disabled={isSavingMemory}
                   />
 
@@ -3081,7 +3081,7 @@ export function ChatShell() {
                         disabled={isSavingMemory || !memoryContent.trim()}
                       >
                         {isSavingMemory
-                          ? "Saving…"
+                          ? "Savingâ€¦"
                           : editingMemoryId === null
                             ? "Add memory"
                             : "Save changes"}
@@ -3098,7 +3098,7 @@ export function ChatShell() {
 
                 <div className="ic-memory-list" aria-live="polite">
                   {isLoadingMemories ? (
-                    <p className="ic-memory-list-state">Loading memories…</p>
+                    <p className="ic-memory-list-state">Loading memoriesâ€¦</p>
                   ) : null}
 
                   {!isLoadingMemories && memories.length === 0 ? (
@@ -3152,7 +3152,7 @@ export function ChatShell() {
                                 ? ` chat ${memory.source_chat_id}`
                                 : ""}
                               {memory.source_message_id
-                                ? ` · message ${memory.source_message_id}`
+                                ? ` Â· message ${memory.source_message_id}`
                                 : ""}
                             </small>
                           ) : null}
@@ -3188,25 +3188,36 @@ export function ChatShell() {
             </>
           ) : null}
         </AnimatePresence>
-        {/* ── Toast notifications ── */}
+        {/* â”€â”€ Toast notifications â”€â”€ */}
         <div className="ic-toast-container" aria-live="polite">
           <AnimatePresence>
             {toasts.map((toast) => (
               <motion.div
                 key={toast.id}
-                className="ic-toast"
+                className={`ic-toast${toast.kind ? ` ic-toast-${toast.kind}` : ""}`}
                 initial={{ opacity: 0, y: 16, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.97 }}
                 transition={{ duration: 0.2 }}
               >
+                {toast.kind === "success" ? (
+                  <svg className="ic-toast-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true" width="14" height="14">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : toast.kind === "error" ? (
+                  <svg className="ic-toast-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true" width="14" height="14">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M8 5v3.5M8 10.5h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                ) : null}
                 {toast.message}
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
 
-        {/* ── Delete confirmation dialog ── */}
+        {/* â”€â”€ Delete confirmation dialog â”€â”€ */}
         <AnimatePresence>
           {deletingChat ? (
             <motion.div
@@ -3254,7 +3265,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* ── New chat confirmation dialog ── */}
+        {/* â”€â”€ New chat confirmation dialog â”€â”€ */}
         <AnimatePresence>
           {showNewChatConfirm ? (
             <motion.div
@@ -3292,7 +3303,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* ── Regenerate confirmation dialog ── */}
+        {/* â”€â”€ Regenerate confirmation dialog â”€â”€ */}
         <AnimatePresence>
           {showRegenConfirm ? (
             <motion.div
@@ -3340,7 +3351,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* ── Delete memory confirmation dialog ── */}
+        {/* â”€â”€ Delete memory confirmation dialog â”€â”€ */}
         <AnimatePresence>
           {deletingMemory ? (
             <motion.div
@@ -3388,7 +3399,7 @@ export function ChatShell() {
         </AnimatePresence>
       </main>
 
-      {/* ── Settings dialog ── */}
+      {/* â”€â”€ Settings dialog â”€â”€ */}
       <SettingsDialog
         open={isSettingsOpen}
         activeSection={settingsSection}
@@ -3450,3 +3461,4 @@ export function ChatShell() {
     </MotionConfig>
   );
 }
+

@@ -3419,6 +3419,9 @@ textarea {
 }
 
 .ic-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #18181b;
   border: 1px solid #27272a;
   border-radius: 8px;
@@ -3429,6 +3432,9 @@ textarea {
   white-space: nowrap;
   pointer-events: auto;
 }
+
+.ic-toast-success .ic-toast-icon { color: #22c55e; }
+.ic-toast-error .ic-toast-icon { color: #f87171; }
 
 /* ── Code block styling ─────────────────────────────────────────────────────── */
 
