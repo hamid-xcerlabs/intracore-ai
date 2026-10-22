@@ -627,6 +627,8 @@ export function ChatShell() {
   const [isSavingMemory, setIsSavingMemory] = useState(false);
   const [busyMemoryId, setBusyMemoryId] = useState<number | null>(null);
   const [isClearingMemories, setIsClearingMemories] = useState(false);
+  const [isDeletingAllChats, setIsDeletingAllChats] = useState(false);
+  const [isExportingChats, setIsExportingChats] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesChatId, setMessagesChatId] = useState<number | null>(null);
@@ -930,6 +932,52 @@ export function ChatShell() {
       showToast("Could not clear all memories. Please try again.");
     } finally {
       setIsClearingMemories(false);
+    }
+  }
+
+  async function exportAllChats() {
+    if (isExportingChats || chats.length === 0) return;
+    setIsExportingChats(true);
+    try {
+      const parts: string[] = [`# IntraCore AI — Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
+      for (const chat of chats) {
+        parts.push(`\n## ${chat.title || "Untitled"}\n`);
+        try {
+          const msgs = await apiFetchMessages(chat.id);
+          for (const msg of msgs) {
+            const role = msg.role === "user" ? "**You**" : "**Assistant**";
+            parts.push(`\n${role}:\n${msg.content}\n`);
+          }
+        } catch { /* skip failed chat */ }
+        parts.push("\n---\n");
+      }
+      const blob = new Blob([parts.join("")], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `intracore-chats-${new Date().toISOString().slice(0, 10)}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Chats exported successfully.");
+    } catch {
+      showToast("Export failed. Please try again.");
+    } finally {
+      setIsExportingChats(false);
+    }
+  }
+
+  async function deleteAllChats() {
+    if (isDeletingAllChats || chats.length === 0) return;
+    setIsDeletingAllChats(true);
+    try {
+      await Promise.all(chats.map((c) => apiDeleteChat(c.id)));
+      setChats([]);
+      setActiveChatId(null);
+      showToast("All conversations deleted.");
+    } catch {
+      showToast("Could not delete all chats. Please try again.");
+    } finally {
+      setIsDeletingAllChats(false);
     }
   }
 
@@ -3328,10 +3376,10 @@ export function ChatShell() {
         ) : settingsSection === "data" ? (
           <DataSection
             chatCount={chats.length}
-            onExportChats={() => {}}
-            onDeleteAllChats={() => {}}
-            isDeleting={false}
-            isExporting={false}
+            onExportChats={() => void exportAllChats()}
+            onDeleteAllChats={() => void deleteAllChats()}
+            isDeleting={isDeletingAllChats}
+            isExporting={isExportingChats}
           />
         ) : (
           <div className="ic-settings-placeholder">
