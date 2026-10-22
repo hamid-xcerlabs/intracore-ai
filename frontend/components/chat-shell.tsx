@@ -2032,9 +2032,13 @@ export function ChatShell() {
               ) : null}
 
               {isLoadingChats ? (
-                <div className="ic-sidebar-loading">
-                  <span />
-                  Loading conversations
+                <div className="ic-chat-skeleton-list">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="ic-chat-skeleton-row">
+                      <div className="ic-chat-skeleton-line ic-chat-skeleton-title" />
+                      <div className="ic-chat-skeleton-line ic-chat-skeleton-sub" />
+                    </div>
+                  ))}
                 </div>
               ) : null}
 

@@ -334,6 +334,44 @@ textarea {
   animation: ic-soft-pulse 1.2s ease-in-out infinite;
 }
 
+.ic-chat-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+}
+
+.ic-chat-skeleton-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
+
+.ic-chat-skeleton-line {
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.06) 75%);
+  background-size: 200% 100%;
+  animation: ic-shimmer 1.4s ease-in-out infinite;
+}
+
+.ic-chat-skeleton-title {
+  height: 11px;
+  width: 72%;
+}
+
+.ic-chat-skeleton-sub {
+  height: 9px;
+  width: 44%;
+  opacity: 0.6;
+}
+
+@keyframes ic-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .ic-sidebar-empty {
   display: flex;
   margin: 4px 2px;
