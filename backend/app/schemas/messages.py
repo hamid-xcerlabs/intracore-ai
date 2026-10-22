@@ -19,6 +19,7 @@ class MessageCreate(BaseModel):
     # The route performs additional trimming and whitespace-only validation.
     content: str = Field(
         min_length=1,
+        max_length=100_000,
         description="The user message to save in the selected conversation.",
     )
 
