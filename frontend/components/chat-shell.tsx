@@ -609,7 +609,10 @@ export function ChatShell() {
 
   // Mobile sidebar drawer + desktop collapse
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("intracore.sidebarCollapsed") === "true";
+  });
 
   const [modelOptions, setModelOptions] = useState<ChatModelOption[]>([]);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
@@ -2148,6 +2151,7 @@ export function ChatShell() {
                     onClick={() => {
                       setIsSidebarOpen(false);
                       setIsSidebarCollapsed(true);
+                      window.localStorage.setItem("intracore.sidebarCollapsed", "true");
                     }}
                   >
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
@@ -2371,6 +2375,7 @@ export function ChatShell() {
                 onClick={() => {
                   setIsSidebarOpen(true);
                   setIsSidebarCollapsed(false);
+                  window.localStorage.setItem("intracore.sidebarCollapsed", "false");
                 }}
               >
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
