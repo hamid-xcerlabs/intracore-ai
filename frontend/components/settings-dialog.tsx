@@ -355,6 +355,67 @@ export function DataSection({
   );
 }
 
+// ── About section ─────────────────────────────────────────────────────────
+
+export function AboutSection({
+  version,
+  ollamaStatus,
+  activeModel,
+  onRetryOllama,
+}: {
+  version: string;
+  ollamaStatus: "connected" | "offline" | "checking";
+  activeModel: string | null;
+  onRetryOllama: () => void;
+}) {
+  const statusColor =
+    ollamaStatus === "connected"
+      ? "#22c55e"
+      : ollamaStatus === "offline"
+      ? "#ef4444"
+      : "#f59e0b";
+
+  const statusLabel =
+    ollamaStatus === "connected"
+      ? "Connected"
+      : ollamaStatus === "offline"
+      ? "Offline"
+      : "Checking…";
+
+  return (
+    <div className="ic-settings-section-body">
+      <SettingRow label="App version" hint="IntraCore AI">
+        <span className="ic-about-value">{version}</span>
+      </SettingRow>
+
+      <SettingRow label="Ollama status" hint="Local LLM runtime">
+        <div className="ic-about-status">
+          <span className="ic-about-dot" style={{ background: statusColor }} />
+          <span className="ic-about-value">{statusLabel}</span>
+          {ollamaStatus === "offline" ? (
+            <button
+              type="button"
+              className="ic-settings-action-btn"
+              onClick={onRetryOllama}
+              style={{ marginLeft: 6 }}
+            >
+              Retry
+            </button>
+          ) : null}
+        </div>
+      </SettingRow>
+
+      <SettingRow label="Active model" hint="Currently selected Ollama model">
+        <span className="ic-about-value">{activeModel ?? "—"}</span>
+      </SettingRow>
+
+      <SettingRow label="Data storage" hint="All data stays on your device">
+        <span className="ic-about-value ic-about-local">Local only</span>
+      </SettingRow>
+    </div>
+  );
+}
+
 // ── Main dialog ────────────────────────────────────────────────────────────
 
 export function SettingsDialog({

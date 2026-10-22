@@ -4857,3 +4857,28 @@ textarea {
 .ic-settings-action-btn:disabled {
   opacity: 0.4;
 }
+
+/* ── About section ──────────────────────────────────────────────────────── */
+
+.ic-about-value {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted-strong);
+}
+
+.ic-about-local {
+  color: #22c55e;
+}
+
+.ic-about-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ic-about-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

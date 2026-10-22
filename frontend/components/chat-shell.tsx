@@ -45,6 +45,7 @@ import {
   AppearanceSection,
   MemorySection,
   DataSection,
+  AboutSection,
   type SettingsSection,
   type SettingsState,
   loadSettings,
@@ -3380,6 +3381,13 @@ export function ChatShell() {
             onDeleteAllChats={() => void deleteAllChats()}
             isDeleting={isDeletingAllChats}
             isExporting={isExportingChats}
+          />
+        ) : settingsSection === "about" ? (
+          <AboutSection
+            version="0.1.0"
+            ollamaStatus={modelError ? "offline" : isLoadingModels ? "checking" : "connected"}
+            activeModel={selectedModelName}
+            onRetryOllama={() => void loadModels()}
           />
         ) : (
           <div className="ic-settings-placeholder">
