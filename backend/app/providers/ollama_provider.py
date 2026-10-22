@@ -206,14 +206,31 @@ class OllamaProvider:                         #Yeh Ollama-related functionality 
 
     async def check_connection(self) -> dict[str, object]: #Yeh function complete diagnostic response banata hai.
         try:
-            installed_models = await self.get_installed_models() #Pehle Ollama se installed models leta hai., Agar successful hua, iska matlab connection working hai.
+            model_options = await self.list_chat_models()
+            selectable_models = [
+                option["name"]
+                for option in model_options
+                if option["selectable"]
+            ]
+            default_model = self.default_chat_model(model_options)
+            installed_models = [
+                option["name"]
+                for option in model_options
+                if option["installed"]
+            ]
+            chat_model_installed = any(
+                model.casefold() == self.chat_model.casefold()
+                for model in selectable_models
+            )
 
             return {
-                "status": "ready",
+                "status": "ready" if default_model else "unavailable",
                 "connected": True,
                 "ollama_url": self.base_url,
                 "chat_model": self.chat_model,
-                "chat_model_installed": self.chat_model in installed_models,
+                "chat_model_installed": chat_model_installed,
+                "default_chat_model": default_model,
+                "selectable_chat_models": selectable_models,
                 "embedding_model": self.embedding_model,
                 "embedding_model_installed": (
                     self.embedding_model in installed_models

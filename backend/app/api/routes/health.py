@@ -81,7 +81,7 @@ async def readiness_check() -> JSONResponse:
         "ollama": ollama_result,
         "database": database_result,
     }
-    ready = bool(ollama_result.get("connected")) and bool(
+    ready = ollama_result.get("status") == "ready" and bool(
         database_result.get("connected")
     )
 

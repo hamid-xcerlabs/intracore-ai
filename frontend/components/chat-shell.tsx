@@ -1956,6 +1956,7 @@ export function ChatShell() {
       .toLocaleLowerCase()
       .includes(modelSearch.trim().toLocaleLowerCase()),
   );
+  const hasInstalledModel = modelOptions.some((model) => model.installed);
 
   const enabledMemoryCount = memories.filter((memory) => memory.is_enabled).length;
   const totalMemoryCount = memories.length;
@@ -2939,7 +2940,7 @@ export function ChatShell() {
                                       </button>
                                     );
                                   })}
-                                  {!isLoadingModels && modelOptions.length === 0 ? (
+                                  {!isLoadingModels && !hasInstalledModel ? (
                                     <div className="ic-model-empty-state">
                                       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="28" height="28">
                                         <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -3562,7 +3563,7 @@ export function ChatShell() {
         ) : settingsSection === "about" ? (
           <AboutSection
             version="0.1.0"
-            ollamaStatus={modelError ? "offline" : isLoadingModels ? "checking" : "connected"}
+            ollamaStatus={modelError || !selectedModelName ? "offline" : isLoadingModels ? "checking" : "connected"}
             activeModel={selectedModelName}
             onRetryOllama={() => void loadModels()}
           />
