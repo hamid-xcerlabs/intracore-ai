@@ -2637,10 +2637,11 @@ export function ChatShell() {
                             {isModelMenuOpen ? (
                               <motion.div
                                 className="ic-model-menu ic-model-menu-up"
-                                initial={{ opacity: 0, y: 6, scale: 0.985 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 4, scale: 0.99 }}
-                                transition={{ duration: 0.16 }}
+                                initial={{ opacity: 0, scaleY: 0.88, y: 8 }}
+                                animate={{ opacity: 1, scaleY: 1, y: 0 }}
+                                exit={{ opacity: 0, scaleY: 0.92, y: 4 }}
+                                transition={{ type: "spring", stiffness: 360, damping: 30 }}
+                                style={{ transformOrigin: "bottom center" }}
                               >
                                 <div className="ic-model-menu-header">Select model</div>
 
