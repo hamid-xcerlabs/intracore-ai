@@ -4302,3 +4302,51 @@ textarea {
   margin: 0;
   max-width: 220px;
 }
+
+/* ── Ollama offline banner ───────────────────────────────────────────────────── */
+
+.ic-offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 9px 0 0;
+  padding: 10px 12px;
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.ic-offline-banner svg { flex-shrink: 0; color: #d97706; }
+
+.ic-offline-banner-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ic-offline-banner-body strong {
+  font-weight: 600;
+  font-size: 12px;
+  color: #78350f;
+}
+
+.ic-offline-banner-body span {
+  font-size: 11px;
+  color: #92400e;
+  opacity: 0.85;
+}
+
+.ic-offline-retry {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #d97706;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ic-offline-retry:hover { background: #b45309; }

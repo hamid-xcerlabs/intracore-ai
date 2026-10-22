@@ -2693,6 +2693,25 @@ export function ChatShell() {
                       </div>
                   </div>
 
+                  {!isLoadingModels && modelError ? (
+                    <div className="ic-offline-banner" role="alert">
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" width="16" height="16">
+                        <path d="M10 2a8 8 0 1 0 0 16A8 8 0 0 0 10 2zm0 4v5m0 2.5h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                      </svg>
+                      <div className="ic-offline-banner-body">
+                        <strong>Ollama not reachable</strong>
+                        <span>Make sure Ollama is running locally, then</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="ic-offline-retry"
+                        onClick={() => void loadModels()}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : null}
+
                   {!isSendingMessage && activeSendError ? (
                     <div className="ic-send-error-banner" role="alert">
                       <svg className="ic-send-error-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" width="16" height="16">
