@@ -12,6 +12,11 @@ if (-not (Test-Path -LiteralPath $pythonPath)) {
     throw "Backend verification requires a working root venv at venv\Scripts\python.exe. Recreate the local venv before running this script."
 }
 
+& $pythonPath --version *> $null
+if ($LASTEXITCODE -ne 0) {
+    throw "Backend verification found venv\Scripts\python.exe, but the interpreter cannot start. Recreate the local venv before running this script."
+}
+
 Push-Location $repoRoot
 try {
     & $pythonPath -m unittest discover -s backend/tests -p "test*.py" -v

@@ -87,6 +87,24 @@ The backend exposes these local readiness checks:
 - `GET /health/ollama` checks the local Ollama runtime.
 - `GET /health/ready` aggregates SQLite and Ollama and returns HTTP 503 when the chat runtime is unavailable.
 
+## Release readiness checklist
+
+Before sharing a build, verify the complete local path:
+
+1. Recreate the local root `venv` if its Python interpreter cannot start.
+2. Run `.\scripts\verify.ps1` from the repository root.
+3. Start the backend and frontend using the existing project configuration.
+4. Confirm `/health`, `/health/database`, `/health/ollama`, and `/health/ready`.
+5. Exercise create chat, stream response, refresh history, regenerate, memory CRUD, export, and delete confirmation.
+6. Review `git status` and ensure local environments, data, uploads, and `.env` files are not staged.
+
+Current release limitations:
+
+- The product is local-first and currently single-user; authentication is not included.
+- Ollama must be installed locally with at least one completion-capable model.
+- Documents, RAG, tools, integrations, and model downloading are not part of this release.
+- The automated test suite is present, but it requires a working local Python environment before it can run.
+
 ## What Comes Next
 
 IntraCore is being built as a long-term systems project, not a temporary local-model wrapper.
