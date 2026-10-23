@@ -593,6 +593,7 @@ export function ChatShell() {
   const [deletingMemory, setDeletingMemory] = useState<MemoryRecord | null>(null);
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
+  const [showDeleteAllChatsConfirm, setShowDeleteAllChatsConfirm] = useState(false);
 
   // Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -944,11 +945,23 @@ export function ChatShell() {
     if (isClearingMemories || memories.length === 0) return;
     setIsClearingMemories(true);
     try {
-      await Promise.all(memories.map((m) => apiDeleteMemory(m.id)));
+      const results = await Promise.allSettled(
+        memories.map((m) => apiDeleteMemory(m.id)),
+      );
+      const failed = results.some((result) => result.status === "rejected");
+      if (failed) {
+        await loadMemories();
+        throw new Error("Some memories could not be cleared.");
+      }
       setMemories([]);
       showToast("All memories cleared.", "success");
-    } catch {
-      showToast("Could not clear all memories. Please try again.", "error");
+    } catch (requestError) {
+      showToast(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not clear all memories. Please try again.",
+        "error",
+      );
     } finally {
       setIsClearingMemories(false);
     }
@@ -959,6 +972,7 @@ export function ChatShell() {
     setIsExportingChats(true);
     try {
       const parts: string[] = [`# IntraCore AI — Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
+      let failedChats = 0;
       for (const chat of chats) {
         parts.push(`\n## ${chat.title || "Untitled"}\n`);
         try {
@@ -967,7 +981,10 @@ export function ChatShell() {
             const role = msg.role === "user" ? "**You**" : "**Assistant**";
             parts.push(`\n${role}:\n${msg.content}\n`);
           }
-        } catch { /* skip failed chat */ }
+        } catch {
+          failedChats += 1;
+          parts.push("\n[Messages could not be loaded for this chat.]\n");
+        }
         parts.push("\n---\n");
       }
       const blob = new Blob([parts.join("")], { type: "text/markdown" });
@@ -977,7 +994,12 @@ export function ChatShell() {
       a.download = `intracore-chats-${new Date().toISOString().slice(0, 10)}.md`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast("Chats exported successfully.", "success");
+      showToast(
+        failedChats === 0
+          ? "Chats exported successfully."
+          : `Export completed with ${failedChats} chat${failedChats === 1 ? "" : "s"} missing messages.`,
+        failedChats === 0 ? "success" : "error",
+      );
     } catch {
       showToast("Export failed. Please try again.", "error");
     } finally {
@@ -989,12 +1011,24 @@ export function ChatShell() {
     if (isDeletingAllChats || chats.length === 0) return;
     setIsDeletingAllChats(true);
     try {
-      await Promise.all(chats.map((c) => apiDeleteChat(c.id)));
+      const results = await Promise.allSettled(
+        chats.map((c) => apiDeleteChat(c.id)),
+      );
+      const failed = results.some((result) => result.status === "rejected");
+      if (failed) {
+        await loadChats();
+        throw new Error("Some conversations could not be deleted.");
+      }
       setChats([]);
       setActiveChatId(null);
       showToast("All conversations deleted.", "success");
-    } catch {
-      showToast("Could not delete all chats. Please try again.", "error");
+    } catch (requestError) {
+      showToast(
+        requestError instanceof Error
+          ? requestError.message
+          : "Could not delete all chats. Please try again.",
+        "error",
+      );
     } finally {
       setIsDeletingAllChats(false);
     }
@@ -3418,6 +3452,58 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
+        {/* Delete all chats confirmation dialog */}
+        <AnimatePresence>
+          {showDeleteAllChatsConfirm ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setShowDeleteAllChatsConfirm(false)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-delete-all-dialog-title"
+              >
+                <h2 id="ic-delete-all-dialog-title" className="ic-dialog-title">
+                  Delete all conversations?
+                </h2>
+                <p className="ic-dialog-body">
+                  This permanently removes every chat and message. This can&apos;t be undone.
+                </p>
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => setShowDeleteAllChatsConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-confirm"
+                    onClick={() => {
+                      setShowDeleteAllChatsConfirm(false);
+                      void deleteAllChats();
+                    }}
+                  >
+                    Delete all
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
         {/* â"€â"€ Regenerate confirmation dialog â"€â"€ */}
         <AnimatePresence>
           {showRegenConfirm ? (
@@ -3556,7 +3642,7 @@ export function ChatShell() {
           <DataSection
             chatCount={chats.length}
             onExportChats={() => void exportAllChats()}
-            onDeleteAllChats={() => void deleteAllChats()}
+            onDeleteAllChats={() => setShowDeleteAllChatsConfirm(true)}
             isDeleting={isDeletingAllChats}
             isExporting={isExportingChats}
           />
