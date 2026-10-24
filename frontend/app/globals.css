@@ -1493,13 +1493,20 @@ textarea {
 }
 
 .ic-admin-notice {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-top: 38px;
   border: 1px solid rgba(96 75 128 / 0.14);
   border-radius: 12px;
   background: #fff;
   padding: 16px 18px;
+}
+
+.ic-admin-notice > div {
+  display: grid;
+  gap: 4px;
 }
 
 .ic-admin-notice strong {
@@ -1510,6 +1517,79 @@ textarea {
 .ic-admin-notice span {
   color: #817989;
   font-size: 12px;
+}
+
+.ic-admin-refresh-button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(96 75 128 / 0.18);
+  border-radius: 7px;
+  background: #fff;
+  color: #5f4772;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 11px;
+}
+
+.ic-admin-refresh-button:hover:not(:disabled) {
+  background: #f7f2fc;
+}
+
+.ic-admin-refresh-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.ic-admin-stats-error {
+  margin-top: 14px;
+  border: 1px solid rgba(220 38 38 / 0.18);
+  border-radius: 9px;
+  background: rgba(239 68 68 / 0.06);
+  color: #b42318;
+  font-size: 11px;
+  padding: 11px 13px;
+}
+
+.ic-admin-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.ic-admin-metric-card {
+  display: grid;
+  min-height: 128px;
+  align-content: space-between;
+  border: 1px solid rgba(54 41 73 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+}
+
+.ic-admin-metric-card strong {
+  color: #3a2d46;
+  font-size: 27px;
+  letter-spacing: -0.04em;
+}
+
+.ic-admin-metric-card strong.is-ready {
+  color: #4b916a;
+  font-size: 20px;
+}
+
+.ic-admin-metric-card strong.is-warning {
+  color: #b7791f;
+  font-size: 20px;
+}
+
+.ic-admin-metric-card > span:last-child {
+  overflow: hidden;
+  color: #817989;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ic-admin-card-grid {
@@ -1577,12 +1657,18 @@ textarea {
   }
 
   .ic-admin-header,
-  .ic-admin-card-grid {
+  .ic-admin-card-grid,
+  .ic-admin-metrics-grid {
     grid-template-columns: 1fr;
   }
 
   .ic-admin-header {
     display: grid;
+  }
+
+  .ic-admin-notice {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

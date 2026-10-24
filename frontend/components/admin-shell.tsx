@@ -1,6 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import {
+  apiFetchChats,
+  apiFetchMemories,
+  apiFetchModels,
+  apiFetchReadiness,
+  type Chat,
+  type MemoryRecord,
+  type ReadinessResponse,
+} from "../lib/api";
 
 const ADMIN_NAV_ITEMS = [
   { label: "Overview", detail: "Dashboard", active: true },
@@ -10,7 +20,96 @@ const ADMIN_NAV_ITEMS = [
   { label: "Activity", detail: "Coming next", active: false },
 ] as const;
 
+type AdminStats = {
+  chatCount: number;
+  messageCount: number;
+  memoryCount: number;
+  enabledMemoryCount: number;
+  modelName: string | null;
+  readiness: ReadinessResponse | null;
+};
+
+const EMPTY_STATS: AdminStats = {
+  chatCount: 0,
+  messageCount: 0,
+  memoryCount: 0,
+  enabledMemoryCount: 0,
+  modelName: null,
+  readiness: null,
+};
+
+function buildAdminStats(
+  chats: Chat[],
+  memories: MemoryRecord[],
+  readiness: ReadinessResponse | null,
+  modelName: string | null,
+): AdminStats {
+  return {
+    chatCount: chats.length,
+    messageCount: chats.reduce((total, chat) => total + chat.message_count, 0),
+    memoryCount: memories.length,
+    enabledMemoryCount: memories.filter((memory) => memory.is_enabled).length,
+    modelName,
+    readiness,
+  };
+}
+
 export function AdminShell() {
+  const [stats, setStats] = useState<AdminStats>(EMPTY_STATS);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const loadStats = useCallback(async () => {
+    setIsLoadingStats(true);
+    setStatsError(null);
+
+    const [chatsResult, memoriesResult, readinessResult, modelsResult] =
+      await Promise.allSettled([
+        apiFetchChats(),
+        apiFetchMemories(),
+        apiFetchReadiness(),
+        apiFetchModels(),
+      ]);
+
+    const chats = chatsResult.status === "fulfilled" ? chatsResult.value : [];
+    const memories =
+      memoriesResult.status === "fulfilled" ? memoriesResult.value : [];
+    const readiness =
+      readinessResult.status === "fulfilled" ? readinessResult.value : null;
+    const modelName =
+      modelsResult.status === "fulfilled"
+        ? modelsResult.value.default_model
+        : null;
+
+    setStats(buildAdminStats(chats, memories, readiness, modelName));
+    setLastUpdated(new Date());
+
+    const failures = [
+      chatsResult,
+      memoriesResult,
+      readinessResult,
+      modelsResult,
+    ].filter((result) => result.status === "rejected");
+    if (failures.length > 0) {
+      setStatsError(
+        "Some dashboard data could not be loaded. Check the local backend and retry.",
+      );
+    }
+    setIsLoadingStats(false);
+  }, []);
+
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats]);
+
+  const runtimeStatus = stats.readiness?.status ?? "unavailable";
+  const runtimeLabel = isLoadingStats
+    ? "Checking…"
+    : runtimeStatus === "ready"
+      ? "Ready"
+      : "Unavailable";
+
   return (
     <main className="ic-admin-shell">
       <aside className="ic-admin-sidebar" aria-label="Admin navigation">
@@ -64,10 +163,53 @@ export function AdminShell() {
         </header>
 
         <div className="ic-admin-notice" role="note">
-          <strong>Admin Lite is ready.</strong>
-          <span>
-            This local-only foundation is intentionally read-only. Management tools will be added one section at a time.
-          </span>
+          <div>
+            <strong>Workspace snapshot</strong>
+            <span>
+              {lastUpdated
+                ? `Updated ${lastUpdated.toLocaleTimeString()}`
+                : "Loading local workspace data…"}
+            </span>
+          </div>
+          <button
+            type="button"
+            className="ic-admin-refresh-button"
+            onClick={() => void loadStats()}
+            disabled={isLoadingStats}
+          >
+            {isLoadingStats ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
+
+        {statsError ? (
+          <div className="ic-admin-stats-error" role="status">
+            {statsError}
+          </div>
+        ) : null}
+
+        <div className="ic-admin-metrics-grid">
+          <article className="ic-admin-metric-card">
+            <span className="ic-admin-card-kicker">Conversations</span>
+            <strong>{isLoadingStats ? "—" : stats.chatCount}</strong>
+            <span>Saved chats</span>
+          </article>
+          <article className="ic-admin-metric-card">
+            <span className="ic-admin-card-kicker">Messages</span>
+            <strong>{isLoadingStats ? "—" : stats.messageCount}</strong>
+            <span>Durable messages</span>
+          </article>
+          <article className="ic-admin-metric-card">
+            <span className="ic-admin-card-kicker">Memories</span>
+            <strong>{isLoadingStats ? "—" : stats.memoryCount}</strong>
+            <span>{stats.enabledMemoryCount} enabled</span>
+          </article>
+          <article className="ic-admin-metric-card">
+            <span className="ic-admin-card-kicker">Runtime</span>
+            <strong className={runtimeStatus === "ready" ? "is-ready" : "is-warning"}>
+              {runtimeLabel}
+            </strong>
+            <span>{stats.modelName ?? "No model reported"}</span>
+          </article>
         </div>
 
         <div className="ic-admin-card-grid">

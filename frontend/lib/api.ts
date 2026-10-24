@@ -39,6 +39,14 @@ export type ChatModelListResponse = {
   models: ChatModelOption[];
 };
 
+export type ReadinessResponse = {
+  status: "ready" | "unavailable";
+  checks: {
+    ollama?: { status?: string; model?: string | null };
+    database?: { connected?: boolean };
+  };
+};
+
 export type MemoryKind = "fact" | "preference" | "instruction";
 
 export type MemoryRecord = {
@@ -161,6 +169,15 @@ export async function apiFetchModels(): Promise<ChatModelListResponse> {
     );
   }
   return response.json() as Promise<ChatModelListResponse>;
+}
+
+export async function apiFetchReadiness(): Promise<ReadinessResponse> {
+  const response = await fetch(`${API_BASE_URL}/health/ready`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  const body = (await response.json()) as ReadinessResponse;
+  return body;
 }
 
 // ─── Memory API ───────────────────────────────────────────────────────────────
