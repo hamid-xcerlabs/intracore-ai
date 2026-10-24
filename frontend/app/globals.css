@@ -1824,6 +1824,107 @@ textarea {
   padding: 10px;
 }
 
+.ic-admin-memory-panel {
+  margin-top: 28px;
+  border: 1px solid rgba(54 41 73 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+}
+
+.ic-admin-memory-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.ic-admin-memory-toolbar .ic-admin-search-input {
+  max-width: 300px;
+  margin-top: 0;
+}
+
+.ic-admin-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ic-admin-filter-button {
+  border: 1px solid rgba(54 41 73 / 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: #817989;
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  padding: 6px 9px;
+  text-transform: capitalize;
+}
+
+.ic-admin-filter-button.is-active,
+.ic-admin-filter-button:hover {
+  border-color: rgba(118 86 141 / 0.25);
+  background: #f4effa;
+  color: #76568d;
+}
+
+.ic-admin-memory-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ic-admin-memory-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(54 41 73 / 0.08);
+  border-radius: 9px;
+  padding: 13px;
+}
+
+.ic-admin-memory-row.is-disabled {
+  background: #fbfafc;
+  opacity: 0.72;
+}
+
+.ic-admin-memory-content {
+  min-width: 0;
+}
+
+.ic-admin-memory-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: #92899a;
+  font-size: 10px;
+}
+
+.ic-admin-memory-kind {
+  border-radius: 999px;
+  background: #f4effa;
+  color: #76568d;
+  padding: 3px 7px;
+  text-transform: capitalize;
+}
+
+.ic-admin-memory-content p {
+  margin: 8px 0 0;
+  color: #5c5365;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.ic-admin-memory-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
 @media (max-width: 760px) {
   .ic-admin-shell {
     display: block;
@@ -1869,6 +1970,20 @@ textarea {
   }
 
   .ic-admin-detail-actions {
+    justify-content: flex-start;
+  }
+
+  .ic-admin-memory-toolbar,
+  .ic-admin-memory-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ic-admin-memory-toolbar .ic-admin-search-input {
+    max-width: none;
+  }
+
+  .ic-admin-memory-actions {
     justify-content: flex-start;
   }
 }
