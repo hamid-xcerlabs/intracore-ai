@@ -16,15 +16,15 @@ type ActivityDay = {
 function dayKey(value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
 function buildActivityDays(range: RangeDays, chats: Chat[], messages: Message[]): ActivityDay[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const counts = new Map<string, { chats: number; messages: number }>();
   for (const chat of chats) {
     const key = dayKey(chat.created_at);
@@ -37,11 +37,15 @@ function buildActivityDays(range: RangeDays, chats: Chat[], messages: Message[])
 
   return Array.from({ length: range }, (_, index) => {
     const date = new Date(today);
-    date.setDate(today.getDate() - (range - index - 1));
+    date.setUTCDate(today.getUTCDate() - (range - index - 1));
     const key = dayKey(date);
     return {
       key,
-      label: date.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      label: date.toLocaleDateString("en-US", {
+        timeZone: "UTC",
+        month: "short",
+        day: "numeric",
+      }),
       chats: counts.get(key)?.chats ?? 0,
       messages: counts.get(key)?.messages ?? 0,
     };
