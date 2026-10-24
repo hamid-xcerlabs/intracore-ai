@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   apiFetchChats,
   apiFetchMemories,
@@ -13,11 +13,11 @@ import {
 } from "../lib/api";
 
 const ADMIN_NAV_ITEMS = [
-  { label: "Overview", detail: "Dashboard", active: true },
-  { label: "Chats", detail: "Coming next", active: false },
-  { label: "Memories", detail: "Coming next", active: false },
-  { label: "Runtime", detail: "Coming next", active: false },
-  { label: "Activity", detail: "Coming next", active: false },
+  { key: "overview", label: "Overview", detail: "Dashboard", href: "/admin" },
+  { key: "chats", label: "Chats", detail: "Management", href: "/admin/chats" },
+  { key: "memories", label: "Memories", detail: "Coming next", href: null },
+  { key: "runtime", label: "Runtime", detail: "Coming next", href: null },
+  { key: "activity", label: "Activity", detail: "Coming next", href: null },
 ] as const;
 
 type AdminStats = {
@@ -54,7 +54,13 @@ function buildAdminStats(
   };
 }
 
-export function AdminShell() {
+export function AdminShell({
+  activeSection = "overview",
+  children,
+}: {
+  activeSection?: (typeof ADMIN_NAV_ITEMS)[number]["key"];
+  children?: ReactNode;
+}) {
   const [stats, setStats] = useState<AdminStats>(EMPTY_STATS);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -128,12 +134,12 @@ export function AdminShell() {
 
         <nav className="ic-admin-nav">
           {ADMIN_NAV_ITEMS.map((item) =>
-            item.active ? (
+            item.href ? (
               <Link
                 key={item.label}
-                className="ic-admin-nav-item is-active"
-                href="/admin"
-                aria-current="page"
+                className={`ic-admin-nav-item${activeSection === item.key ? " is-active" : ""}`}
+                href={item.href}
+                aria-current={activeSection === item.key ? "page" : undefined}
               >
                 <span>{item.label}</span>
                 <small>{item.detail}</small>
@@ -153,6 +159,8 @@ export function AdminShell() {
       </aside>
 
       <section className="ic-admin-content" aria-labelledby="admin-page-title">
+        {children ?? (
+          <>
         <header className="ic-admin-header">
           <div>
             <span className="ic-admin-eyebrow">Workspace control center</span>
@@ -232,6 +240,8 @@ export function AdminShell() {
             <span className="ic-admin-card-status is-safe">SQLite + local runtime</span>
           </article>
         </div>
+          </>
+        )}
       </section>
     </main>
   );

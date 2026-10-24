@@ -154,6 +154,17 @@ export async function apiFetchMessages(
   return response.json() as Promise<Message[]>;
 }
 
+export async function apiExportChat(chatId: number): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}/chats/${chatId}/export`, {
+    method: "GET",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Could not export chat (${response.status}).`);
+  }
+  return response.blob();
+}
+
 // ─── Models API ───────────────────────────────────────────────────────────────
 
 export async function apiFetchModels(): Promise<ChatModelListResponse> {
