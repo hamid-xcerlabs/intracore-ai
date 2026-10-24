@@ -1925,6 +1925,106 @@ textarea {
   gap: 7px;
 }
 
+.ic-admin-runtime-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.ic-admin-runtime-note {
+  color: #92899a;
+  font-size: 11px;
+}
+
+.ic-admin-runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.ic-admin-runtime-card {
+  display: grid;
+  min-height: 132px;
+  align-content: space-between;
+  border: 1px solid rgba(54 41 73 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+}
+
+.ic-admin-runtime-card strong {
+  color: #3a2d46;
+  font-size: 20px;
+}
+
+.ic-admin-runtime-card strong.is-ready {
+  color: #4b916a;
+}
+
+.ic-admin-runtime-card strong.is-warning {
+  color: #b7791f;
+}
+
+.ic-admin-runtime-card > span:last-child {
+  color: #92899a;
+  font-size: 10px;
+}
+
+.ic-admin-model-panel {
+  margin-top: 16px;
+  border: 1px solid rgba(54 41 73 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+}
+
+.ic-admin-model-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+}
+
+.ic-admin-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(54 41 73 / 0.08);
+  border-radius: 8px;
+  padding: 11px 12px;
+}
+
+.ic-admin-model-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ic-admin-model-row strong {
+  color: #44364f;
+  font-size: 12px;
+}
+
+.ic-admin-model-row span {
+  color: #92899a;
+  font-size: 10px;
+}
+
+.ic-admin-model-badge {
+  border-radius: 999px;
+  background: #f4effa;
+  color: #76568d !important;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.ic-admin-model-badge.is-selectable {
+  background: #eef8f1;
+  color: #4b916a !important;
+}
+
 @media (max-width: 760px) {
   .ic-admin-shell {
     display: block;
@@ -1985,6 +2085,16 @@ textarea {
 
   .ic-admin-memory-actions {
     justify-content: flex-start;
+  }
+
+  .ic-admin-runtime-actions,
+  .ic-admin-model-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ic-admin-runtime-grid {
+    grid-template-columns: 1fr;
   }
 }
 

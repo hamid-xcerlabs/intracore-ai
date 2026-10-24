@@ -16,7 +16,7 @@ const ADMIN_NAV_ITEMS = [
   { key: "overview", label: "Overview", detail: "Dashboard", href: "/admin" },
   { key: "chats", label: "Chats", detail: "Management", href: "/admin/chats" },
   { key: "memories", label: "Memories", detail: "Management", href: "/admin/memories" },
-  { key: "runtime", label: "Runtime", detail: "Coming next", href: null },
+  { key: "runtime", label: "Runtime", detail: "Diagnostics", href: "/admin/runtime" },
   { key: "activity", label: "Activity", detail: "Coming next", href: null },
 ] as const;
 
