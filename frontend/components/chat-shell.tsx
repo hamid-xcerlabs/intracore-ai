@@ -694,6 +694,7 @@ export function ChatShell() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesChatId, setMessagesChatId] = useState<number | null>(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [messageRetryToken, setMessageRetryToken] = useState(0);
   const [messageError, setMessageError] = useState<{
     chatId: number;
     message: string;
@@ -1232,7 +1233,7 @@ export function ChatShell() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeChatId]);
+  }, [activeChatId, messageRetryToken]);
 
   useEffect(() => {
     return () => {
@@ -2684,7 +2685,19 @@ export function ChatShell() {
                   ) : null}
 
                   {activeChat && activeMessageError ? (
-                    <div className="ic-page-error">{activeMessageError}</div>
+                    <div className="ic-page-error">
+                      <div className="ic-page-error-content">
+                        <span>{activeMessageError}</span>
+                        <button
+                          type="button"
+                          className="ic-page-error-retry"
+                          onClick={() => setMessageRetryToken((token) => token + 1)}
+                          disabled={isLoadingMessages}
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    </div>
                   ) : null}
 
                   {/* Commit 4: enhanced empty state for a new chat with prompt chips */}
