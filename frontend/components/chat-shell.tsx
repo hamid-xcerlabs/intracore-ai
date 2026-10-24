@@ -89,6 +89,13 @@ function sanitizeExportFilename(title: string): string {
   return `${filename}.md`;
 }
 
+function escapeExportSummaryText(value: string): string {
+  return value
+    .replace(/[\\`*_\[\]<>]/g, "\\$&")
+    .replace(/[\r\n\t]+/g, " ")
+    .trim();
+}
+
 const STARTER_PROMPTS = [
   "Explain this to me like I'm new to it:",
   "Help me write a clear, professional email about:",
@@ -1008,20 +1015,43 @@ export function ChatShell() {
     setIsExportingChats(true);
     try {
       const parts: string[] = [`# IntraCore AI — Exported Conversations\n\nExported: ${new Date().toLocaleString()}\n\n---\n`];
-      let failedChats = 0;
+      const failedChats: Array<{ id: number; title: string; error: string }> = [];
       for (const chat of chats) {
-        parts.push(`\n## ${chat.title || "Untitled"}\n`);
+        const title = chat.title || "Untitled";
+        parts.push(`\n## ${sanitizeExportTitle(title)}\n`);
         try {
           const msgs = await apiFetchMessages(chat.id);
           for (const msg of msgs) {
             const role = msg.role === "user" ? "**You**" : "**Assistant**";
             parts.push(`\n${role}:\n${msg.content}\n`);
           }
-        } catch {
-          failedChats += 1;
+        } catch (requestError) {
+          failedChats.push({
+            id: chat.id,
+            title,
+            error:
+              requestError instanceof Error
+                ? requestError.message
+                : "Unknown error while loading messages.",
+          });
           parts.push("\n[Messages could not be loaded for this chat.]\n");
         }
         parts.push("\n---\n");
+      }
+      if (failedChats.length > 0) {
+        parts.push(
+          "\n## Export summary\n\n",
+          `- Chats requested: ${chats.length}\n`,
+          `- Chats exported with messages: ${chats.length - failedChats.length}\n`,
+          `- Chats with failures: ${failedChats.length}\n\n`,
+          "### Failed chats\n\n",
+        );
+        for (const failedChat of failedChats) {
+          parts.push(
+            `- **${escapeExportSummaryText(failedChat.title || "Untitled")}** ` +
+              `(ID ${failedChat.id}): ${escapeExportSummaryText(failedChat.error).slice(0, 300)}\n`,
+          );
+        }
       }
       const blob = new Blob([parts.join("")], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
@@ -1031,10 +1061,10 @@ export function ChatShell() {
       a.click();
       URL.revokeObjectURL(url);
       showToast(
-        failedChats === 0
+        failedChats.length === 0
           ? "Chats exported successfully."
-          : `Export completed with ${failedChats} chat${failedChats === 1 ? "" : "s"} missing messages.`,
-        failedChats === 0 ? "success" : "error",
+          : `Export completed with ${failedChats.length} failed chat${failedChats.length === 1 ? "" : "s"}. See the export summary for details.`,
+        failedChats.length === 0 ? "success" : "error",
       );
     } catch {
       showToast("Export failed. Please try again.", "error");
