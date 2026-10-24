@@ -72,6 +72,26 @@ messages remain isolated to their own conversation.
 
 The larger product is still being shaped.
 
+## Local startup
+
+From the repository root, start the backend and frontend in separate PowerShell terminals.
+
+Backend terminal:
+
+```powershell
+Set-Location .\backend
+..\venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Frontend terminal:
+
+```powershell
+Set-Location .\frontend
+npm run dev
+```
+
+Open `http://localhost:3000` in the browser. The frontend uses `http://127.0.0.1:8000` as its default backend URL; override it with `NEXT_PUBLIC_API_URL` when using a different local port.
+
 ## Local verification
 
 Run the repeatable verification script from the repository root:
