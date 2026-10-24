@@ -1326,6 +1326,266 @@ textarea {
   padding: 8px 0 34px;
 }
 
+/* ── Admin Lite ── */
+
+.ic-admin-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f8f7fb;
+  color: #24212b;
+}
+
+.ic-admin-sidebar {
+  display: flex;
+  width: 244px;
+  flex-direction: column;
+  gap: 24px;
+  border-right: 1px solid rgba(54 41 73 / 0.1);
+  background: #fff;
+  padding: 28px 18px 22px;
+}
+
+.ic-admin-brand,
+.ic-admin-back-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ic-admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ic-admin-brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: #34233f;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ic-admin-brand strong,
+.ic-admin-brand small {
+  display: block;
+}
+
+.ic-admin-brand strong {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.ic-admin-brand small,
+.ic-admin-nav-item small {
+  color: #8b8494;
+  font-size: 10px;
+}
+
+.ic-admin-mode-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(96 75 128 / 0.14);
+  border-radius: 8px;
+  background: #faf8ff;
+  color: #665477;
+  font-size: 10px;
+  padding: 8px 9px;
+}
+
+.ic-admin-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #55a779;
+}
+
+.ic-admin-nav {
+  display: grid;
+  gap: 5px;
+}
+
+.ic-admin-nav-item {
+  display: flex;
+  min-height: 46px;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 8px;
+  color: #6f6879;
+  padding: 8px 11px;
+  text-decoration: none;
+}
+
+.ic-admin-nav-item span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ic-admin-nav-item.is-active {
+  background: #f0eafa;
+  color: #4b3560;
+}
+
+.ic-admin-nav-item.is-disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.ic-admin-back-link {
+  margin-top: auto;
+  color: #7d7387;
+  font-size: 11px;
+}
+
+.ic-admin-content {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 54px clamp(24px, 5vw, 72px);
+}
+
+.ic-admin-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.ic-admin-eyebrow,
+.ic-admin-card-kicker {
+  color: #9676b0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ic-admin-header h1 {
+  margin: 7px 0 8px;
+  color: #2e2536;
+  font-size: clamp(25px, 4vw, 38px);
+  letter-spacing: -0.04em;
+}
+
+.ic-admin-header p,
+.ic-admin-card p {
+  color: #817989;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ic-admin-header p {
+  margin: 0;
+}
+
+.ic-admin-header-chip,
+.ic-admin-card-status {
+  border: 1px solid rgba(96 75 128 / 0.14);
+  border-radius: 999px;
+  background: #fff;
+  color: #73647e;
+  font-size: 10px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.ic-admin-notice {
+  display: grid;
+  gap: 4px;
+  margin-top: 38px;
+  border: 1px solid rgba(96 75 128 / 0.14);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+}
+
+.ic-admin-notice strong {
+  color: #4b3560;
+  font-size: 12px;
+}
+
+.ic-admin-notice span {
+  color: #817989;
+  font-size: 12px;
+}
+
+.ic-admin-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.ic-admin-card {
+  min-height: 190px;
+  border: 1px solid rgba(54 41 73 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  padding: 18px;
+}
+
+.ic-admin-card h2 {
+  margin: 12px 0 7px;
+  color: #3a2d46;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.ic-admin-card p {
+  min-height: 42px;
+  margin: 0 0 18px;
+}
+
+.ic-admin-card-status {
+  display: inline-block;
+  border: 0;
+  background: #f4effa;
+  color: #76568d;
+}
+
+.ic-admin-card-status.is-safe {
+  background: #eef8f1;
+  color: #4b916a;
+}
+
+@media (max-width: 760px) {
+  .ic-admin-shell {
+    display: block;
+  }
+
+  .ic-admin-sidebar {
+    width: auto;
+    gap: 16px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(54 41 73 / 0.1);
+    padding: 18px;
+  }
+
+  .ic-admin-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ic-admin-back-link {
+    margin-top: 0;
+  }
+
+  .ic-admin-content {
+    padding: 32px 18px;
+  }
+
+  .ic-admin-header,
+  .ic-admin-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ic-admin-header {
+    display: grid;
+  }
+}
+
 .ic-message {
   display: flex;
   width: 100%;
