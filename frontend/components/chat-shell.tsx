@@ -636,6 +636,7 @@ export function ChatShell() {
   const [showRegenConfirm, setShowRegenConfirm] = useState(false);
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const [showDeleteAllChatsConfirm, setShowDeleteAllChatsConfirm] = useState(false);
+  const [showClearAllMemoriesConfirm, setShowClearAllMemoriesConfirm] = useState(false);
 
   // Settings
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -1290,6 +1291,7 @@ export function ChatShell() {
         setIsShortcutsOpen(false);
         setShowNewChatConfirm(false);
         setShowRegenConfirm(false);
+        setShowClearAllMemoriesConfirm(false);
         setDeletingChat(null);
         setDeletingMemory(null);
         setIsSearchOpen((v) => { if (!v) return v; setChatSearch(""); return false; });
@@ -3541,6 +3543,61 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
+        {/* Clear all memories confirmation dialog */}
+        <AnimatePresence>
+          {showClearAllMemoriesConfirm ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => setShowClearAllMemoriesConfirm(false)}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-clear-all-memories-dialog-title"
+              >
+                <h2
+                  id="ic-clear-all-memories-dialog-title"
+                  className="ic-dialog-title"
+                >
+                  Clear all memories?
+                </h2>
+                <p className="ic-dialog-body">
+                  This permanently deletes all {memories.length} saved memor{memories.length === 1 ? "y" : "ies"}. This can&apos;t be undone.
+                </p>
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => setShowClearAllMemoriesConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-confirm"
+                    onClick={() => {
+                      setShowClearAllMemoriesConfirm(false);
+                      void clearAllMemories();
+                    }}
+                  >
+                    Clear all
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
         {/* Delete all chats confirmation dialog */}
         <AnimatePresence>
           {showDeleteAllChatsConfirm ? (
@@ -3724,7 +3781,7 @@ export function ChatShell() {
               setIsMemoryPanelOpen(true);
               void loadMemories();
             }}
-            onClearAll={() => void clearAllMemories()}
+            onClearAll={() => setShowClearAllMemoriesConfirm(true)}
             isClearing={isClearingMemories}
           />
         ) : settingsSection === "data" ? (
