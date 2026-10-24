@@ -17,7 +17,7 @@ const ADMIN_NAV_ITEMS = [
   { key: "chats", label: "Chats", detail: "Management", href: "/admin/chats" },
   { key: "memories", label: "Memories", detail: "Management", href: "/admin/memories" },
   { key: "runtime", label: "Runtime", detail: "Diagnostics", href: "/admin/runtime" },
-  { key: "activity", label: "Activity", detail: "Coming next", href: null },
+  { key: "activity", label: "Activity", detail: "Analytics", href: "/admin/analytics" },
 ] as const;
 
 type AdminStats = {
@@ -133,24 +133,17 @@ export function AdminShell({
         </div>
 
         <nav className="ic-admin-nav">
-          {ADMIN_NAV_ITEMS.map((item) =>
-            item.href ? (
-              <Link
-                key={item.label}
-                className={`ic-admin-nav-item${activeSection === item.key ? " is-active" : ""}`}
-                href={item.href}
-                aria-current={activeSection === item.key ? "page" : undefined}
-              >
-                <span>{item.label}</span>
-                <small>{item.detail}</small>
-              </Link>
-            ) : (
-              <span key={item.label} className="ic-admin-nav-item is-disabled" aria-disabled="true">
-                <span>{item.label}</span>
-                <small>{item.detail}</small>
-              </span>
-            ),
-          )}
+          {ADMIN_NAV_ITEMS.map((item) => (
+            <Link
+              key={item.label}
+              className={`ic-admin-nav-item${activeSection === item.key ? " is-active" : ""}`}
+              href={item.href}
+              aria-current={activeSection === item.key ? "page" : undefined}
+            >
+              <span>{item.label}</span>
+              <small>{item.detail}</small>
+            </Link>
+          ))}
         </nav>
 
         <Link className="ic-admin-back-link" href="/">
