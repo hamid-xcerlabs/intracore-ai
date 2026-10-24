@@ -54,6 +54,41 @@ import {
 
 const MODEL_PREFERENCE_KEY = "intracore.chatModel";
 
+const WINDOWS_RESERVED_EXPORT_NAMES = new Set([
+  "con",
+  "prn",
+  "aux",
+  "nul",
+  ...Array.from({ length: 9 }, (_, index) => `com${index + 1}`),
+  ...Array.from({ length: 9 }, (_, index) => `lpt${index + 1}`),
+]);
+
+function sanitizeExportTitle(title: string): string {
+  return title.replace(/[\r\n\t]+/g, " ").trim();
+}
+
+function sanitizeExportFilename(title: string): string {
+  let filename = sanitizeExportTitle(title)
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[ .-]+|[ .-]+$/g, "")
+    .replace(/\.md$/i, "")
+    .slice(0, 80)
+    .replace(/^[ .-]+|[ .-]+$/g, "");
+
+  if (
+    !filename ||
+    WINDOWS_RESERVED_EXPORT_NAMES.has(filename.split(".", 1)[0])
+  ) {
+    filename = filename ? `chat-${filename}` : "intracore-chat";
+  }
+
+  return `${filename}.md`;
+}
+
 const STARTER_PROMPTS = [
   "Explain this to me like I'm new to it:",
   "Help me write a clear, professional email about:",
@@ -1652,7 +1687,7 @@ export function ChatShell() {
     if (!activeChat || activeMessages.length === 0) return;
 
     const lines: string[] = [
-      `# ${activeChat.title}`,
+      `# ${sanitizeExportTitle(activeChat.title)}`,
       ``,
       `*Exported from IntraCore AI — ${new Date().toLocaleString()}*`,
       ``,
@@ -1671,7 +1706,7 @@ export function ChatShell() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${activeChat.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.md`;
+    anchor.download = sanitizeExportFilename(activeChat.title);
     anchor.click();
     URL.revokeObjectURL(url);
   }

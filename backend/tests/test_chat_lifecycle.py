@@ -9,6 +9,7 @@ from app.db.base import Base
 from app.db.models import Chat, Message
 from app.db.session import get_database_session
 from app.main import app
+from app.api.routes.chats import sanitize_export_filename, sanitize_export_title
 
 
 class ChatLifecycleTests(unittest.IsolatedAsyncioTestCase):
@@ -82,6 +83,24 @@ class ChatLifecycleTests(unittest.IsolatedAsyncioTestCase):
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             created = await client.post("/chats", json={"title": "   "})
             self.assertEqual(created.status_code, 422)
+
+    def test_export_title_and_filename_are_safe(self):
+        self.assertEqual(
+            sanitize_export_title("  Project\nNotes\t2026  "),
+            "Project Notes 2026",
+        )
+        self.assertEqual(
+            sanitize_export_filename('CON: roadmap / Q4?.md'),
+            "con-roadmap-q4.md",
+        )
+        self.assertEqual(
+            sanitize_export_filename(" /\\:*?\"<>| "),
+            "intracore-chat.md",
+        )
+        self.assertEqual(
+            sanitize_export_filename("CON"),
+            "chat-con.md",
+        )
 
 
 if __name__ == "__main__":

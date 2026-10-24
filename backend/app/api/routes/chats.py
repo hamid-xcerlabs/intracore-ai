@@ -1,5 +1,6 @@
 # Annotated lets FastAPI attach dependency metadata to typed parameters.
 import asyncio
+import re
 from collections.abc import AsyncIterator
 from typing import Annotated
 
@@ -69,6 +70,37 @@ DatabaseSession = Annotated[
     AsyncSession,
     Depends(get_database_session),
 ]
+
+_WINDOWS_RESERVED_FILENAMES = {
+    "con",
+    "prn",
+    "aux",
+    "nul",
+    *(f"com{index}" for index in range(1, 10)),
+    *(f"lpt{index}" for index in range(1, 10)),
+}
+
+
+def sanitize_export_title(title: str) -> str:
+    """Keep a chat title on one Markdown heading line."""
+
+    return re.sub(r"[\r\n\t]+", " ", title).strip()
+
+
+def sanitize_export_filename(title: str) -> str:
+    """Build a safe, portable Markdown download filename."""
+
+    filename = sanitize_export_title(title).lower()
+    filename = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", filename)
+    filename = re.sub(r"\s+", "-", filename)
+    filename = re.sub(r"\.md$", "", filename)
+    filename = re.sub(r"-+", "-", filename).strip(" .-")[:80]
+    filename = filename.strip(" .-") or "intracore-chat"
+
+    if filename.split(".", 1)[0] in _WINDOWS_RESERVED_FILENAMES:
+        filename = f"chat-{filename}"
+
+    return f"{filename}.md"
 
 
 async def build_chat_response(
@@ -644,7 +676,7 @@ async def export_chat(
     )
 
     lines: list[str] = [
-        f"# {chat.title}",
+        f"# {sanitize_export_title(chat.title)}",
         "",
         f"*Exported from IntraCore AI — {chat.updated_at.strftime('%Y-%m-%d %H:%M')} UTC*",
         "",
@@ -657,11 +689,14 @@ async def export_chat(
             badge = f" *({message.model_name})*" if message.model_name else ""
             lines += [f"## IntraCore{badge}", "", message.content, ""]
 
-    filename = chat.title.lower().replace(" ", "-")
     return Response(
         content="\n".join(lines),
         media_type="text/markdown",
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}.md"',
+            "Content-Disposition": (
+                "attachment; filename=\""
+                f"{sanitize_export_filename(chat.title)}"
+                "\""
+            ),
         },
     )
