@@ -677,6 +677,7 @@ export function ChatShell() {
   const nextStreamRequestIdRef = useRef(1);
   const activeStreamRequestIdRef = useRef<number | null>(null);
   const streamAbortControllerRef = useRef<AbortController | null>(null);
+  const sendMessageInFlightRef = useRef(false);
   const pendingAssistantDeltaRef = useRef("");
   const deltaFlushTimerRef = useRef<number | null>(null);
   const conversationScrollRef = useRef<HTMLDivElement | null>(null);
@@ -1337,7 +1338,12 @@ export function ChatShell() {
   }
 
   async function sendMessage(overrideContent?: string) {
-    if (activeChatId === null || isMessageViewLoading || isSendingMessage) {
+    if (
+      activeChatId === null ||
+      isMessageViewLoading ||
+      isSendingMessage ||
+      sendMessageInFlightRef.current
+    ) {
       return;
     }
 
@@ -1357,6 +1363,10 @@ export function ChatShell() {
       });
       return;
     }
+
+    // Lock immediately, before React schedules the state update, so rapid
+    // double-clicks cannot create two durable message requests.
+    sendMessageInFlightRef.current = true;
 
     const optimisticMessageId = nextOptimisticMessageIdRef.current;
     nextOptimisticMessageIdRef.current -= 1;
@@ -1616,6 +1626,7 @@ export function ChatShell() {
 
       await reloadDurableHistory(targetChatId);
     } finally {
+      sendMessageInFlightRef.current = false;
       if (activeStreamRequestIdRef.current === requestId) {
         activeStreamRequestIdRef.current = null;
         streamAbortControllerRef.current = null;
