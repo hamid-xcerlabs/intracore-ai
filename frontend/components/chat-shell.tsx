@@ -115,10 +115,10 @@ const PRE_RESPONSE_STATUS_LABELS = [
 const PRE_RESPONSE_STATUS_DURATION_MS = 10000;
 
 const ANIMATED_EMOJI_PATTERN =
-  /((?:\p{Regional_Indicator}{2})|(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:â€\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*))/gu;
+  /((?:\p{Regional_Indicator}{2})|(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:‍\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*))/gu;
 
 const EMOJI_ONLY_PATTERN =
-  /^(?:\p{Regional_Indicator}{2})$|^(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:â€\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*)$/u;
+  /^(?:\p{Regional_Indicator}{2})$|^(?:\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?(?:‍\p{Extended_Pictographic}(?:ï¸|ï¸Ž)?(?:\p{Emoji_Modifier})?)*)$/u;
 
 type StreamLifecycle =
   | "starting"
@@ -332,7 +332,7 @@ function uniqueMessages(messages: Message[]): Message[] {
   );
 }
 
-// â"€â"€â"€ Icons â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
 function SendIcon() {
   return (
@@ -484,7 +484,7 @@ function MicrophoneIcon() {
   );
 }
 
-// â"€â"€â"€ Streaming assistant view â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Streaming assistant view ─────────────────────────────────────────────────
 
 function StreamingAssistantView({
   stream,
@@ -606,7 +606,7 @@ function StreamingAssistantView({
   );
 }
 
-// â"€â"€â"€ Main component â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function ChatShell() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -1119,7 +1119,7 @@ export function ChatShell() {
     }
   }
 
-  // â"€â"€â"€ Effects â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // ─── Effects ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -1396,7 +1396,7 @@ export function ChatShell() {
     return () => window.cancelAnimationFrame(frameId);
   }, [activeChatId, messages, streamingAssistant]);
 
-  // â"€â"€â"€ Actions â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // ─── Actions ───────────────────────────────────────────────────────────────
 
   function resizeComposer() {
     const el = composerTextareaRef.current;
@@ -2039,7 +2039,7 @@ export function ChatShell() {
     }
   }
 
-  // â"€â"€â"€ Derived state â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // ─── Derived state ─────────────────────────────────────────────────────────
 
   const activeChat =
     chats.find((chat) => chat.id === activeChatId) ?? null;
@@ -2125,7 +2125,7 @@ export function ChatShell() {
     }
   }, [activeChatId]);
 
-  // â"€â"€â"€ Render â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <MotionConfig reducedMotion="user">
@@ -2217,7 +2217,7 @@ export function ChatShell() {
         ) : null}
 
         <div className={`ic-workspace${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-          {/* â"€â"€ Mobile sidebar backdrop â"€â"€ */}
+          {/* ── Mobile sidebar backdrop ── */}
           {isSidebarOpen ? (
             <div
               className="ic-sidebar-backdrop"
@@ -2226,7 +2226,7 @@ export function ChatShell() {
             />
           ) : null}
 
-          {/* â"€â"€ Sidebar â"€â"€ */}
+          {/* ── Sidebar ── */}
           <aside className={`ic-sidebar${isSidebarOpen ? " is-open" : ""}`}>
             <div className="ic-sidebar-top">
               {/* Row 1: brand + action icons */}
@@ -2493,7 +2493,7 @@ export function ChatShell() {
             </div>
           </aside>
 
-          {/* â"€â"€ Main panel â"€â"€ */}
+          {/* ── Main panel ── */}
           <section className="ic-main">
             <header className="ic-header">
               <button
@@ -2547,7 +2547,7 @@ export function ChatShell() {
                     aria-expanded={isChatOptionsOpen}
                     onClick={() => setIsChatOptionsOpen((current) => !current)}
                   >
-                    <span aria-hidden="true">â€¢â€¢â€¢</span>
+                    <span aria-hidden="true">•••</span>
                   </button>
 
                   {isChatOptionsOpen ? (
@@ -3177,7 +3177,7 @@ export function ChatShell() {
           </section>
         </div>
 
-        {/* â"€â"€ Memory panel â"€â"€ */}
+        {/* ── Memory panel ── */}
         <AnimatePresence>
           {isMemoryPanelOpen ? (
             <>
@@ -3379,7 +3379,7 @@ export function ChatShell() {
             </>
           ) : null}
         </AnimatePresence>
-        {/* â"€â"€ Toast notifications â"€â"€ */}
+        {/* ── Toast notifications ── */}
         <div className="ic-toast-container" aria-live="polite">
           <AnimatePresence>
             {toasts.map((toast) => (
@@ -3505,7 +3505,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â"€â"€ New chat confirmation dialog â"€â"€ */}
+        {/* ── New chat confirmation dialog ── */}
         <AnimatePresence>
           {showNewChatConfirm ? (
             <motion.div
@@ -3650,7 +3650,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â"€â"€ Regenerate confirmation dialog â"€â"€ */}
+        {/* ── Regenerate confirmation dialog ── */}
         <AnimatePresence>
           {showRegenConfirm ? (
             <motion.div
@@ -3698,7 +3698,7 @@ export function ChatShell() {
           ) : null}
         </AnimatePresence>
 
-        {/* â"€â"€ Delete memory confirmation dialog â"€â"€ */}
+        {/* ── Delete memory confirmation dialog ── */}
         <AnimatePresence>
           {deletingMemory ? (
             <motion.div
@@ -3746,7 +3746,7 @@ export function ChatShell() {
         </AnimatePresence>
       </main>
 
-      {/* â"€â"€ Settings dialog â"€â"€ */}
+      {/* ── Settings dialog ── */}
       <SettingsDialog
         open={isSettingsOpen}
         activeSection={settingsSection}
