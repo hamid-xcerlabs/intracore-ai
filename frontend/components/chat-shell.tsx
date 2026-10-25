@@ -2477,7 +2477,7 @@ export function ChatShell() {
                   <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
                 </svg>
                 <span>Settings</span>
-                <span className="ic-settings-shortcut">âŒ˜,</span>
+                <span className="ic-settings-shortcut">⌘,</span>
               </button>
 
               <div className="ic-local-card">
@@ -3004,7 +3004,7 @@ export function ChatShell() {
                               setModelNotice(null);
                             }}
                           >
-                            <span className="ic-composer-model-icon" aria-hidden="true">âš¡</span>
+                            <span className="ic-composer-model-icon" aria-hidden="true">⚡</span>
                             <span className="ic-composer-model-name">
                               {isLoadingModels
                                 ? "Finding models…"
@@ -3060,7 +3060,7 @@ export function ChatShell() {
                                           ) : null}
                                         </span>
                                         {isSelected ? (
-                                          <span className="ic-model-check" aria-label="Selected">âœ"</span>
+                                          <span className="ic-model-check" aria-label="Selected">✓</span>
                                         ) : null}
                                       </button>
                                     );
