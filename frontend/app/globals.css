@@ -464,20 +464,15 @@ textarea {
   align-items: center;
   overflow: visible;
   border-radius: 7px;
-  transition: background 150ms ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background 120ms ease;
 }
 
 .ic-chat-row:hover {
-  background: rgba(0 0 0 / 0.04);
-  transform: translateX(2px);
+  background: rgba(0 0 0 / 0.05);
 }
 
 .ic-chat-row.is-active {
-  transform: none;
-}
-
-.ic-chat-row.is-active {
-  background: rgba(0 0 0 / 0.07);
+  background: rgba(0 0 0 / 0.09);
 }
 
 
@@ -6277,11 +6272,11 @@ textarea {
 }
 
 :root[data-theme="dark"] .ic-chat-row:hover {
-  background: rgba(255 255 255 / 0.05);
+  background: rgba(255 255 255 / 0.06);
 }
 
 :root[data-theme="dark"] .ic-chat-row.is-active {
-  background: rgba(255 255 255 / 0.08);
+  background: rgba(255 255 255 / 0.11);
 }
 
 :root[data-theme="dark"] .ic-settings-dialog {
