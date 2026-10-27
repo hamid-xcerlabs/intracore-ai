@@ -477,9 +477,7 @@ textarea {
 }
 
 .ic-chat-row.is-active {
-  background: rgba(0 0 0 / 0.06);
-  border-left: 2px solid #6366f1;
-  padding-left: calc(6px - 2px);
+  background: rgba(0 0 0 / 0.07);
 }
 
 
@@ -513,7 +511,7 @@ textarea {
 }
 
 .ic-chat-row.is-active .ic-chat-icon {
-  color: #7c3aed;
+  color: inherit;
 }
 
 .ic-chat-copy {
@@ -6283,9 +6281,7 @@ textarea {
 }
 
 :root[data-theme="dark"] .ic-chat-row.is-active {
-  background: rgba(160, 124, 208, 0.15);
-  border-left: 2px solid #818cf8;
-  padding-left: calc(6px - 2px);
+  background: rgba(255 255 255 / 0.08);
 }
 
 :root[data-theme="dark"] .ic-settings-dialog {
