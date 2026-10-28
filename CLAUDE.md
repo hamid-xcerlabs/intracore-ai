@@ -42,6 +42,15 @@
 - Commit and push only after explicit user approval.
 - After pushing, report the branch, commit hash, changed files, and any remaining untracked files.
 
+## Documentation rules
+
+- Update the relevant README or documentation file when a feature changes setup, behaviour, API usage, or verification steps.
+- Keep backend and frontend startup commands accurate and runnable from the documented working directory.
+- Document important local health checks, test commands, and known release limitations.
+- Keep parked ideas separate from approved implementation plans and current product requirements.
+- Prefer concise, product-specific documentation that matches the actual code instead of planned functionality.
+- Never include secrets, credentials, private user content, local database records, or environment values in documentation.
+
 ## Architecture
 
 - Backend: FastAPI, entry point `backend/app/main.py`, start with `uvicorn app.main:app --reload --port 8000` from inside `backend/`.
