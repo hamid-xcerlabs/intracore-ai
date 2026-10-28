@@ -69,6 +69,11 @@
 - Run backend tests from inside `backend/`: `pytest`.
 - Do not mock the database in integration tests — use the real SQLite instance.
 - Verify UI changes in the browser before marking done; type-check with `npx tsc --noEmit` from `frontend/`.
+- Use focused tests for the changed route, service, repository, component, or user flow before running the broader suite.
+- Cover the core local-first flows when they are affected: chat creation, streaming, history loading, regeneration, memory CRUD, export, and deletion confirmation.
+- Check loading, empty, error, retry, and cancellation behaviour for asynchronous UI and API states.
+- Review browser console output for new errors, hydration warnings, failed requests, and accessibility issues.
+- If a check cannot run because the local environment is unavailable, report the exact limitation instead of claiming it passed.
 
 ## Frontend UX rules
 
