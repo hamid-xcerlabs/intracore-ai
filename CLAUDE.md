@@ -105,6 +105,15 @@
 - Preserve keyboard navigation, visible focus states, accessible labels, and readable contrast.
 - Keep responsive layouts usable across the main desktop and mobile breakpoints.
 
+## Accessibility rules
+
+- Make every interactive control usable with keyboard navigation and provide a visible focus indicator.
+- Use semantic HTML and accessible names for buttons, links, inputs, dialogs, status messages, and icon-only controls.
+- Ensure form errors, loading states, success messages, and retry actions are announced or otherwise understandable without relying on colour alone.
+- Maintain readable text and control contrast in both light and dark themes.
+- Keep modal dialogs focusable, dismissible, and correctly associated with their titles and descriptions.
+- Do not use colour as the only way to communicate health, runtime, error, or availability status.
+
 ## Definition of done
 
 - Change works in the browser (no console errors, no visual regressions).
