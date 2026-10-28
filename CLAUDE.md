@@ -15,6 +15,15 @@
 - Never inspect or modify anything inside `backend/data/`, `backend/venv/`, `frontend/node_modules/`, `frontend/.next/`.
 - Never expose tokens, passwords, credentials, or user data.
 
+## Security boundaries
+
+- Treat local secrets, environment files, databases, uploaded files, logs, and user content as private by default.
+- Never print, quote, copy, summarize, or include sensitive values in chat responses, commits, screenshots, test output, or debug logs.
+- Do not enable external APIs, cloud services, telemetry, or network access unless the user explicitly approves it.
+- Before any destructive action, verify the exact target and scope; preserve recoverable data whenever practical.
+- Keep admin and diagnostic features limited to the local product context and do not expose private conversation or memory content unnecessarily.
+- If a command or code path could expose an environment variable, credential, token, or user record, stop immediately and report the issue.
+
 ## Project rules
 
 - Inspect the existing code before making any changes.
