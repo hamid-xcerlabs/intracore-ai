@@ -58,6 +58,16 @@
 - Database: SQLite (authoritative). Vector stores are indexes only.
 - AI: Ollama local models via LangGraph.
 
+## Admin Lite rules
+
+- Keep Admin Lite scoped to local administration and operational visibility for the single-user product.
+- Treat admin pages as read-only by default; mutating actions must be explicit, reversible where practical, and confirmation-based.
+- Keep health, database, Ollama, runtime, usage, chat, and memory information clearly separated in the interface.
+- Make metrics traceable to their actual backend source and label unavailable or partial data honestly.
+- Do not expose private conversation or memory content in summaries, diagnostics, or analytics unless the feature explicitly requires it.
+- Preserve clear loading, empty, error, retry, and unavailable-runtime states across admin pages.
+- Keep admin routes and components consistent with the existing Next.js layout and shared styling system.
+
 ## Code style
 
 - Python: snake_case for functions/variables, PascalCase for classes. No inline styles in JSX.
