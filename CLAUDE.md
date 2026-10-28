@@ -51,6 +51,16 @@
 - Do not mock the database in integration tests — use the real SQLite instance.
 - Verify UI changes in the browser before marking done; type-check with `npx tsc --noEmit` from `frontend/`.
 
+## Frontend UX rules
+
+- Every async view must handle loading, empty, success, and error states clearly.
+- Failed chat loads and network requests should provide a visible retry action where recovery is possible.
+- Prevent duplicate submissions for send, save, delete, export, and other mutating actions.
+- Require clear confirmation before destructive actions such as deleting chats or all memories.
+- Keep server-rendered and client-rendered output deterministic to avoid hydration warnings.
+- Preserve keyboard navigation, visible focus states, accessible labels, and readable contrast.
+- Keep responsive layouts usable across the main desktop and mobile breakpoints.
+
 ## Definition of done
 
 - Change works in the browser (no console errors, no visual regressions).
