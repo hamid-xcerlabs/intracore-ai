@@ -30,6 +30,38 @@
 - Database: SQLite (authoritative). Vector stores are indexes only.
 - AI: Ollama local models via LangGraph.
 
+## Code style
+
+- Python: snake_case for functions/variables, PascalCase for classes. No inline styles in JSX.
+- TypeScript/React: PascalCase components, camelCase hooks (`useXxx`), CSS class names prefixed with `ic-`.
+- CSS: define colors as CSS variables on `:root`, override under `:root[data-theme="dark"]`. No hardcoded color values in components.
+
+## Testing
+
+- Run backend tests from inside `backend/`: `pytest`.
+- Do not mock the database in integration tests — use the real SQLite instance.
+- Verify UI changes in the browser before marking done; type-check with `npx tsc --noEmit` from `frontend/`.
+
+## Definition of done
+
+- Change works in the browser (no console errors, no visual regressions).
+- TypeScript compiles clean.
+- Only the files required for the task are changed — no extra cleanup or refactors.
+
+## API conventions
+
+- Routes follow `/api/v1/<resource>` (e.g. `/api/v1/chats`, `/api/v1/messages`).
+- Request/response shapes are defined in `backend/app/schemas/`.
+- Errors return `{ "detail": "..." }` with an appropriate HTTP status code.
+
+## Known gotchas
+
+- Editing source files with PowerShell (`-replace`, `Out-File`, `Set-Content`) corrupts encoding — always use the Edit or Write tools.
+- `git push --force` is blocked by the Bash tool in auto-mode; use `mcp__terminal__run_in_terminal` instead.
+- `git filter-branch` leaves a backup ref at `refs/original/refs/heads/main`; delete it with `git update-ref -d refs/original/refs/heads/main` before rerunning.
+- The frontend uses `motion/react` (Framer Motion v11), not the older `framer-motion` import path.
+- CSS dark mode is controlled by `data-theme="dark"` on `<html>`, not `prefers-color-scheme` media query.
+
 ## Key files
 
 - `frontend/components/chat-shell.tsx` — main UI shell: sidebar, chat list, message thread, dialogs.
