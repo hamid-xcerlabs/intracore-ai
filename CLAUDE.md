@@ -54,7 +54,7 @@
 ## Architecture
 
 - Backend: FastAPI, entry point `backend/app/main.py`, start with `uvicorn app.main:app --reload --port 8000` from inside `backend/`.
-- Frontend: Next.js (Turbopack), start with `npm run dev -- --port 3001` from inside `frontend/`.
+- Frontend: Next.js (Turbopack), start with `npm run dev` from inside `frontend/`; open it at `http://localhost:3000`.
 - Database: SQLite (authoritative). Vector stores are indexes only.
 - AI: Ollama local models via LangGraph.
 
