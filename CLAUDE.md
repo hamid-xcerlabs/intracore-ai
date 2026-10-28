@@ -68,6 +68,16 @@
 - Preserve clear loading, empty, error, retry, and unavailable-runtime states across admin pages.
 - Keep admin routes and components consistent with the existing Next.js layout and shared styling system.
 
+## Backend rules
+
+- Keep API route handlers focused on HTTP concerns; place reusable business logic in services.
+- Keep SQLite access in repositories and preserve the database as the authoritative durable store.
+- Keep request and response validation in schemas instead of duplicating contract logic across routes.
+- Translate provider, validation, not-found, and persistence failures into stable, user-safe API errors.
+- Do not leak stack traces, credentials, local paths, database records, or provider internals in responses.
+- Ensure streaming endpoints handle cancellation, provider failure, partial output, and cleanup consistently.
+- Preserve existing route contracts unless the approved milestone explicitly requires a compatible API change.
+
 ## Code style
 
 - Python: snake_case for functions/variables, PascalCase for classes. No inline styles in JSX.
