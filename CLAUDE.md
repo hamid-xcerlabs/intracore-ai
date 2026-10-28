@@ -108,7 +108,7 @@
 ## Definition of done
 
 - Change works in the browser (no console errors, no visual regressions).
-- TypeScript compiles clean.
+- TypeScript checks pass, or any pre-existing failures are identified and no new failures are introduced.
 - Only the files required for the task are changed — no extra cleanup or refactors.
 
 ## API conventions
