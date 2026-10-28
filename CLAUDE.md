@@ -32,6 +32,16 @@
 - Preserve the existing backend and frontend architecture.
 - Do not install packages or run migrations without approval.
 
+## Git workflow
+
+- Inspect `git status` and the relevant diff before staging anything.
+- Stage only files required for the approved milestone; never include local environments, data, generated files, or unrelated work.
+- Run `git diff --check` before committing.
+- Keep commits focused and use a clear message that describes the approved change.
+- Run focused verification before committing and report any known failures honestly.
+- Commit and push only after explicit user approval.
+- After pushing, report the branch, commit hash, changed files, and any remaining untracked files.
+
 ## Architecture
 
 - Backend: FastAPI, entry point `backend/app/main.py`, start with `uvicorn app.main:app --reload --port 8000` from inside `backend/`.
