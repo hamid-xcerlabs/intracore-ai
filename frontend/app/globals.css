@@ -5796,8 +5796,15 @@ textarea {
 }
 
 .ic-dialog-btn-primary {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
   background: var(--ink);
   color: var(--surface-strong);
+  transition: opacity 0.12s;
 }
 
 .ic-dialog-btn-primary:hover {
