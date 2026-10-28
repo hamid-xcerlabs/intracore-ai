@@ -29,3 +29,14 @@
 - Frontend: Next.js (Turbopack), start with `npm run dev -- --port 3001` from inside `frontend/`.
 - Database: SQLite (authoritative). Vector stores are indexes only.
 - AI: Ollama local models via LangGraph.
+
+## Key files
+
+- `frontend/components/chat-shell.tsx` — main UI shell: sidebar, chat list, message thread, dialogs.
+- `frontend/app/globals.css` — all custom CSS; uses `data-theme` attribute for dark/light mode via CSS variables.
+- `backend/app/main.py` — FastAPI app init, router registration.
+- `backend/app/api/` — HTTP route handlers (one file per domain).
+- `backend/app/services/` — business logic called by routes.
+- `backend/app/repositories/` — SQLite persistence layer.
+- `backend/app/providers/` — Ollama / LLM communication.
+- `backend/app/prompts/` — system prompt strings.
