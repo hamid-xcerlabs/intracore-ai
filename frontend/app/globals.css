@@ -5671,7 +5671,25 @@ textarea {
   font-size: 16px;
   font-weight: 600;
   color: var(--ink);
-  margin: 0 0 8px;
+  margin: 0 0 16px;
+}
+
+.ic-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 20px;
+  transition: border-color 0.12s;
+}
+
+.ic-dialog-input:focus {
+  border-color: #a1a1aa;
 }
 
 .ic-dialog-body {

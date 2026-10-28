@@ -620,8 +620,8 @@ export function ChatShell() {
   const [toasts, setToasts] = useState<{ id: number; message: string; kind?: "success" | "error" }[]>([]);
   const toastIdRef = useRef(1);
 
-  // Inline rename state
-  const [renamingChatId, setRenamingChatId] = useState<number | null>(null);
+  // Rename dialog state
+  const [renamingChat, setRenamingChat] = useState<{ id: number; title: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1217,13 +1217,13 @@ export function ChatShell() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [isMemoryPanelOpen]);
 
-  // Focus rename input when entering rename mode
+  // Focus rename input when dialog opens
   useEffect(() => {
-    if (renamingChatId !== null && renameInputRef.current) {
+    if (renamingChat !== null && renameInputRef.current) {
       renameInputRef.current.focus();
       renameInputRef.current.select();
     }
-  }, [renamingChatId]);
+  }, [renamingChat]);
 
   useEffect(() => {
     activeChatIdRef.current = activeChatId;
@@ -1823,15 +1823,14 @@ export function ChatShell() {
     }
   }
 
-  // Commit 2: inline rename
   function startRenaming(chat: Chat) {
-    setRenamingChatId(chat.id);
+    setRenamingChat({ id: chat.id, title: chat.title });
     setRenameDraft(chat.title);
   }
 
   async function commitRename(chatId: number) {
     const clean = renameDraft.trim();
-    setRenamingChatId(null);
+    setRenamingChat(null);
     setRenameDraft("");
 
     if (!clean) {
@@ -1861,7 +1860,7 @@ export function ChatShell() {
       event.preventDefault();
       void commitRename(chatId);
     } else if (event.key === "Escape") {
-      setRenamingChatId(null);
+      setRenamingChat(null);
       setRenameDraft("");
     }
   }
@@ -2342,7 +2341,6 @@ export function ChatShell() {
                     <p className="ic-chat-group-label">{label}</p>
                     {groupChats.map((chat) => {
                   const isActive = chat.id === activeChatId;
-                  const isRenaming = renamingChatId === chat.id;
 
                   return (
                     <motion.div
@@ -2350,38 +2348,21 @@ export function ChatShell() {
                       key={chat.id}
                       className={`ic-chat-row ${isActive ? "is-active" : ""}`}
                     >
-                      {isRenaming ? (
-                        /* Commit 2: inline rename input */
-                        <div className="ic-rename-wrap">
-                          <input
-                            ref={renameInputRef}
-                            className="ic-rename-input"
-                            value={renameDraft}
-                            onChange={(e) => setRenameDraft(e.target.value)}
-                            onBlur={() => void commitRename(chat.id)}
-                            onKeyDown={(e) => handleRenameKeyDown(e, chat.id)}
-                            maxLength={120}
-                            aria-label="Rename conversation"
-                          />
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            activeChatIdRef.current = chat.id;
-                            setActiveChatId(chat.id);
-                            setIsSidebarOpen(false);
-                          }}
-                          className="ic-chat-select"
-                        >
-                          <span className="ic-chat-copy">
-                            <strong>{chat.title}</strong>
-                          </span>
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          activeChatIdRef.current = chat.id;
+                          setActiveChatId(chat.id);
+                          setIsSidebarOpen(false);
+                        }}
+                        className="ic-chat-select"
+                      >
+                        <span className="ic-chat-copy">
+                          <strong>{chat.title}</strong>
+                        </span>
+                      </button>
 
-                      {!isRenaming ? (
-                        <div className="ic-chat-actions">
+                      <div className="ic-chat-actions">
                           <button
                             type="button"
                             className="ic-chat-menu-btn"
@@ -2430,8 +2411,7 @@ export function ChatShell() {
                               </button>
                             </div>
                           ) : null}
-                        </div>
-                      ) : null}
+                      </div>
                     </motion.div>
                   );
                 })}
@@ -3450,6 +3430,60 @@ export function ChatShell() {
                 <div className="ic-dialog-actions">
                   <button type="button" className="ic-dialog-btn ic-dialog-btn-primary" onClick={() => setIsShortcutsOpen(false)}>
                     Close
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/* ── Rename dialog ── */}
+        <AnimatePresence>
+          {renamingChat ? (
+            <motion.div
+              className="ic-dialog-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => { setRenamingChat(null); setRenameDraft(""); }}
+            >
+              <motion.div
+                className="ic-dialog"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="ic-rename-dialog-title"
+              >
+                <h2 id="ic-rename-dialog-title" className="ic-dialog-title">Rename conversation</h2>
+                <input
+                  ref={renameInputRef}
+                  className="ic-dialog-input"
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  onKeyDown={(e) => handleRenameKeyDown(e, renamingChat.id)}
+                  maxLength={120}
+                  placeholder="Conversation name"
+                  aria-label="Conversation name"
+                />
+                <div className="ic-dialog-actions">
+                  <button
+                    type="button"
+                    className="ic-dialog-cancel"
+                    onClick={() => { setRenamingChat(null); setRenameDraft(""); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="ic-dialog-btn-primary"
+                    onClick={() => void commitRename(renamingChat.id)}
+                  >
+                    Save
                   </button>
                 </div>
               </motion.div>
